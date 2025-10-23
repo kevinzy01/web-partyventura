@@ -66,6 +66,7 @@ Ubicado en `/backend/middleware/rateLimiter.js` y `specificRateLimiters.js`:
 - Contacto: 5 mensajes/hora
 - Newsletter: 3 suscripciones/hora
 - Creación de contenido: 20 items/hora
+- **Recuperación de contraseña**: 3 solicitudes/hora por email o IP (forgot), 5 intentos/15min (reset)
 
 ### 6. Patrón de Subida de Archivos
 Usar middleware multer de `/backend/middleware/upload.js`:
@@ -109,6 +110,158 @@ El middleware `validate` (en `/backend/middleware/validate.js`) formatea errores
 
 ### 10. Nomenclatura de Modelos de Base de Datos
 Todos los modelos usan singular, PascalCase: `Admin.js`, `Event.js`, `News.js`, `Newsletter.js`, `Contact.js`, `GalleryImage.js`, `Schedule.js`, `TimeRecord.js`
+
+### 11. Sistema de Recuperación de Contraseña
+**Implementado**: Sistema completo y seguro de recuperación de contraseña para admins.
+
+**Arquitectura**:
+- **Modelo Admin** (`/backend/models/Admin.js`):
+  - `resetPasswordToken` - Token hasheado con SHA-256 (select: false)
+  - `resetPasswordExpire` - Timestamp de expiración (1 hora)
+  - Método `generarResetToken()` - Genera token aleatorio de 32 bytes, lo hashea y retorna token sin hashear
+  - Método `limpiarResetToken()` - Limpia campos de token tras uso exitoso
+
+- **Controladores** (`/backend/controllers/authController.js`):
+  - `forgotPassword()` - Recibe email, genera token, envía email con enlace de recuperación
+  - `resetPassword()` - Valida token, verifica expiración, actualiza contraseña, limpia token
+
+- **Rutas** (`/backend/routes/auth.js`):
+  - `POST /api/auth/forgot-password` - Solicitud de recuperación (rate limit: 3 req/hora)
+  - `POST /api/auth/reset-password` - Restablecimiento con token (rate limit: 5 req/15min)
+
+- **Email Template** (`/backend/templates/resetPasswordEmail.js`):
+  - HTML responsive con gradiente corporativo naranja
+  - Logo circular, botón CTA, enlace alternativo
+  - Advertencias de seguridad y expiración (1 hora)
+  - Compatible móvil y desktop
+
+- **Frontend**:
+  - `/frontend/public/forgot-password.html` - Formulario de solicitud de recuperación
+  - `/frontend/public/reset-password.html` - Formulario de reset con toggle de visibilidad y medidor de fortaleza
+  - Link en `login.html` - "¿Olvidaste tu contraseña?"
+
+**Seguridad**:
+- Token aleatorio de 32 bytes generado con `crypto.randomBytes()`
+- Hashing SHA-256 antes de almacenar en base de datos
+- Expiración de 1 hora estrictamente validada
+- Token de un solo uso (se limpia tras uso exitoso)
+- Rate limiting estricto para prevenir ataques de fuerza bruta
+- Respuestas genéricas para prevenir enumeración de usuarios
+- Validación multicapa: frontend → middleware → backend
+
+**Configuración Requerida**:
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=tu-email@gmail.com
+EMAIL_PASS=contraseña-de-aplicacion-gmail
+```
+**IMPORTANTE**: Usar contraseña de aplicación de Gmail, no contraseña normal.
+
+**Flujo Completo**:
+1. Usuario ingresa email en forgot-password.html
+2. Backend genera token, lo hashea y almacena con expiración
+3. Email enviado con enlace: `http://domain/reset-password.html?token=XXXXX`
+4. Usuario hace clic en enlace, ingresa nueva contraseña
+5. Backend valida token hasheado y expiración
+6. Si válido, actualiza contraseña y limpia token
+7. Redirección automática a login
+
+**Documentación**: Ver `/docs/RECUPERACION_PASSWORD.md` para guía completa y `/docs/TESTING_RECUPERACION_PASSWORD.md` para testing.
+
+### 12. Sistema de Bulk Selection y Eliminación
+**Implementado**: Sistema de selección masiva con checkbox "Seleccionar Todo" en 6 secciones del panel admin.
+
+**Secciones Afectadas**:
+1. Noticias (`#noticias-content`)
+2. Mensajes de Contacto (`#contacto-content`)
+3. Gestión de Empleados (`#gestion-empleados-content`)
+4. Eventos (`#eventos-content`)
+5. Galería (`#galeria-content`)
+6. Control Horario (`#control-horario-content`) - Incluye exportación CSV de seleccionados
+
+**Arquitectura**:
+- **Estado basado en Set**: Uso de `Set()` para almacenar IDs seleccionados (rendimiento O(1))
+- **Modo silencioso**: Operaciones masivas usan parámetro `silent=true` para evitar recargas individuales
+- **Rate limiting friendly**: Una sola recarga al final de operación masiva
+
+**Patrón de Implementación** (en `/frontend/public/admin.js`):
+```javascript
+// Estado para cada sección
+const selectedNewsIds = new Set();
+const selectedContactIds = new Set();
+const selectedEmpleadosIds = new Set();
+const selectedEventIds = new Set();
+const selectedGalleryIds = new Set();
+const selectedTimeRecordIds = new Set();
+
+// Handler de checkbox individual
+function handleNewsCheckbox(newsId, isChecked) {
+  if (isChecked) {
+    selectedNewsIds.add(newsId);
+  } else {
+    selectedNewsIds.delete(newsId);
+  }
+  updateSelectAllNewsCheckbox();
+  updateDeleteSelectedNewsButton();
+}
+
+// Handler de "Seleccionar Todo"
+function handleSelectAllNews(isChecked) {
+  const checkboxes = document.querySelectorAll('.news-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = isChecked;
+    const newsId = checkbox.dataset.newsId;
+    if (isChecked) {
+      selectedNewsIds.add(newsId);
+    } else {
+      selectedNewsIds.delete(newsId);
+    }
+  });
+  updateDeleteSelectedNewsButton();
+}
+
+// Eliminación masiva con modo silencioso
+async function deleteSelectedNews() {
+  const idsArray = Array.from(selectedNewsIds);
+  const deletePromises = idsArray.map(id => deleteNews(id, true)); // silent=true
+  await Promise.all(deletePromises);
+  selectedNewsIds.clear();
+  await loadNews(); // Una sola recarga al final
+}
+```
+
+**Características Especiales - Control Horario**:
+- **Exportación CSV selectiva**: Botón "Exportar Seleccionados (CSV)"
+- **Filtrado de datos**: Solo exporta registros marcados
+- **Formato CSV**:
+  ```csv
+  Empleado,Fecha,Tipo,Hora,Notas
+  Juan Pérez,2025-10-23,Entrada,08:00,
+  Juan Pérez,2025-10-23,Salida,17:00,
+  ```
+- **Descarga automática**: Genera Blob y simula clic en enlace temporal
+
+**UX/UI**:
+- Checkbox "Seleccionar Todo" en header de cada tabla
+- Botón "Eliminar Seleccionados" visible solo si hay selección
+- Confirmación con SweetAlert2 mostrando cantidad de items
+- Contador visual de items seleccionados
+- Limpieza automática de estado tras operación
+- Feedback con notificaciones de éxito/error
+
+**Prevención de Problemas**:
+- Validación de selección vacía antes de eliminar
+- Confirmación explícita del usuario
+- Manejo de errores individuales en batch
+- Recarga única al finalizar para evitar rate limiting
+- Limpieza de estado en cada cambio de sección
+
+**Notas de Implementación**:
+- NUNCA editar archivos en `/frontend/src/` - siempre trabajar en `/frontend/public/`
+- Usar modo silencioso para operaciones batch: `deleteItem(id, true)`
+- Recargar datos una sola vez al final: `await Promise.all(promises); await loadData();`
+- Mantener sincronización entre checkbox visual y estado Set
 
 ## Flujos de Trabajo de Desarrollo
 
@@ -222,6 +375,76 @@ const imageUrl = `${SERVER_URL}${event.image}`; // SERVER_URL de config.js
 - Verifica que el servidor no se esté reiniciando (lo que regenera el secret si no está en .env)
 - Asegúrate de que `JWT_SECRET` en `.env` no esté cambiando entre reinicios
 
+### 11. Nuevas Rutas Agregadas No Funcionan (404)
+**Problema**: Después de agregar nuevas rutas al backend, obtienes error 404 al intentar acceder.
+
+**Causa**: Node.js/Express no recarga automáticamente archivos de rutas nuevos, incluso con nodemon.
+
+**Solución**:
+1. **Detener el servidor** completamente (Ctrl+C)
+2. **Reiniciar el servidor**: `cd backend && npm run dev`
+3. Verificar en logs de consola que no haya errores de importación
+4. Probar endpoint con `/api/health` primero
+5. Si persiste, verificar que la ruta esté registrada en `server.js` con `app.use()`
+
+**Prevención**: Siempre reiniciar servidor tras agregar nuevos archivos de ruta o controladores.
+
+### 12. Bulk Selection No Funciona Tras Agregar Items
+**Problema**: Checkbox "Seleccionar Todo" no marca items recién agregados.
+
+**Causa**: Los event listeners no se reasignan a elementos DOM nuevos tras recarga de datos.
+
+**Solución**:
+- Llamar a la función de setup de event listeners después de `loadData()`
+- Ejemplo en `admin.js`:
+  ```javascript
+  async function loadNews() {
+    // ... cargar datos ...
+    setupNewsEventListeners(); // Reasignar listeners
+  }
+  ```
+
+**Prevención**: Siempre llamar a setup de event listeners tras cualquier actualización del DOM.
+
+### 13. Email de Recuperación de Contraseña No Llega
+**Problema**: Usuario solicita recuperación pero no recibe email.
+
+**Diagnóstico**:
+1. Verifica logs del backend - busca "✅ Email de recuperación enviado" o errores
+2. Verifica configuración SMTP en `.env`:
+   ```env
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=tu-email@gmail.com
+   EMAIL_PASS=contraseña-de-aplicacion  # NO tu contraseña normal
+   ```
+3. Verifica que uses contraseña de aplicación de Gmail:
+   - Ir a https://myaccount.google.com/apppasswords
+   - Generar nueva contraseña para "Correo"
+   - Copiar en `EMAIL_PASS` sin espacios
+
+**Soluciones Comunes**:
+- Error "Invalid login": Estás usando contraseña normal en vez de contraseña de aplicación
+- Error "Connection timeout": Firewall bloqueando puerto 587, verificar `EMAIL_PORT=587`
+- Error "Self signed certificate": Agregar `tls: { rejectUnauthorized: false }` a config Nodemailer (solo desarrollo)
+
+**Testing**: Ver `/docs/TESTING_RECUPERACION_PASSWORD.md` para guía completa.
+
+### 14. CSV Export Descarga Archivo Vacío
+**Problema**: Al exportar registros horarios seleccionados, el CSV está vacío o tiene solo headers.
+
+**Causa**: El Set de IDs seleccionados está vacío o los datos no se filtran correctamente.
+
+**Solución**:
+1. Verificar que `selectedTimeRecordIds.size > 0` antes de exportar
+2. Verificar que el filtrado use el Set correctamente:
+   ```javascript
+   const selectedRecords = allRecords.filter(r => selectedTimeRecordIds.has(r._id));
+   ```
+3. Verificar que los IDs en el Set coincidan con los IDs de los registros (string vs ObjectId)
+
+**Prevención**: Mostrar contador de seleccionados en UI antes de permitir exportación.
+
 ## Archivos Clave para Contexto
 
 - **Arquitectura**: `/docs/ESTRUCTURA_PROYECTO.md` - Explicación completa de estructura de archivos
@@ -229,6 +452,8 @@ const imageUrl = `${SERVER_URL}${event.image}`; // SERVER_URL de config.js
 - **Documentación API**: `/backend/API_DOCUMENTATION.md` - Referencia completa de endpoints
 - **Inicio Rápido**: `/docs/INICIO_RAPIDO.md` - Guía de configuración en 3 pasos
 - **Roles de Admin**: `/docs/GESTION_ADMINS.md` - Sistema de roles y permisos
+- **Recuperación de Contraseña**: `/docs/RECUPERACION_PASSWORD.md` - Sistema completo de password recovery
+- **Testing de Recuperación**: `/docs/TESTING_RECUPERACION_PASSWORD.md` - Guía rápida de testing del sistema de recuperación
 
 ## Enfoque de Pruebas
 
