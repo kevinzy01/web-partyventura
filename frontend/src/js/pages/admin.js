@@ -2733,11 +2733,23 @@ async function loadTimeRecords() {
       const tipoColor = record.tipo === 'entrada' ? 'text-green-600' : 'text-red-600';
       const horas = record.horasTrabajadas ? `${record.horasTrabajadas.toFixed(2)}h` : '-';
       
+      // Manejar empleados eliminados
+      const empleadoNombre = record.empleado 
+        ? (record.empleado.nombre || record.empleado.username)
+        : (record.empleadoNombre || 'Empleado eliminado');
+      const empleadoEmail = record.empleado 
+        ? record.empleado.email 
+        : '(usuario eliminado)';
+      const empleadoEliminado = !record.empleado;
+      
       return `
-        <tr class="hover:bg-gray-50 transition-colors">
+        <tr class="hover:bg-gray-50 transition-colors ${empleadoEliminado ? 'bg-gray-50' : ''}">
           <td class="px-6 py-4">
-            <div class="font-semibold text-gray-800">${record.empleado.nombre || record.empleado.username}</div>
-            <div class="text-xs text-gray-500">${record.empleado.email}</div>
+            <div class="font-semibold text-gray-800 ${empleadoEliminado ? 'text-gray-500' : ''}">
+              ${empleadoNombre}
+              ${empleadoEliminado ? '<span class="ml-2 text-xs text-red-600">⚠️ Eliminado</span>' : ''}
+            </div>
+            <div class="text-xs text-gray-500">${empleadoEmail}</div>
           </td>
           <td class="px-6 py-4">
             <span class="${tipoColor} font-semibold text-sm">

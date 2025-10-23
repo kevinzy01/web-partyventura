@@ -202,10 +202,27 @@ exports.getTodosLosRegistros = async (req, res) => {
 
     const total = await TimeRecord.countDocuments(query);
 
+    // Formatear registros para manejar empleados eliminados
+    const registrosFormateados = registros.map(registro => {
+      const registroObj = registro.toObject();
+      
+      // Si el empleado fue eliminado, usar el nombre guardado en el registro
+      if (!registroObj.empleado) {
+        registroObj.empleado = {
+          _id: null,
+          nombre: registroObj.empleadoNombre,
+          username: registroObj.empleadoNombre,
+          email: '(empleado eliminado)'
+        };
+      }
+      
+      return registroObj;
+    });
+
     res.json({
       success: true,
       data: {
-        registros: registros,
+        registros: registrosFormateados,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(total / parseInt(limit)),
