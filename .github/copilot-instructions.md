@@ -445,6 +445,98 @@ const imageUrl = `${SERVER_URL}${event.image}`; // SERVER_URL de config.js
 
 **Prevención**: Mostrar contador de seleccionados en UI antes de permitir exportación.
 
+### 15. Caché del Navegador No Muestra Cambios en HTML
+**Problema**: Cambios en archivos HTML no se reflejan en el navegador, incluso en Ngrok.
+
+**Causa**: Express sirve archivos estáticos con caché del navegador por defecto.
+
+**Solución Implementada**:
+- Middleware en `server.js` que desactiva caché para archivos HTML:
+```javascript
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+  }
+  next();
+});
+```
+
+**Soluciones Rápidas**:
+- **Hard Reload**: Ctrl + Shift + R (Windows) o Cmd + Shift + R (Mac)
+- **DevTools**: F12 → Click derecho en recargar → "Vaciar caché y recargar de manera forzada"
+- **Modo Incógnito**: Abre ventana de incógnito para ver cambios sin caché
+
+**Prevención**: Siempre reiniciar servidor tras cambios estructurales en archivos estáticos.
+
+### 16. Botones Desalineados en Tarjetas (Cards)
+**Problema**: Botones en tarjetas con diferentes cantidades de contenido no están a la misma altura.
+
+**Causa**: Tailwind CSS no puede forzar altura uniforme cuando el contenido varía significativamente entre tarjetas.
+
+**Solución**: Usar CSS custom con flexbox y altura mínima:
+```css
+/* En <style> dentro de <head> */
+#cardContainer > article {
+  min-height: 620px; /* Altura mínima uniforme */
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative;
+}
+
+/* Contenido crece para llenar espacio */
+#cardContainer > article > div.flex-grow {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+/* Botón empujado al final */
+#cardContainer > article > div.mt-auto {
+  margin-top: auto !important;
+  padding-top: 1rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* Badges absolutos no afectan layout */
+#cardContainer > article > div[style*="absolute"] {
+  position: absolute !important;
+}
+```
+
+**Estructura HTML requerida**:
+```html
+<article class="... flex flex-col ...">
+  <div class="flex-grow">
+    <!-- Contenido variable -->
+  </div>
+  <div class="mt-auto pt-4">
+    <!-- Botón siempre alineado -->
+  </div>
+</article>
+```
+
+**Notas**:
+- Usar `!important` para sobrescribir Tailwind cuando sea necesario
+- `min-height` debe ser suficiente para la tarjeta con más contenido
+- Badges con `position: absolute` deben estar en tarjetas con `position: relative`
+
+## Información de Horarios del Local
+
+**Horarios Actuales** (actualizados octubre 2025):
+- **Lunes a Jueves**: 17:00 - 22:00
+- **Viernes a Domingo**: 10:00 - 22:00
+- **Vísperas de Festivo y Festivos**: 10:00 - 22:00
+
+**Ubicaciones en el código**:
+1. Sección "Horarios" (tabla): `/frontend/public/index.html` líneas 761-774
+2. Sección "¿Dónde Estamos?" (footer): `/frontend/public/index.html` línea 935
+
+**Importante**: Al actualizar horarios, verificar ambas ubicaciones para mantener consistencia.
+
 ## Archivos Clave para Contexto
 
 - **Arquitectura**: `/docs/ESTRUCTURA_PROYECTO.md` - Explicación completa de estructura de archivos

@@ -269,6 +269,47 @@
     .bg-gradient-to-br.from-fuchsia-400.to-purple-500 {
       background: linear-gradient(to bottom right, rgb(232, 121, 249), rgb(168, 85, 247)) !important;
     }
+    
+    /* SOLUCIÓN DEFINITIVA: Alinear botones de tarjetas de tarifas */
+    #cardContainer > article {
+      min-height: 620px; /* Altura mínima aumentada para acomodar tarjetas con más contenido */
+      display: flex !important;
+      flex-direction: column !important;
+      position: relative; /* Para que los badges absolutos funcionen */
+    }
+    
+    /* Badges absolutos no deben afectar el layout */
+    #cardContainer > article > div[style*="absolute"],
+    #cardContainer > article > div.absolute {
+      position: absolute !important;
+      z-index: 20 !important;
+    }
+    
+    /* El contenido crece para llenar el espacio disponible */
+    #cardContainer > article > div:not([style*="absolute"]):not(.absolute):first-of-type,
+    #cardContainer > article > div.flex-grow {
+      flex: 1 1 auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+    }
+    
+    /* El botón siempre al final */
+    #cardContainer > article > div.mt-auto {
+      margin-top: auto !important;
+      padding-top: 1rem !important;
+      flex-shrink: 0 !important;
+    }
+    
+    /* Asegurar que las listas no crezcan más de lo necesario */
+    #cardContainer > article ul {
+      flex-shrink: 0 !important;
+    }
+    
+    /* El texto del footer no debe empujar el botón */
+    #cardContainer > article > div:last-child {
+      flex-shrink: 0 !important;
+    }
   </style>
 </head>
 <body class="bg-white text-gray-800">
@@ -451,8 +492,8 @@
         <div id="cardContainer" class="flex overflow-x-auto lg:overflow-visible px-4 lg:px-12 space-x-4 lg:space-x-6 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing scrollbar-hide">
       
       <!-- Card 1 - 1 Hora -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-pink-50 to-pink-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
-        <div>
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-pink-50 to-pink-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
+        <div class="flex-grow">
           <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-purple-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
             <img src="assets/icons/jpg/Image_2025-10-18_112219_746.jpg" alt="1 Hora" class="w-12 h-12 object-cover rounded-xl">
           </div>
@@ -465,7 +506,7 @@
             </div>
             <div class="text-center">
               <p class="text-3xl font-extrabold text-pink-700">15€</p>
-              <p class="text-xs text-gray-600 mt-1 font-medium">V-D</p>
+              <p class="text-xs text-gray-600 mt-1 font-medium">V-D*</p>
             </div>
           </div>
           <ul class="text-sm text-gray-700 space-y-2 mb-6 font-medium">
@@ -475,23 +516,23 @@
             <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span>Monitores certificados</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-pink-600 hover:bg-pink-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Reservar</a>
         </div>
         <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-pink-700">V-D, festivos y vísperas de festivo</span>
+            <span class="text-pink-700">*V-D, festivos y vísperas de festivo</span>
         </div>
       </article>
       
       <!-- Card 2 - 2 Horas -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300" style="overflow: visible;">
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300" style="overflow: visible;">
         <!-- Badge "MÁS POPULAR" -->
         <div class="absolute left-1/2 z-20 transition-transform duration-300 group-hover:scale-110" style="top: -40px; transform: translateX(-50%);">
           <span class="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-6 py-2 rounded-full shadow-xl border-2 border-white whitespace-nowrap inline-block">
             ⭐ MÁS POPULAR
           </span>
         </div>
-        <div>
+        <div class="flex-grow">
           <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl transform rotate-3">
             <img src="assets/icons/jpg/Image_2025-10-18_112219_746.jpg" alt="2 Horas" class="w-14 h-14 object-cover rounded-xl">
           </div>
@@ -504,7 +545,7 @@
             </div>
             <div class="text-center">
               <p class="text-4xl font-extrabold text-blue-700 price-glow-blue">24€</p>
-              <p class="text-xs text-gray-600 mt-1 font-semibold">V-D</p>
+              <p class="text-xs text-gray-600 mt-1 font-semibold">*V-D</p>
             </div>
           </div>
           <ul class="text-sm text-gray-700 space-y-2 mb-6 font-medium">
@@ -514,17 +555,17 @@
             <li class="flex items-center"><span class="text-blue-500 mr-2">✓</span>Monitores certificados</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-blue-600 hover:bg-blue-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Reservar</a>
         </div>
         <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-blue-700">V-D, festivos y vísperas de festivo</span>
+            <span class="text-blue-700">*V-D, festivos y vísperas de festivo</span>
         </div>
       </article>
 
       <!-- Card 3 - Niño + Adulto -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
-        <div>
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
+        <div class="flex-grow">
           <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
             <img src="assets/icons/jpg/Image_2025-10-18_112219_746.jpg" alt="Niño + Adulto" class="w-12 h-12 object-cover rounded-xl">
           </div>
@@ -537,7 +578,7 @@
             </div>
             <div class="text-center">
               <p class="text-3xl font-extrabold text-green-700">22€</p>
-              <p class="text-xs text-gray-600 mt-1 font-medium">1h V-D</p>
+              <p class="text-xs text-gray-600 mt-1 font-medium">1h V-D*</p>
             </div>
             <div class="text-center">
               <p class="text-4xl font-extrabold text-green-600 price-glow-green">30€</p>
@@ -545,7 +586,7 @@
             </div>
             <div class="text-center">
               <p class="text-4xl font-extrabold text-green-700 price-glow-green">35€</p>
-              <p class="text-xs text-gray-600 mt-1 font-semibold">2h V-D</p>
+              <p class="text-xs text-gray-600 mt-1 font-semibold">2h V-D*</p>
             </div>
           </div>
           <ul class="text-sm text-gray-700 space-y-2 mb-6 font-medium">
@@ -554,17 +595,17 @@
             <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Supervisión constante</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-green-600 hover:bg-green-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Reservar</a>
         </div>
         <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-green-700">V-D, festivos y vísperas de festivo</span>
+            <span class="text-green-700">*V-D, festivos y vísperas de festivo</span>
         </div>
       </article>
 
       <!-- Card 4 - Pack Cumpleaños Jump -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-red-50 to-rose-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
-        <div>
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-red-50 to-rose-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
+        <div class="flex-grow">
           <div class="w-16 h-16 bg-gradient-to-br from-red-400 to-rose-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
             <img src="assets/icons/jpg/Image_2025-10-18_112219_746.jpg" alt="Pack Jump" class="w-12 h-12 object-cover rounded-xl">
           </div>
@@ -577,34 +618,34 @@
             </div>
             <div class="text-center">
               <p class="text-3xl font-extrabold text-red-700">20€</p>
-              <p class="text-xs text-gray-600 mt-1 font-medium">V-D</p>
+              <p class="text-xs text-gray-600 mt-1 font-medium">*V-D</p>
             </div>
           </div>
           <ul class="text-sm text-gray-700 space-y-2 mb-6 font-medium">
             <li class="flex items-center"><span class="text-red-500 mr-2">✓</span>Pulsera identificativa</li>
             <li class="flex items-center"><span class="text-red-500 mr-2">✓</span>Calcetines obligatorios (2€)</li>
-            <li class="flex items-center"><span class="text-red-500 mr-2">✓</span>Merienda a elegir con patatas, postre y bebida</li>
+            <li class="flex items-center"><span class="text-red-500 mr-2">✓</span>Merienda a elegir con bebida</li>
             <li class="flex items-center"><span class="text-red-500 mr-2">✓</span>1 hora extra de salto para el cumpleañero</li>
             <li class="flex items-center font-bold"><span class="text-red-500 mr-2">✓</span>No incluye tarta</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-red-600 hover:bg-red-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Reservar cumpleaños</a>
           <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-red-700">V-D, festivos y vísperas de festivo</span>
+            <span class="text-red-700">*V-D, festivos y vísperas de festivo</span>
           </div>
         </div>
       </article>
 
       <!-- Card 5 - Pack Cumpleaños Spider -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300" style="overflow: visible;">
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300" style="overflow: visible;">
         <!-- Badge "PREMIUM" -->
         <div class="absolute left-1/2 z-20 transition-transform duration-300 group-hover:scale-110" style="top: -40px; transform: translateX(-50%);">
           <span class="bg-purple-600 text-white text-xs font-bold px-6 py-2 rounded-full shadow-xl border-2 border-white whitespace-nowrap inline-block">
             ⭐ PREMIUM
           </span>
         </div>
-        <div>
+        <div class="flex-grow">
           <div class="w-20 h-20 bg-gradient-to-br from-fuchsia-400 to-purple-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl transform rotate-3">
             <img src="assets/icons/jpg/1350.jpg" alt="Pack Spider" class="w-14 h-14 object-cover rounded-xl">
           </div>
@@ -617,28 +658,28 @@
             </div>
             <div class="text-center">
               <p class="text-4xl font-extrabold text-purple-700 price-glow-purple">25€</p>
-              <p class="text-xs text-gray-600 mt-1 font-semibold">V-D</p>
+              <p class="text-xs text-gray-600 mt-1 font-semibold">V-D*</p>
             </div>
           </div>
           <ul class="text-sm text-gray-700 space-y-2 mb-6 font-medium">
             <li class="flex items-center"><span class="text-purple-500 mr-2">✓</span>Pulsera identificativa</li>
             <li class="flex items-center"><span class="text-purple-500 mr-2">✓</span>Calcetines obligatorios (2€)</li>
-            <li class="flex items-center"><span class="text-purple-500 mr-2">✓</span>Merienda a elegir con patatas, postre y bebida</li>
+            <li class="flex items-center"><span class="text-purple-500 mr-2">✓</span>Merienda a elegir con bebida</li>
             <li class="flex items-center"><span class="text-purple-500 mr-2">✓</span>1 hora extra de salto para el cumpleañero</li>
             <li class="flex items-center font-bold"><span class="text-purple-500 mr-2">✓</span>No incluye tarta</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-purple-600 hover:bg-purple-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Reservar cumpleaños</a>
         </div>
         <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-purple-700">V-D, festivos y vísperas de festivo</span>
+            <span class="text-purple-700">*V-D, festivos y vísperas de festivo</span>
         </div>
       </article>
 
       <!-- Card 6 - Bonos -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-orange-50 to-amber-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
-        <div>
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-orange-50 to-amber-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
+        <div class="flex-grow">
           <div class="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
             <img src="assets/icons/jpg/Image_2025-10-18_112219_746.jpg" alt="Bonos" class="w-12 h-12 object-cover rounded-xl">
           </div>
@@ -657,17 +698,14 @@
             <li class="flex items-center"><span class="text-orange-500 mr-2">✓</span>Ahorro de hasta 8€/hora</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-orange-600 hover:bg-orange-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Comprar bono</a>
-        </div>
-        <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-orange-700">V-D, festivos y vísperas de festivo</span>
         </div>
       </article>
 
       <!-- Card 7 - Grupos -->
-      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
-        <div>
+      <article class="snap-start flex-shrink-0 w-72 bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col transform hover:scale-105 hover:-translate-y-2 transition-all duration-300">
+        <div class="flex-grow">
           <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
             <img src="assets/icons/jpg/Image_2025-10-18_112219_746.jpg" alt="Grupos" class="w-12 h-12 object-cover rounded-xl">
           </div>
@@ -689,11 +727,8 @@
             <li class="flex items-center"><span class="text-yellow-500 mr-2">✓</span>Actividades personalizadas</li>
           </ul>
         </div>
-        <div>
+        <div class="mt-auto pt-4">
           <a href="#" class="block text-center text-white font-bold bg-yellow-600 hover:bg-yellow-700 rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Consultar</a>
-        </div>
-        <div class="flex justify-center space-x-4 text-xs font-medium">
-            <span class="text-yellow-700">V-D, festivos y vísperas de festivo</span>
         </div>
       </article>
 
@@ -761,19 +796,15 @@
       <div id="horariosTable" class="divide-y divide-gray-200">
         <div class="flex hover:bg-gray-50 transition-colors">
           <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg font-medium">Lunes - Jueves</div>
-          <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">17:00 - 21:00</div>
-        </div>
-        <div class="flex hover:bg-gray-50 transition-colors">
-          <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg font-medium">Viernes</div>
           <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">17:00 - 22:00</div>
         </div>
         <div class="flex hover:bg-gray-50 transition-colors">
-          <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg font-medium">Sábados</div>
-          <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">11:00 - 14:00 / 17:00 - 22:00</div>
+          <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg font-medium">Viernes - Domingo</div>
+          <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">10:00 - 22:00</div>
         </div>
         <div class="flex hover:bg-gray-50 transition-colors">
-          <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg font-medium">Domingos y Festivos</div>
-          <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">11:00 - 14:00 / 17:00 - 21:00</div>
+          <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg font-medium">Vísperas de Festivo y Festivos</div>
+          <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">10:00 - 22:00</div>
         </div>
       </div>
     </div>
@@ -935,7 +966,7 @@
               </div>
               <div>
                 <h3 class="font-bold text-gray-900 text-lg">Horario</h3>
-                <p class="text-gray-600 text-sm">Lunes - Jueves: 16:00 - 22:00<br>Viernes - Domingo y festivos: 10:00 - 22:00</p>
+                <p class="text-gray-600 text-sm">L - J: 17:00 - 22:00<br>V - D, vísperas de festivo y festivos: 10:00 - 22:00</p>
               </div>
             </div>
             

@@ -88,6 +88,17 @@ app.use(sanitizeBody);
 // ARCHIVOS ESTÁTICOS
 // ====================================
 
+// Middleware para desactivar caché en archivos HTML (para desarrollo)
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+  }
+  next();
+});
+
 // Servir archivos estáticos del frontend (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 app.use('/src', express.static(path.join(__dirname, '../frontend/src')));
