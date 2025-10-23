@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Overflow Y Hover</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-8">
+  
+  <h1 class="text-2xl font-bold mb-4">Test: overflow-y: visible con hover</h1>
+  
+  <!-- TEST 1: overflow-x auto, overflow-y visible -->
+  <div class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Test 1: overflow-x: auto, overflow-y: visible</h2>
+    <div class="overflow-x-auto scrollbar-hide py-16 px-4" style="overflow-y: visible !important;">
+      <div class="flex gap-4">
+        <div class="flex-shrink-0 w-64 h-80 bg-blue-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold">
+          Card 1
+        </div>
+        <div class="flex-shrink-0 w-64 h-80 bg-green-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold">
+          Card 2
+        </div>
+        <div class="flex-shrink-0 w-64 h-80 bg-red-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold">
+          Card 3
+        </div>
+        <div class="flex-shrink-0 w-64 h-80 bg-purple-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold">
+          Card 4
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEST 2: Con clip-path none -->
+  <div class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Test 2: Con clip-path: none</h2>
+    <div class="overflow-x-auto scrollbar-hide py-16 px-4" style="overflow-y: visible !important; clip-path: none;">
+      <div class="flex gap-4">
+        <div class="flex-shrink-0 w-64 h-80 bg-blue-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold" style="clip-path: none;">
+          Card 1
+        </div>
+        <div class="flex-shrink-0 w-64 h-80 bg-green-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold" style="clip-path: none;">
+          Card 2
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEST 3: Con contain none -->
+  <div class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Test 3: Con contain: none</h2>
+    <div class="overflow-x-auto scrollbar-hide py-16 px-4" style="overflow-y: visible !important; contain: none;">
+      <div class="flex gap-4">
+        <div class="flex-shrink-0 w-64 h-80 bg-blue-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold">
+          Card 1
+        </div>
+        <div class="flex-shrink-0 w-64 h-80 bg-green-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold">
+          Card 2
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEST 4: Transform-style preserve-3d -->
+  <div class="mb-8">
+    <h2 class="text-xl font-semibold mb-2">Test 4: transform-style: preserve-3d</h2>
+    <div class="overflow-x-auto scrollbar-hide py-16 px-4" style="overflow-y: visible !important; transform-style: preserve-3d;">
+      <div class="flex gap-4" style="transform-style: preserve-3d;">
+        <div class="flex-shrink-0 w-64 h-80 bg-blue-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold" style="transform-style: preserve-3d;">
+          Card 1
+        </div>
+        <div class="flex-shrink-0 w-64 h-80 bg-green-500 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 hover:-translate-y-4 flex items-center justify-center text-white font-bold" style="transform-style: preserve-3d;">
+          Card 2
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

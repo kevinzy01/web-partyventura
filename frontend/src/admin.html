@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración - Partyventura</title>
+  <link href="styles/index.css?v=20" rel="stylesheet">
+  <link href="styles/styles.css?v=20" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/assets/icons/png/logo-partyventura.png">
+  <style>
+    :root {
+      --primary-orange: #f97316;
+      --primary-orange-dark: #ea580c;
+      --primary-red: #dc2626;
+      --secondary-blue: #3b82f6;
+      --success-green: #10b981;
+      --danger-red: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-800: #1f2937;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    
+    @media (min-width: 768px) {
+      .admin-container {
+        padding: 24px;
+      }
+    }
+    
+    /* Cards */
+    .news-card, .contact-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid #e5e7eb;
+    }
+    
+    .news-card:hover, .contact-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--primary-orange);
+    }
+    
+    /* Stats Cards */
+    .stats-card {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .stats-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    /* Tabs */
+    .tab-button {
+      position: relative;
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+    
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+    }
+    
+    .tab-button:not(.active):hover {
+      background-color: var(--gray-100);
+    }
+    
+    /* Badges */
+    .badge-new {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.05); }
+    }
+    
+    /* Filter buttons */
+    .filter-btn {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .filter-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(249, 115, 22, 0.1);
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s;
+    }
+    
+    .filter-btn:hover::after {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Modals */
+    .modal-backdrop {
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.2s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal-content {
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Dropdown de notificaciones - Posicionamiento desde la DERECHA */
+    #notificationsDropdown {
+      position: fixed;
+      right: 0.5rem; /* 8px */
+      left: auto !important;
+      top: 4rem; /* 64px - altura del header */
+      width: calc(100vw - 1rem); /* Mobile: casi full-width */
+      max-width: 100%;
+      min-height: 200px; /* Altura mínima para que se vea */
+      height: auto;
+      z-index: 1000;
+    }
+
+    /* Desktop: posicionar relativo al botón con position absolute */
+    @media (min-width: 640px) {
+      #notificationsDropdown {
+        position: absolute;
+        right: 0;
+        left: auto !important;
+        width: 450px !important; /* Forzar ancho */
+        min-width: 450px;
+        top: 100%; /* Justo debajo del contenedor padre */
+        margin-top: 0.5rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      #notificationsDropdown {
+        width: 550px !important;
+        min-width: 550px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      #notificationsDropdown {
+        width: 600px !important;
+        min-width: 600px;
+      }
+    }
+
+    #notificationsDropdown:not(.hidden) {
+      animation: dropdownSlide 0.2s ease-out;
+    }
+    
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Posicionamiento responsive del dropdown */
+    @media (max-width: 639px) {
+      #notificationsDropdown:not(.hidden) {
+        animation: dropdownSlideDown 0.25s ease-out;
+      }
+      
+      @keyframes dropdownSlideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    }
+    
+    /* Scroll personalizado para lista de notificaciones */
+    #notificationsList::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    #notificationsList::-webkit-scrollbar-track {
+      background: #f9fafb;
+    }
+    
+    #notificationsList::-webkit-scrollbar-thumb {
+      background: #f97316;
+      border-radius: 4px;
+    }
+    
+    #notificationsList::-webkit-scrollbar-thumb:hover {
+      background: #ea580c;
+    }
+    
+    /* Line clamp para texto */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* Preview Image */
+    .preview-image {
+      max-width: 200px;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    
+    /* Loading States */
+    .loading {
+      animation: shimmer 2s infinite;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    @keyframes scale-in {
+      0% {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    .animate-scale-in {
+      animation: scale-in 0.3s ease-out;
+    }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary-orange);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-orange-dark);
+    }
+    
+    /* Empty States */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+    }
+    
+    .empty-state-icon {
+      font-size: 4rem;
+      opacity: 0.5;
+      margin-bottom: 1rem;
+    }
+    
+    /* Tab Styles */
+    .tab-button {
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #6b7280; /* gray-600 por defecto */
+    }
+    
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--primary-orange), var(--primary-red));
+      color: white !important; /* Forzar texto blanco */
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+    
+    .tab-button.active svg {
+      color: white !important; /* Forzar iconos blancos */
+    }
+    
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: white;
+      border-radius: 3px 3px 0 0;
+    }
+    
+    .tab-button:not(.active):hover {
+      background: var(--gray-50);
+      color: var(--primary-orange);
+    }
+    
+    .badge-new {
+      animation: pulse 2s infinite;
+    }
+    
+    /* Header Improvements */
+    @media (max-width: 768px) {
+      header .max-w-7xl {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      
+      header h1 {
+        font-size: 1rem;
+      }
+      
+      header .space-x-4 {
+        gap: 8px;
+      }
+    }
+    
+    /* Smooth transitions for header elements */
+    header a, header button {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    header a:active, header button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  
+  <!-- Header Profesional -->
+  <header class="bg-white border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Logo y Título -->
+        <div class="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+            <span class="text-2xl sm:text-3xl">🎉</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h1 class="text-base sm:text-xl md:text-2xl font-bold text-gray-900 truncate">Panel de Administración</h1>
+            <p class="text-gray-500 text-[10px] sm:text-xs md:text-sm flex items-center gap-1 sm:gap-2">
+              <span class="hidden sm:inline">Partyventura</span>
+              <span class="w-1 h-1 bg-gray-400 rounded-full hidden sm:inline-block"></span>
+              <span id="currentDateTime" class="text-gray-400 text-[10px] sm:text-xs truncate"></span>
+            </p>
+          </div>
+        </div>
+        
+        <!-- Acciones del Header -->
+        <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <!-- Botón Volver -->
+          <a href="index.html" class="flex items-center gap-1 sm:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all border border-gray-300 hover:border-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="hidden md:inline">Volver</span>
+          </a>
+          
+          <!-- Notificaciones -->
+          <div class="relative">
+            <button id="btnNotifications" class="relative p-2 sm:p-2.5 hover:bg-gray-100 rounded-lg transition-colors" title="Notificaciones">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+              </svg>
+              <span id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-bold">0</span>
+            </button>
+            
+            <!-- Dropdown de Notificaciones -->
+            <div id="notificationsDropdown" class="hidden bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
+              <!-- Header del dropdown -->
+              <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-5 py-3 flex items-center justify-between">
+                <h3 class="text-white font-semibold text-base sm:text-lg">Notificaciones</h3>
+                <button id="btnMarkAllRead" class="text-white/90 hover:text-white text-xs sm:text-sm underline transition-colors">
+                  Marcar todas como leídas
+                </button>
+              </div>
+              
+              <!-- Lista de notificaciones -->
+              <div id="notificationsList" class="overflow-y-auto" style="max-height: 400px;">
+                <!-- Las notificaciones se insertarán aquí dinámicamente -->
+                <div class="p-8 text-center text-gray-400">
+                  <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                  </svg>
+                  <p class="text-sm">No hay notificaciones</p>
+                </div>
+              </div>
+              
+              <!-- Footer -->
+              <div class="border-t border-gray-200 px-4 sm:px-5 py-3 bg-gray-50">
+                <button id="btnViewAllNotifications" class="text-orange-600 hover:text-orange-700 text-sm font-semibold w-full text-center py-1">
+                  Ver todas las notificaciones
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Usuario y Logout -->
+          <div class="flex items-center gap-1 sm:gap-2 border-l border-gray-200 pl-1 sm:pl-2">
+            <div class="hidden lg:block text-right">
+              <p id="adminName" class="text-xs sm:text-sm font-semibold text-gray-700 truncate max-w-[120px]"></p>
+              <p id="adminRole" class="text-[10px] sm:text-xs text-gray-500 truncate"></p>
+            </div>
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold shadow-md text-sm sm:text-base">
+              <span id="adminInitial">A</span>
+            </div>
+            <button 
+              onclick="handleLogout()" 
+              class="p-1.5 sm:p-2.5 hover:bg-red-50 rounded-lg transition-colors group" 
+              title="Cerrar Sesión"
+            >
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Cards Profesionales -->
+  <div class="max-w-7xl mx-auto px-2 sm:px-4 py-3 md:py-8">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-6 mb-4 md:mb-8">
+      <!-- Card Noticias -->
+      <div class="bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+                  <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Total Noticias</p>
+            </div>
+            <p id="totalNews" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Publicadas</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card Mensajes Nuevos -->
+      <div class="bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Mensajes Nuevos</p>
+            </div>
+            <p id="newMessages" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Sin leer</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card Total Contactos -->
+      <div class="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Total Contactos</p>
+            </div>
+            <p id="totalContacts" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Mensajes recibidos</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card Suscriptores -->
+      <div class="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+                  <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Suscriptores</p>
+            </div>
+            <p id="totalSubscribers" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Newsletter activa</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Eventos -->
+      <div class="bg-gradient-to-br from-pink-400 to-pink-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Eventos</p>
+            </div>
+            <p id="totalEvents" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Programados</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Galería -->
+      <div class="bg-gradient-to-br from-indigo-400 to-indigo-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Galería</p>
+            </div>
+            <p id="totalGalleryImages" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Imágenes</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Horarios (solo superadmin) -->
+      <div id="schedulesStatsCard" class="hidden bg-gradient-to-br from-teal-400 to-teal-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Horarios</p>
+            </div>
+            <p id="totalSchedules" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Activos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Profesionales -->
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6 md:mb-8">
+      <div class="flex flex-col sm:flex-row">
+        <button id="tabNews" class="tab-button active flex-1 px-4 md:px-6 py-4 font-semibold transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+              <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"></path>
+            </svg>
+            <span>Noticias</span>
+          </div>
+        </button>
+        <button id="tabContacts" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+            </svg>
+            <span>Mensajes de Contacto</span>
+            <span id="badgeNewContacts" class="hidden ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+        </button>
+        <button id="tabAdmins" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+            </svg>
+            <span>Administradores</span>
+          </div>
+        </button>
+        <button id="tabSchedules" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Horarios y Tarifas</span>
+          </div>
+        </button>
+        <button id="tabEvents" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Eventos</span>
+          </div>
+        </button>
+        <button id="tabGallery" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Galería</span>
+          </div>
+        </button>
+        <button id="tabTimeRecords" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Control Horario</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- News Section -->
+    <div id="newsSection" class="admin-container">
+      <!-- Botón Nueva Noticia -->
+      <div class="mb-4 md:mb-6">
+        <button id="btnNewNews" class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-all transform hover:scale-105">
+          ➕ Nueva Noticia
+        </button>
+      </div>
+
+      <!-- Lista de Noticias -->
+      <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+        <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 flex items-center">
+          <span class="text-2xl md:text-3xl mr-2 md:mr-3">📰</span>
+          Noticias Publicadas
+        </h2>
+        
+        <div id="newsContainer" class="space-y-4">
+          <div class="text-center py-12 text-gray-500">
+            <div class="text-6xl mb-4">⏳</div>
+            <p class="text-lg">Cargando noticias...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contacts Section -->
+    <div id="contactsSection" class="admin-container hidden">
+      <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+            <span class="text-2xl md:text-3xl mr-2 md:mr-3">📧</span>
+            Mensajes de Contacto
+          </h2>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button id="btnFilterAll" class="filter-btn flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold bg-orange-100 text-orange-600 transition-all">
+              Todos
+            </button>
+            <button id="btnFilterUnread" class="filter-btn flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all">
+              No leídos
+            </button>
+            <button id="btnFilterRead" class="filter-btn flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all">
+              Leídos
+            </button>
+          </div>
+        </div>
+        
+        <div id="contactsContainer" class="space-y-4">
+          <div class="text-center py-12 text-gray-500">
+            <div class="text-6xl mb-4">⏳</div>
+            <p class="text-lg">Cargando mensajes...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admins Section (Solo Superadmin) -->
+    <div id="adminsSection" class="admin-container hidden">
+      <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+            <span class="text-2xl md:text-3xl mr-2 md:mr-3">👥</span>
+            Gestión de Administradores
+          </h2>
+          <button id="btnNewAdmin" class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-lg transition-all">
+            ➕ Nuevo Administrador
+          </button>
+        </div>
+        
+        <div id="adminsContainer" class="space-y-4">
+          <div class="text-center py-12 text-gray-500">
+            <div class="text-6xl mb-4">⏳</div>
+            <p class="text-lg">Cargando administradores...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Crear/Editar Noticia -->
+  <div id="newsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <h3 id="modalTitle" class="text-2xl font-bold text-gray-900">Nueva Noticia</h3>
+        <button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="newsForm" class="p-6 space-y-6">
+        <input type="hidden" id="newsId">
+        
+        <!-- Título -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Título *</label>
+          <input 
+            type="text" 
+            id="titulo" 
+            required
+            maxlength="200"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Título de la noticia"
+          >
+        </div>
+
+        <!-- Resumen -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Resumen *</label>
+          <textarea 
+            id="resumen" 
+            required
+            maxlength="300"
+            rows="3"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Breve resumen (máx. 300 caracteres)"
+          ></textarea>
+          <p class="text-xs text-gray-500 mt-1">
+            <span id="resumenCount">0</span>/300 caracteres
+          </p>
+        </div>
+
+        <!-- Contenido -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Contenido *</label>
+          <textarea 
+            id="contenido" 
+            required
+            rows="10"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Contenido completo de la noticia"
+          ></textarea>
+        </div>
+
+        <!-- Categoría -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Categoría</label>
+          <select 
+            id="categoria"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="general">General</option>
+            <option value="eventos">Eventos</option>
+            <option value="promociones">Promociones</option>
+            <option value="noticias">Noticias</option>
+          </select>
+        </div>
+
+        <!-- Imagen -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen</label>
+          <input 
+            type="file" 
+            id="imagen"
+            accept="image/*"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+          <p class="text-xs text-gray-500 mt-1">Formatos: JPG, PNG, GIF, WEBP (máx. 5MB)</p>
+          
+          <!-- Vista previa de imagen -->
+          <div id="imagePreview" class="mt-4 hidden">
+            <img id="previewImg" class="preview-image rounded-lg border border-gray-300">
+          </div>
+        </div>
+
+        <!-- Publicado -->
+        <div class="flex items-center space-x-3">
+          <input 
+            type="checkbox" 
+            id="publicado"
+            checked
+            class="w-5 h-5 text-orange-500 rounded focus:ring-2 focus:ring-orange-500"
+          >
+          <label for="publicado" class="text-sm font-semibold text-gray-700">Publicar inmediatamente</label>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex space-x-3 pt-4 border-t border-gray-200">
+          <button 
+            type="submit"
+            class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors"
+          >
+            💾 Guardar Noticia
+          </button>
+          <button 
+            type="button"
+            id="btnCancelModal"
+            class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para Ver Mensaje de Contacto -->
+  <div id="contactModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
+      <div class="sticky top-0 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 md:px-6 py-3 md:py-4 flex items-center justify-between rounded-t-2xl">
+        <h3 class="text-lg md:text-2xl font-bold">📧 Mensaje de Contacto</h3>
+        <button id="closeContactModal" class="text-white/80 hover:text-white transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="p-4 md:p-6">
+        <div class="space-y-4">
+          <!-- Info del contacto -->
+          <div class="bg-gray-50 rounded-lg p-3 md:p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+              <div>
+                <p class="text-xs md:text-sm text-gray-600 mb-1">Nombre</p>
+                <p id="contactName" class="font-semibold text-sm md:text-base text-gray-900 break-words"></p>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-600 mb-1">Email</p>
+                <p id="contactEmail" class="font-semibold text-sm md:text-base text-blue-600 break-all"></p>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-600 mb-1">Fecha</p>
+                <p id="contactDate" class="font-semibold text-sm md:text-base text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-600 mb-1">Estado</p>
+                <div id="contactStatus"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mensaje -->
+          <div>
+            <p class="text-xs md:text-sm text-gray-600 mb-2 font-medium">Mensaje</p>
+            <div id="contactMessage" class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 text-sm md:text-base text-gray-800 whitespace-pre-wrap max-h-48 overflow-y-auto"></div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex flex-col sm:flex-row gap-2 md:gap-3 pt-4 border-t border-gray-200">
+            <button 
+              id="btnMarkAsRead"
+              class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 md:py-3 rounded-lg transition-colors flex items-center justify-center text-sm md:text-base gap-1"
+            >
+              <span>✓</span>
+              <span class="hidden sm:inline">Marcar como leído</span>
+              <span class="sm:hidden">Leído</span>
+            </button>
+            <button 
+              id="btnMarkAsResponded"
+              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 md:py-3 rounded-lg transition-colors flex items-center justify-center text-sm md:text-base gap-1"
+            >
+              <span>↩️</span>
+              <span class="hidden sm:inline">Marcar como respondido</span>
+              <span class="sm:hidden">Respondido</span>
+            </button>
+            <button 
+              id="btnDeleteContact"
+              class="sm:w-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 md:py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <span>🗑️</span>
+              <span class="sm:hidden">Eliminar</span>
+            </button>
+          </div>
+
+          <!-- Link para enviar email -->
+          <div class="text-center pt-2">
+            <a id="btnReplyEmail" href="" class="text-orange-600 hover:text-orange-700 font-semibold inline-flex items-center gap-2 text-sm md:text-base">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              Responder por email
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Administrador -->
+  <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-2xl">
+        <div class="flex justify-between items-center">
+          <h2 id="adminModalTitle" class="text-2xl font-bold">Nuevo Administrador</h2>
+          <button id="btnCloseAdminModal" class="text-white hover:text-gray-200 text-3xl font-bold leading-none">&times;</button>
+        </div>
+      </div>
+      
+      <div class="p-6">
+        <form id="adminForm" class="space-y-6">
+          <input type="hidden" id="adminId">
+          
+          <!-- Usuario -->
+          <div>
+            <label for="adminUsername" class="block text-sm font-semibold text-gray-700 mb-2">
+              Usuario <span class="text-red-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="adminUsername" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder="Nombre de usuario"
+            >
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="adminEmail" class="block text-sm font-semibold text-gray-700 mb-2">
+              Email <span class="text-red-500">*</span>
+            </label>
+            <input 
+              type="email" 
+              id="adminEmail" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder="admin@partyventura.com"
+            >
+          </div>
+
+          <!-- Contraseña -->
+          <div>
+            <label for="adminPassword" class="block text-sm font-semibold text-gray-700 mb-2">
+              Contraseña <span id="passwordRequired" class="text-red-500">*</span>
+            </label>
+            <input 
+              type="password" 
+              id="adminPassword"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder="Mínimo 6 caracteres"
+            >
+            <p class="text-xs text-gray-500 mt-1">
+              <span id="passwordHint">Requerida. </span>Mínimo 6 caracteres.
+            </p>
+          </div>
+
+          <!-- Rol -->
+          <div>
+            <label for="adminRole" class="block text-sm font-semibold text-gray-700 mb-2">
+              Rol <span class="text-red-500">*</span>
+            </label>
+            <select 
+              id="adminRole" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+            >
+              <option value="admin">Administrador</option>
+              <option value="superadmin">Super Administrador</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">
+              Los super administradores pueden gestionar otros admins.
+            </p>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex gap-3 pt-4">
+            <button 
+              type="submit"
+              class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Guardar
+            </button>
+            <button 
+              type="button"
+              id="btnCancelAdmin"
+              class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       SECCIÓN DE HORARIOS Y TARIFAS
+       ======================================== -->
+  <div id="schedulesSection" class="admin-container hidden">
+    <!-- Botón Nueva Entrada -->
+    <div class="mb-6">
+      <button id="btnNewSchedule" class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all transform hover:scale-105">
+        ➕ Nuevo Horario/Tarifa
+      </button>
+    </div>
+
+    <!-- Tabs de tipo -->
+    <div class="bg-white rounded-xl shadow-lg mb-6 overflow-hidden">
+      <div class="flex border-b border-gray-200">
+        <button id="scheduleTabHorarios" class="flex-1 px-6 py-4 font-semibold text-orange-600 border-b-2 border-orange-600 bg-orange-50 transition-all">
+          🕐 Horarios
+        </button>
+        <button id="scheduleTabTarifas" class="flex-1 px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all">
+          💰 Tarifas
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de Horarios -->
+    <div id="schedulesContainer" class="bg-white rounded-xl shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <span id="scheduleTitle" class="text-3xl mr-3">🕐</span>
+        <span id="scheduleSubtitle">Horarios Configurados</span>
+      </h2>
+      
+      <div id="schedulesListContainer" class="space-y-4">
+        <div class="text-center py-12 text-gray-500">
+          <div class="text-6xl mb-4">⏳</div>
+          <p class="text-lg">Cargando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Horario/Tarifa -->
+  <div id="modalSchedule" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content max-w-2xl">
+      <div class="modal-header bg-gradient-to-r from-orange-500 to-orange-600">
+        <h3 id="modalScheduleTitle" class="modal-title">Nuevo Horario/Tarifa</h3>
+        <button id="btnCloseScheduleModal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formSchedule">
+          <input type="hidden" id="scheduleId">
+          
+          <!-- Tipo -->
+          <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Tipo <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+              <button type="button" id="btnTypeHorario" class="schedule-type-btn border-2 border-orange-600 bg-orange-50 text-orange-700 px-4 py-3 rounded-lg font-semibold transition-all">
+                🕐 Horario
+              </button>
+              <button type="button" id="btnTypeTarifa" class="schedule-type-btn border-2 border-gray-300 text-gray-600 px-4 py-3 rounded-lg font-semibold hover:border-orange-400 transition-all">
+                💰 Tarifa
+              </button>
+            </div>
+            <input type="hidden" id="scheduleType" value="horario" required>
+          </div>
+
+          <!-- Título -->
+          <div class="mb-4">
+            <label for="scheduleTitle" class="block text-sm font-semibold text-gray-700 mb-2">
+              Título <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="scheduleTitleInput" required maxlength="100"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Ej: Lunes a Viernes">
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-4">
+            <label for="scheduleDescription" class="block text-sm font-semibold text-gray-700 mb-2">
+              Descripción
+            </label>
+            <textarea id="scheduleDescription" rows="2" maxlength="500"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Descripción adicional..."></textarea>
+          </div>
+
+          <!-- Campos específicos de HORARIO -->
+          <div id="horarioFields">
+            <!-- Días de la semana -->
+            <div class="mb-4">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Días</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="lunes" class="schedule-day">
+                  <span class="text-sm">Lunes</span>
+                </label>
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="martes" class="schedule-day">
+                  <span class="text-sm">Martes</span>
+                </label>
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="miércoles" class="schedule-day">
+                  <span class="text-sm">Miércoles</span>
+                </label>
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="jueves" class="schedule-day">
+                  <span class="text-sm">Jueves</span>
+                </label>
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="viernes" class="schedule-day">
+                  <span class="text-sm">Viernes</span>
+                </label>
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="sábado" class="schedule-day">
+                  <span class="text-sm">Sábado</span>
+                </label>
+                <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" value="domingo" class="schedule-day">
+                  <span class="text-sm">Domingo</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Horarios -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label for="scheduleOpenTime" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Hora Apertura
+                </label>
+                <input type="time" id="scheduleOpenTime"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+              </div>
+              <div>
+                <label for="scheduleCloseTime" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Hora Cierre
+                </label>
+                <input type="time" id="scheduleCloseTime"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos específicos de TARIFA -->
+          <div id="tarifaFields" class="hidden">
+            <!-- Precio -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label for="schedulePrice" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Precio
+                </label>
+                <input type="number" id="schedulePrice" min="0" step="0.01"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="150.00">
+              </div>
+              <div>
+                <label for="scheduleCurrency" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Moneda
+                </label>
+                <select id="scheduleCurrency"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                  <option value="EUR">EUR (€)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Unidad -->
+            <div class="mb-4">
+              <label for="scheduleUnit" class="block text-sm font-semibold text-gray-700 mb-2">
+                Unidad
+              </label>
+              <input type="text" id="scheduleUnit" maxlength="50"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="Ej: por hora, por día, por persona">
+            </div>
+          </div>
+
+          <!-- Ícono -->
+          <div class="mb-4">
+            <label for="scheduleIcon" class="block text-sm font-semibold text-gray-700 mb-2">
+              Ícono (emoji)
+            </label>
+            <input type="text" id="scheduleIcon" maxlength="2"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-2xl text-center"
+              placeholder="🕐">
+          </div>
+
+          <!-- Orden -->
+          <div class="mb-4">
+            <label for="scheduleOrder" class="block text-sm font-semibold text-gray-700 mb-2">
+              Orden de visualización
+            </label>
+            <input type="number" id="scheduleOrder" min="0" value="0"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+          </div>
+
+          <!-- Activo -->
+          <div class="mb-4">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" id="scheduleIsActive" checked class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
+              <span class="text-sm font-semibold text-gray-700">Activo (visible en la web)</span>
+            </label>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex gap-3 pt-4">
+            <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+              Guardar
+            </button>
+            <button type="button" id="btnCancelSchedule" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       SECCIÓN DE EVENTOS
+       ======================================== -->
+  <div id="eventsSection" class="admin-container hidden">
+    <div class="mb-6">
+      <button id="btnNewEvent" class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all transform hover:scale-105">
+        ➕ Nuevo Evento
+      </button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <span class="text-3xl mr-3">📅</span>
+        Eventos del Calendario
+      </h2>
+      
+      <div id="eventsListContainer" class="space-y-4">
+        <div class="text-center py-12 text-gray-500">
+          <div class="text-6xl mb-4">⏳</div>
+          <p class="text-lg">Cargando eventos...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       SECCIÓN DE GALERÍA
+       ======================================== -->
+  <div id="gallerySection" class="admin-container hidden">
+    <div class="mb-6">
+      <button id="btnUploadImage" class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all transform hover:scale-105">
+        ➕ Subir Imagen
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl shadow-lg p-4 mb-6">
+      <div class="flex flex-wrap gap-4">
+        <select id="filterCategory" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+          <option value="">Todas las categorías</option>
+          <option value="eventos">🎉 Eventos</option>
+          <option value="instalaciones">🏢 Instalaciones</option>
+          <option value="fiestas">🎊 Fiestas</option>
+          <option value="equipo">👥 Equipo</option>
+          <option value="otros">📷 Otros</option>
+        </select>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="filterFeatured" class="w-4 h-4 text-orange-600 rounded">
+          <span class="text-sm font-semibold">Solo destacadas</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="filterActive" checked class="w-4 h-4 text-orange-600 rounded">
+          <span class="text-sm font-semibold">Solo activas</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <span class="text-3xl mr-3">🖼️</span>
+        Galería de Imágenes
+      </h2>
+      
+      <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="col-span-full text-center py-12 text-gray-500">
+          <div class="text-6xl mb-4">⏳</div>
+          <p class="text-lg">Cargando galería...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Subir/Editar Imagen -->
+  <div id="modalGallery" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content max-w-2xl">
+      <div class="modal-header bg-gradient-to-r from-orange-500 to-orange-600">
+        <h3 id="modalGalleryTitle" class="modal-title">Subir Imagen</h3>
+        <button id="btnCloseGalleryModal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formGallery" enctype="multipart/form-data">
+          <input type="hidden" id="imageId">
+          
+          <!-- Upload de imagen -->
+          <div id="imageUploadSection" class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Imagen <span class="text-red-500">*</span>
+            </label>
+            <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-500 transition-colors cursor-pointer">
+              <input type="file" id="imageFile" accept="image/*" class="hidden">
+              <div id="dropZoneContent">
+                <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="text-gray-600 font-semibold mb-1">Arrastra una imagen aquí o haz clic para seleccionar</p>
+                <p class="text-sm text-gray-500">JPG, PNG, GIF, WebP (máx. 10MB)</p>
+              </div>
+              <div id="imagePreview" class="hidden">
+                <img id="previewImg" class="max-w-full h-auto rounded-lg mx-auto" style="max-height: 300px;">
+                <button type="button" id="btnRemoveImage" class="mt-3 text-red-600 hover:text-red-700 font-semibold text-sm">
+                  ✕ Eliminar imagen
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Título -->
+          <div class="mb-4">
+            <label for="imageTitle" class="block text-sm font-semibold text-gray-700 mb-2">
+              Título <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="imageTitle" required maxlength="200"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Título de la imagen">
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-4">
+            <label for="imageDescription" class="block text-sm font-semibold text-gray-700 mb-2">
+              Descripción
+            </label>
+            <textarea id="imageDescription" rows="2" maxlength="500"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Descripción de la imagen..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Categoría -->
+            <div>
+              <label for="imageCategory" class="block text-sm font-semibold text-gray-700 mb-2">
+                Categoría
+              </label>
+              <select id="imageCategory"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                <option value="eventos">🎉 Eventos</option>
+                <option value="instalaciones">🏢 Instalaciones</option>
+                <option value="fiestas">🎊 Fiestas</option>
+                <option value="equipo">👥 Equipo</option>
+                <option value="otros">📷 Otros</option>
+              </select>
+            </div>
+
+            <!-- Orden -->
+            <div>
+              <label for="imageOrder" class="block text-sm font-semibold text-gray-700 mb-2">
+                Orden
+              </label>
+              <input type="number" id="imageOrder" min="0" value="0"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="mb-4 mt-4">
+            <label for="imageTags" class="block text-sm font-semibold text-gray-700 mb-2">
+              Etiquetas (separadas por comas)
+            </label>
+            <input type="text" id="imageTags"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Ej: fiesta, decoración, luces">
+          </div>
+
+          <!-- Texto alternativo -->
+          <div class="mb-4">
+            <label for="imageAltText" class="block text-sm font-semibold text-gray-700 mb-2">
+              Texto Alternativo (para accesibilidad)
+            </label>
+            <input type="text" id="imageAltText" maxlength="200"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Descripción breve de la imagen">
+          </div>
+
+          <!-- Checkboxes -->
+          <div class="mb-6 flex gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="imageIsActive" checked class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
+              <span class="text-sm font-semibold text-gray-700">Activa</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="imageIsFeatured" class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
+              <span class="text-sm font-semibold text-gray-700">Destacada</span>
+            </label>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+              <span id="btnGallerySubmitText">Subir Imagen</span>
+            </button>
+            <button type="button" id="btnCancelGallery" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       SECCIÓN DE CONTROL HORARIO
+       ======================================== -->
+  <div id="timeRecordsSection" class="admin-container hidden">
+    
+    <!-- Resumen general -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-blue-100 text-xs font-semibold mb-1">Total Empleados</p>
+            <p id="totalEmployees" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="text-4xl opacity-80">👥</div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-green-100 text-xs font-semibold mb-1">Trabajando Ahora</p>
+            <p id="workingNow" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="text-4xl opacity-80">✅</div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-100 text-xs font-semibold mb-1">Horas Este Mes</p>
+            <p id="monthHours" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="text-4xl opacity-80">⏰</div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-orange-100 text-xs font-semibold mb-1">Registros Hoy</p>
+            <p id="todayRecords" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="text-4xl opacity-80">📋</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl shadow-lg p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <select id="filterEmployee" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          <option value="">Todos los empleados</option>
+        </select>
+        <input type="date" id="filterStartDate" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <input type="date" id="filterEndDate" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <select id="filterType" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          <option value="">Todos los tipos</option>
+          <option value="entrada">✅ Entrada</option>
+          <option value="salida">🚪 Salida</option>
+        </select>
+        <button id="btnApplyFilters" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
+          🔍 Filtrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de registros -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+            <span class="text-3xl mr-3">⏱️</span>
+            Registros de Tiempo
+          </h2>
+          <button id="btnExportTimeRecords" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm">
+            📥 Exportar CSV
+          </button>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Empleado</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha y Hora</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ubicación</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Horas</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="timeRecordsTableBody" class="divide-y divide-gray-200">
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                <div class="text-6xl mb-4">⏳</div>
+                <p class="text-lg">Cargando registros...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-600">
+            Mostrando <span id="recordsFrom">0</span> - <span id="recordsTo">0</span> de <span id="recordsTotal">0</span> registros
+          </div>
+          <div class="flex gap-2">
+            <button id="btnPrevPage" disabled class="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 transition-colors">
+              ← Anterior
+            </button>
+            <button id="btnNextPage" disabled class="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 transition-colors">
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Registro -->
+  <div id="modalEditTimeRecord" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content max-w-lg">
+      <div class="modal-header bg-gradient-to-r from-blue-500 to-blue-600">
+        <h3 class="modal-title">Editar Registro de Tiempo</h3>
+        <button id="btnCloseEditModal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditTimeRecord">
+          <input type="hidden" id="editRecordId">
+          
+          <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Empleado
+            </label>
+            <input type="text" id="editEmployeeName" readonly
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
+          </div>
+
+          <div class="mb-4">
+            <label for="editType" class="block text-sm font-semibold text-gray-700 mb-2">
+              Tipo <span class="text-red-500">*</span>
+            </label>
+            <select id="editType" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="entrada">✅ Entrada</option>
+              <option value="salida">🚪 Salida</option>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label for="editDate" class="block text-sm font-semibold text-gray-700 mb-2">
+              Fecha <span class="text-red-500">*</span>
+            </label>
+            <input type="date" id="editDate" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div class="mb-4">
+            <label for="editTime" class="block text-sm font-semibold text-gray-700 mb-2">
+              Hora <span class="text-red-500">*</span>
+            </label>
+            <input type="time" id="editTime" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div class="mb-6">
+            <label for="editLocation" class="block text-sm font-semibold text-gray-700 mb-2">
+              Ubicación
+            </label>
+            <input type="text" id="editLocation" maxlength="200"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Oficina Central">
+          </div>
+
+          <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+              💾 Guardar Cambios
+            </button>
+            <button type="button" id="btnCancelEdit" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       MODALES
+       ======================================== -->
+  
+  <!-- Modal Eventos con efecto blur -->
+  <div id="modalEvent" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <!-- Overlay con blur -->
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-md" onclick="event.target === this && closeEventModal && closeEventModal()"></div>
+    
+    <!-- Contenido del modal - scrolleable -->
+    <div class="relative bg-white rounded-2xl shadow-2xl w-[85vw] h-[80vh] flex flex-col overflow-hidden animate-scale-in border-4 border-orange-400">
+      <!-- Header del modal -->
+      <div class="flex-shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 flex items-center justify-between">
+        <h3 id="modalEventTitle" class="text-xl font-bold text-white">Nuevo Evento</h3>
+        <button id="btnCloseEventModal" class="text-white hover:text-gray-200 transition-colors text-3xl font-light leading-none">&times;</button>
+      </div>
+      
+      <!-- Body del modal con scroll (área morada) -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 bg-gray-50">
+        <form id="formEvent" class="h-full">
+          <input type="hidden" id="eventId">
+          
+          <div class="flex gap-4 h-full">
+            
+            <!-- Columna izquierda: Imagen del Evento (ancho fijo) -->
+            <div class="w-48 flex-shrink-0">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">
+                📸 Imagen del Evento
+              </label>
+              
+              <!-- Preview de la imagen -->
+              <div id="eventImagePreviewContainer" class="mb-3 hidden">
+                <div class="relative">
+                  <img id="eventImagePreviewImg" src="" alt="Preview" class="w-full h-48 rounded-lg object-cover border-2 border-gray-200">
+                  <button type="button" id="btnRemoveEventImage" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Input de archivo -->
+              <div class="relative">
+                <input type="file" id="eventImage" accept="image/*" class="hidden">
+                <label for="eventImage" class="block w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-orange-500 hover:bg-orange-50 transition-all">
+                  <svg class="w-6 h-6 mx-auto mb-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  <span class="text-xs text-gray-600">Haz clic para subir imagen</span>
+                </label>
+              </div>
+              
+              <p class="text-xs text-gray-500 mt-1">JPG, PNG o WebP. Máx 5MB</p>
+            </div>
+            
+            <!-- Columna derecha: Campos del formulario (se expande para llenar el espacio) -->
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Título -->
+            <div class="md:col-span-2">
+              <label for="eventTitle" class="block text-sm font-semibold text-gray-700 mb-1">
+                Título del Evento <span class="text-red-500">*</span>
+              </label>
+              <input type="text" id="eventTitle" required maxlength="200"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Ej: Fiesta de Halloween">
+            </div>
+
+            <!-- Descripción -->
+            <div class="md:col-span-2">
+              <label for="eventDescription" class="block text-sm font-semibold text-gray-700 mb-1">
+                Descripción <span class="text-red-500">*</span>
+              </label>
+              <textarea id="eventDescription" required rows="2" maxlength="2000"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Describe el evento..."></textarea>
+            </div>
+
+            <!-- Fecha y hora de inicio -->
+            <div>
+              <label for="eventStartDate" class="block text-sm font-semibold text-gray-700 mb-1">
+                Fecha y Hora de Inicio <span class="text-red-500">*</span>
+              </label>
+              <input type="datetime-local" id="eventStartDate" required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+            </div>
+
+            <!-- Fecha y hora de fin -->
+            <div>
+              <label for="eventEndDate" class="block text-sm font-semibold text-gray-700 mb-1">
+                Fecha y Hora de Fin <span class="text-red-500">*</span>
+              </label>
+              <input type="datetime-local" id="eventEndDate" required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+            </div>
+
+            <!-- Ubicación -->
+            <div>
+              <label for="eventLocation" class="block text-sm font-semibold text-gray-700 mb-1">
+                Ubicación
+              </label>
+              <input type="text" id="eventLocation" maxlength="200"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Ej: Sala Principal">
+            </div>
+
+            <!-- Tipo de evento -->
+            <div>
+              <label for="eventType" class="block text-sm font-semibold text-gray-700 mb-1">
+                Tipo de Evento
+              </label>
+              <select id="eventType"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                <option value="fiesta">🎉 Fiesta</option>
+                <option value="cumpleaños">🎂 Cumpleaños</option>
+                <option value="corporativo">💼 Corporativo</option>
+                <option value="boda">💒 Boda</option>
+                <option value="otro">📌 Otro</option>
+              </select>
+            </div>
+
+            <!-- Color -->
+            <div>
+              <label for="eventColor" class="block text-sm font-semibold text-gray-700 mb-1">
+                Color del Evento
+              </label>
+              <input type="color" id="eventColor" value="#FF6B35"
+                class="w-full h-10 px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+            </div>
+
+            <!-- Capacidad -->
+            <div>
+              <label for="eventCapacity" class="block text-sm font-semibold text-gray-700 mb-1">
+                Capacidad Máxima
+              </label>
+              <input type="number" id="eventCapacity" min="0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Ej: 50">
+            </div>
+
+            <!-- Precio -->
+            <div>
+              <label for="eventPrice" class="block text-sm font-semibold text-gray-700 mb-1">
+                Precio
+              </label>
+              <input type="number" id="eventPrice" min="0" step="0.01"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Ej: 15.00">
+            </div>
+
+            <!-- Estado -->
+            <div>
+              <label for="eventStatus" class="block text-sm font-semibold text-gray-700 mb-1">
+                Estado
+              </label>
+              <select id="eventStatus"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                <option value="programado">📅 Programado</option>
+                <option value="en-curso">▶️ En Curso</option>
+                <option value="completado">✅ Completado</option>
+                <option value="cancelado">❌ Cancelado</option>
+              </select>
+            </div>
+
+            <!-- Checkboxes -->
+            <div class="md:col-span-2 flex gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="eventIsPublic" checked class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500">
+                <span class="text-sm font-semibold text-gray-700">Visible públicamente</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="eventAllowBooking" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500">
+                <span class="text-sm font-semibold text-gray-700">Permitir reservas</span>
+              </label>
+            </div>
+
+            <!-- Tags -->
+            <div class="md:col-span-2">
+              <label for="eventTags" class="block text-sm font-semibold text-gray-700 mb-1">
+                Etiquetas (separadas por comas)
+              </label>
+              <input type="text" id="eventTags"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Ej: halloween, terror, disfraces">
+            </div>
+
+            <!-- Notas internas -->
+            <div class="md:col-span-2">
+              <label for="eventNotes" class="block text-sm font-semibold text-gray-700 mb-1">
+                Notas Internas (solo visible para administradores)
+              </label>
+              <textarea id="eventNotes" rows="2" maxlength="1000"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                placeholder="Notas privadas sobre el evento..."></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer con botones (línea amarilla) -->
+      <div class="flex-shrink-0 bg-white border-t-2 border-gray-200 px-6 py-4 flex gap-3">
+        <button type="submit" form="formEvent" class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          💾 Guardar Evento
+        </button>
+        <button type="button" id="btnCancelEvent" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all">
+          ✖️ Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/src/js/modules/config.js?v=16"></script>
+  <script src="/src/js/modules/auth.js?v=16"></script>
+  <script src="/src/js/modules/utils.js?v=16"></script>
+  <script src="/src/js/pages/admin.js?v=30"></script>
+</body>
+</html>

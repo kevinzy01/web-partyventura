@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal del Empleado - Partyventura</title>
+  <link href="index.css?v=19" rel="stylesheet">
+  <link href="/src/styles/styles.css?v=19" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/icons/png/logo-partyventura.png">
+  <script src="/src/js/modules/config.js?v=3"></script>
+  <script src="/src/js/modules/auth.js?v=3"></script>
+  <style>
+    :root {
+      --primary-orange: #f97316;
+      --primary-red: #dc2626;
+      --primary-green: #10b981;
+    }
+
+    .clock-container {
+      background: linear-gradient(135deg, var(--primary-orange), var(--primary-red));
+      animation: gradient 3s ease infinite;
+      background-size: 200% 200%;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .pulse-animation {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .time-digit {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-orange-50 via-white to-red-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="../public/assets/icons/png/logo-partyventura.png" alt="Logo" class="w-10 h-10 rounded-lg">
+        <div>
+          <h1 class="text-xl font-bold text-gray-800">Portal del Empleado</h1>
+          <p class="text-sm text-gray-500">Partyventura</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <div class="hidden sm:block text-right">
+          <p id="empleadoNombre" class="text-sm font-semibold text-gray-800"></p>
+          <p class="text-xs text-gray-500">Empleado</p>
+        </div>
+        <button id="btnLogout" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all">
+          Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    
+    <!-- Reloj y Estado Actual -->
+    <div class="clock-container text-white rounded-2xl p-8 mb-8 shadow-2xl">
+      <div class="text-center">
+        <div class="mb-4">
+          <p class="text-white/80 text-sm uppercase tracking-wider mb-2">Hora actual</p>
+          <div id="currentTime" class="text-6xl font-bold time-digit mb-2">--:--:--</div>
+          <p id="currentDate" class="text-white/90 text-lg"></p>
+        </div>
+        
+        <div id="estadoActual" class="mt-6 p-4 bg-white/20 backdrop-blur-sm rounded-xl">
+          <p class="text-sm text-white/80 mb-2">Estado actual</p>
+          <p id="estadoTexto" class="text-2xl font-bold">--</p>
+          <p id="estadoDetalle" class="text-sm text-white/80 mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de Fichar -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      
+      <!-- Botón Entrada -->
+      <button id="btnEntrada" class="group relative bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl p-8 shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+        <div class="flex flex-col items-center">
+          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-white/30 transition-all">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"></path>
+            </svg>
+          </div>
+          <span class="text-2xl font-bold mb-2">Fichar Entrada</span>
+          <span class="text-sm text-white/80">Registrar llegada</span>
+        </div>
+      </button>
+
+      <!-- Botón Salida -->
+      <button id="btnSalida" class="group relative bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-2xl p-8 shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+        <div class="flex flex-col items-center">
+          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-white/30 transition-all">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" transform="rotate(180 10 10)"></path>
+            </svg>
+          </div>
+          <span class="text-2xl font-bold mb-2">Fichar Salida</span>
+          <span class="text-sm text-white/80">Registrar salida</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Resumen del Día -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+      <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+        </svg>
+        Resumen de Hoy
+      </h2>
+      
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+          <p class="text-sm text-gray-600 mb-1">Hora Entrada</p>
+          <p id="horaEntradaHoy" class="text-2xl font-bold text-blue-600">--:--</p>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+          <p class="text-sm text-gray-600 mb-1">Hora Salida</p>
+          <p id="horaSalidaHoy" class="text-2xl font-bold text-purple-600">--:--</p>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+          <p class="text-sm text-gray-600 mb-1">Horas Hoy</p>
+          <p id="horasHoy" class="text-2xl font-bold text-green-600">--</p>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+          <p class="text-sm text-gray-600 mb-1">Este Mes</p>
+          <p id="horasMes" class="text-2xl font-bold text-orange-600">--h</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial Reciente -->
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
+        <span class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+          </svg>
+          Historial Reciente
+        </span>
+        <button id="btnRecargarHistorial" class="text-sm text-orange-500 hover:text-orange-600 font-medium">
+          Actualizar
+        </button>
+      </h2>
+      
+      <div id="historialContainer" class="space-y-3">
+        <!-- Se llenará con JavaScript -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Notificación Toast -->
+  <div id="toast" class="fixed top-20 right-4 bg-white rounded-xl shadow-2xl p-4 transform translate-x-[200%] transition-transform duration-300 z-50 max-w-sm">
+    <div class="flex items-center gap-3">
+      <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"></div>
+      <div class="flex-1">
+        <p id="toastTitle" class="font-semibold text-gray-800"></p>
+        <p id="toastMessage" class="text-sm text-gray-600"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/src/js/pages/employee.js?v=1"></script>
+</body>
+</html>

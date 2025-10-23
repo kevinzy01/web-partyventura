@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Panel de Administración | Partyventura</title>
+  <link href="index.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/icons/png/logo-partyventura.png">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-width: 400px;
+      width: 90%;
+      animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .login-header {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 15px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .login-body {
+      padding: 40px 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      outline: none;
+      box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+    
+    .form-input.error {
+      border-color: #ef4444;
+    }
+    
+    .error-message {
+      color: #ef4444;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+    }
+    
+    .btn-login:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+    }
+    
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid white;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .alert.show {
+      display: block;
+    }
+    
+    .alert-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    
+    .alert-success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6b7280;
+      font-size: 18px;
+      user-select: none;
+      transition: all 0.2s ease;
+      padding: 4px;
+    }
+    
+    .password-toggle:hover {
+      color: #f97316;
+      transform: translateY(-50%) scale(1.1);
+    }
+    
+    .password-toggle:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+    
+    .input-wrapper {
+      position: relative;
+    }
+    
+    .footer-text {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .config-indicator {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-radius: 6px;
+      font-size: 12px;
+      z-index: 9999;
+    }
+
+    .config-indicator.dev {
+      background: rgba(34, 197, 94, 0.9);
+    }
+
+    .config-indicator.prod {
+      background: rgba(239, 68, 68, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <div id="configIndicator" class="config-indicator"></div>
+  
+  <div class="login-container">
+    <div class="login-header">
+      <div class="logo">🎉</div>
+      <h1 style="font-size: 1.5rem; font-weight: bold; margin: 0;">Partyventura</h1>
+      <p style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.9;">Panel de Administración</p>
+    </div>
+    
+    <div class="login-body">
+      <div id="alertBox" class="alert"></div>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="username">Usuario</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-input" 
+            placeholder="Ingresa tu usuario"
+            autocomplete="username"
+            required
+          >
+          <div id="usernameError" class="error-message"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña</label>
+          <div class="input-wrapper">
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              class="form-input" 
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password"
+              required
+            >
+            <span class="password-toggle" id="togglePasswordBtn">👁️</span>
+          </div>
+          <div id="passwordError" class="error-message"></div>
+        </div>
+        
+        <button type="submit" id="btnLogin" class="btn-login">
+          Iniciar Sesión
+        </button>
+      </form>
+      
+      <div class="footer-text">
+        <p>🔒 Conexión segura con JWT</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===================================
+    // CONFIGURACIÓN - DETECCIÓN AUTOMÁTICA
+    // ===================================
+    
+    // Detectar si estamos en Ngrok o localhost
+    const isNgrok = window.location.hostname.includes('ngrok');
+    const isLocalFile = window.location.protocol === 'file:';
+    
+    // Configuración automática
+    let API_URL;
+    let MODE;
+    
+    if (isNgrok) {
+      // Usar la misma URL de Ngrok para el API
+      const currentOrigin = window.location.origin;
+      API_URL = `${currentOrigin}/api`;
+      MODE = 'ngrok';
+    } else if (isLocalFile) {
+      // Archivo abierto directamente
+      API_URL = 'http://localhost:5000/api';
+      MODE = 'local-file';
+    } else {
+      // Localhost con servidor
+      API_URL = 'http://localhost:5000/api';
+      MODE = 'local-server';
+    }
+    
+    // Mostrar indicador de configuración
+    const configIndicator = document.getElementById('configIndicator');
+    configIndicator.textContent = `Modo: ${MODE}`;
+    configIndicator.className = `config-indicator ${isNgrok ? 'prod' : 'dev'}`;
+    
+    console.log('🔧 Configuración de Login:');
+    console.log('   Modo:', MODE);
+    console.log('   API URL:', API_URL);
+    console.log('   Hostname:', window.location.hostname);
+    console.log('   Origin:', window.location.origin);
+    
+    // ===================================
+    // LOGIN - SISTEMA DE AUTENTICACIÓN
+    // ===================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('loginForm');
+      const btnLogin = document.getElementById('btnLogin');
+      const alertBox = document.getElementById('alertBox');
+      const passwordInput = document.getElementById('password');
+      const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+      const usernameInput = document.getElementById('username');
+      
+      // Toggle password visibility
+      if (togglePasswordBtn && passwordInput) {
+        togglePasswordBtn.addEventListener('click', function() {
+          if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            togglePasswordBtn.textContent = '🙈';
+          } else {
+            passwordInput.type = 'password';
+            togglePasswordBtn.textContent = '👁️';
+          }
+        });
+      }
+      
+      // Verificar si ya hay sesión activa
+      checkExistingSession();
+    
+      // Verificar sesión existente
+      function checkExistingSession() {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          verifyToken(token);
+        }
+      }
+    
+      // Verificar token
+      async function verifyToken(token) {
+        try {
+          const response = await fetch(`${API_URL}/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              const rol = data.data.rol;
+              window.location.href = rol === 'empleado' ? '../src/employee.html' : '../src/admin.html';
+            } else {
+              window.location.href = '../src/admin.html';
+            }
+          } else {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('adminUser');
+          }
+        } catch (error) {
+          console.error('Error al verificar token:', error);
+        }
+      }
+    
+      // Mostrar alerta
+      function showAlert(message, type = 'error') {
+        alertBox.textContent = message;
+        alertBox.className = `alert alert-${type} show`;
+        
+        if (type === 'success') {
+          setTimeout(() => {
+            alertBox.classList.remove('show');
+          }, 2000);
+        }
+      }
+    
+      // Validar campo
+      function validateField(fieldId, errorId, message) {
+        const field = document.getElementById(fieldId);
+        const error = document.getElementById(errorId);
+        
+        if (!field.value.trim()) {
+          field.classList.add('error');
+          error.textContent = message;
+          error.classList.add('show');
+          return false;
+        }
+        
+        field.classList.remove('error');
+        error.classList.remove('show');
+        return true;
+      }
+    
+      // Login handler
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        alertBox.classList.remove('show');
+        
+        const usernameValid = validateField('username', 'usernameError', 'El usuario es obligatorio');
+        const passwordValid = validateField('password', 'passwordError', 'La contraseña es obligatoria');
+        
+        if (!usernameValid || !passwordValid) {
+          return;
+        }
+        
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+        
+        if (username.length < 3) {
+          showAlert('El usuario debe tener al menos 3 caracteres');
+          return;
+        }
+        
+        if (password.length < 6) {
+          showAlert('La contraseña debe tener al menos 6 caracteres');
+          return;
+        }
+        
+        btnLogin.disabled = true;
+        btnLogin.innerHTML = '<span class="loading-spinner"></span>Iniciando sesión...';
+        
+        try {
+          console.log('🔐 Intentando login en:', `${API_URL}/auth/login`);
+          
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
+          
+          console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+          
+          const data = await response.json();
+          console.log('📦 Datos recibidos:', data);
+          
+          if (response.ok && data.success) {
+            showAlert('¡Login exitoso! Redirigiendo...', 'success');
+            
+            localStorage.setItem('authToken', data.data.token);
+            localStorage.setItem('adminUser', JSON.stringify(data.data.admin));
+            
+            setTimeout(() => {
+              const rol = data.data.admin.rol;
+              if (rol === 'empleado') {
+                window.location.href = 'employee.html';
+              } else {
+                window.location.href = 'admin.html';
+              }
+            }, 1000);
+            
+          } else {
+            showAlert(data.message || 'Credenciales inválidas');
+            btnLogin.disabled = false;
+            btnLogin.textContent = 'Iniciar Sesión';
+          }
+          
+        } catch (error) {
+          console.error('❌ Error en login:', error);
+          
+          if (error.message.includes('Failed to fetch')) {
+            showAlert(`No se puede conectar al servidor (${API_URL}). Verifica que el backend esté iniciado y que Ngrok esté activo.`);
+          } else {
+            showAlert('Error al iniciar sesión. Inténtalo de nuevo.');
+          }
+          
+          btnLogin.disabled = false;
+          btnLogin.textContent = 'Iniciar Sesión';
+        }
+      });
+      
+      // Limpiar errores al escribir
+      usernameInput.addEventListener('input', function() {
+        this.classList.remove('error');
+        document.getElementById('usernameError').classList.remove('show');
+        alertBox.classList.remove('show');
+      });
+      
+      passwordInput.addEventListener('input', function() {
+        this.classList.remove('error');
+        document.getElementById('passwordError').classList.remove('show');
+        alertBox.classList.remove('show');
+      });
+      
+    });
+  </script>
+</body>
+</html>
