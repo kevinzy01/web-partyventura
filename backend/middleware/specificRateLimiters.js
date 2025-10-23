@@ -131,6 +131,43 @@ const generalLimiter = rateLimit({
   skipSuccessfulRequests: false
 });
 
+// Rate limiter para solicitud de recuperación de contraseña
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 3, // Máximo 3 solicitudes por hora
+  message: {
+    success: false,
+    message: 'Demasiadas solicitudes de recuperación de contraseña. Intenta de nuevo en 1 hora.',
+    errorCode: 'FORGOT_PASSWORD_RATE_LIMIT',
+    retryAfter: '1 hora'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+  keyGenerator: (req) => {
+    // Limitar por email (si se proporciona) o IP
+    return req.body?.email?.toLowerCase() || req.ip;
+  }
+});
+
+// Rate limiter para reset de contraseña
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Máximo 5 intentos de reset por 15 minutos
+  message: {
+    success: false,
+    message: 'Demasiados intentos de restablecimiento. Intenta de nuevo en 15 minutos.',
+    errorCode: 'RESET_PASSWORD_RATE_LIMIT',
+    retryAfter: '15 minutos'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+  keyGenerator: (req) => {
+    return req.ip;
+  }
+});
+
 module.exports = {
   publicReadLimiter,
   uploadLimiter,
@@ -138,5 +175,7 @@ module.exports = {
   updateLimiter,
   deleteLimiter,
   strictLimiter,
-  generalLimiter
+  generalLimiter,
+  forgotPasswordLimiter,
+  resetPasswordLimiter
 };

@@ -50,6 +50,14 @@ const adminSchema = new mongoose.Schema({
   bloqueadoHasta: {
     type: Date,
     default: null
+  },
+  resetPasswordToken: {
+    type: String,
+    select: false
+  },
+  resetPasswordExpire: {
+    type: Date,
+    select: false
   }
 }, {
   timestamps: true
@@ -97,6 +105,31 @@ adminSchema.methods.resetearIntentos = async function() {
   this.bloqueadoHasta = null;
   this.ultimoAcceso = Date.now();
   await this.save();
+};
+
+// Método para generar token de reset de password
+adminSchema.methods.generarResetToken = function() {
+  // Generar token aleatorio usando crypto
+  const crypto = require('crypto');
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  
+  // Hashear token antes de guardar en BD (seguridad adicional)
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  
+  // Establecer expiración: 1 hora desde ahora
+  this.resetPasswordExpire = Date.now() + 60 * 60 * 1000;
+  
+  // Retornar el token sin hashear (se enviará por email)
+  return resetToken;
+};
+
+// Método para limpiar token de reset
+adminSchema.methods.limpiarResetToken = function() {
+  this.resetPasswordToken = undefined;
+  this.resetPasswordExpire = undefined;
 };
 
 module.exports = mongoose.model('Admin', adminSchema);
