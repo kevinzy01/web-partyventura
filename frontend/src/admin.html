@@ -686,12 +686,38 @@
         </button>
       </div>
 
+      <!-- Barra de acción masiva -->
+      <div id="bulkActionBarNews" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-blue-800 font-semibold">
+            <span class="selected-count">0</span> elemento(s) seleccionado(s)
+          </span>
+          <button onclick="clearSelection('news')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+            Limpiar selección
+          </button>
+        </div>
+        <button onclick="bulkDelete('news', deleteNews, loadNews)" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          🗑️ Eliminar seleccionados
+        </button>
+      </div>
+
       <!-- Lista de Noticias -->
       <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
-        <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 flex items-center">
-          <span class="text-2xl md:text-3xl mr-2 md:mr-3">📰</span>
-          Noticias Publicadas
-        </h2>
+        <div class="flex items-center justify-between mb-4 md:mb-6">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+            <span class="text-2xl md:text-3xl mr-2 md:mr-3">📰</span>
+            Noticias Publicadas
+          </h2>
+          <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+            <input 
+              type="checkbox" 
+              id="selectAllNews"
+              class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              onchange="toggleSelectAll('news', this.checked)"
+            />
+            Seleccionar todo
+          </label>
+        </div>
         
         <div id="newsContainer" class="space-y-4">
           <div class="text-center py-12 text-gray-500">
@@ -704,12 +730,38 @@
 
     <!-- Contacts Section -->
     <div id="contactsSection" class="admin-container hidden">
+      <!-- Barra de acción masiva -->
+      <div id="bulkActionBarContacts" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-blue-800 font-semibold">
+            <span class="selected-count">0</span> elemento(s) seleccionado(s)
+          </span>
+          <button onclick="clearSelection('contacts')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+            Limpiar selección
+          </button>
+        </div>
+        <button onclick="bulkDelete('contacts', deleteContact, () => loadContacts(currentFilter))" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          🗑️ Eliminar seleccionados
+        </button>
+      </div>
+      
       <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
-            <span class="text-2xl md:text-3xl mr-2 md:mr-3">📧</span>
-            Mensajes de Contacto
-          </h2>
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+              <span class="text-2xl md:text-3xl mr-2 md:mr-3">📧</span>
+              Mensajes de Contacto
+            </h2>
+            <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+              <input 
+                type="checkbox" 
+                id="selectAllContacts"
+                class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                onchange="toggleSelectAll('contacts', this.checked)"
+              />
+              Seleccionar todo
+            </label>
+          </div>
           <div class="flex gap-2 w-full sm:w-auto">
             <button id="btnFilterAll" class="filter-btn flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold bg-orange-100 text-orange-600 transition-all">
               Todos

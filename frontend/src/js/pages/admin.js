@@ -8,6 +8,141 @@
 let currentContactId = null;
 let currentFilter = 'all';
 
+// Estado de selección múltiple
+const bulkSelection = {
+  news: new Set(),
+  contacts: new Set(),
+  empleados: new Set(),
+  events: new Set(),
+  gallery: new Set(),
+  timeRecords: new Set()
+};
+
+// ===================================
+// FUNCIONES DE SELECCIÓN MÚLTIPLE
+// ===================================
+
+// Toggle individual checkbox
+function toggleItemSelection(section, itemId, checked) {
+  if (checked) {
+    bulkSelection[section].add(itemId);
+  } else {
+    bulkSelection[section].delete(itemId);
+  }
+  updateBulkActionBar(section);
+  updateSelectAllCheckbox(section);
+}
+
+// Seleccionar/deseleccionar todos
+function toggleSelectAll(section, checked) {
+  const checkboxes = document.querySelectorAll(`[data-section="${section}"] .item-checkbox`);
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = checked;
+    const itemId = checkbox.dataset.itemId;
+    if (checked) {
+      bulkSelection[section].add(itemId);
+    } else {
+      bulkSelection[section].delete(itemId);
+    }
+  });
+  updateBulkActionBar(section);
+}
+
+// Actualizar estado del checkbox "seleccionar todo"
+function updateSelectAllCheckbox(section) {
+  const selectAllCheckbox = document.getElementById(`selectAll${section.charAt(0).toUpperCase() + section.slice(1)}`);
+  if (!selectAllCheckbox) return;
+  
+  const checkboxes = document.querySelectorAll(`[data-section="${section}"] .item-checkbox`);
+  const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+  
+  selectAllCheckbox.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+  selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+}
+
+// Actualizar barra de acciones
+function updateBulkActionBar(section) {
+  const selectedCount = bulkSelection[section].size;
+  const bulkBar = document.getElementById(`bulkActionBar${section.charAt(0).toUpperCase() + section.slice(1)}`);
+  
+  if (!bulkBar) return;
+  
+  if (selectedCount > 0) {
+    bulkBar.classList.remove('hidden');
+    const countElement = bulkBar.querySelector('.selected-count');
+    if (countElement) {
+      countElement.textContent = selectedCount;
+    }
+  } else {
+    bulkBar.classList.add('hidden');
+  }
+}
+
+// Limpiar selección
+function clearSelection(section) {
+  bulkSelection[section].clear();
+  const checkboxes = document.querySelectorAll(`[data-section="${section}"] .item-checkbox`);
+  checkboxes.forEach(cb => cb.checked = false);
+  updateBulkActionBar(section);
+  updateSelectAllCheckbox(section);
+}
+
+// Eliminar elementos seleccionados
+async function bulkDelete(section, deleteFunction, reloadFunction) {
+  const selectedIds = Array.from(bulkSelection[section]);
+  
+  if (selectedIds.length === 0) {
+    showNotification('No hay elementos seleccionados', 'warning');
+    return;
+  }
+  
+  const confirmMessage = `¿Estás seguro de eliminar ${selectedIds.length} elemento(s)?\n\nEsta acción no se puede deshacer.`;
+  
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  try {
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Eliminar en paralelo (máximo 5 a la vez)
+    const batchSize = 5;
+    for (let i = 0; i < selectedIds.length; i += batchSize) {
+      const batch = selectedIds.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map(id => deleteFunction(id, true)) // true = silent mode
+      );
+      
+      results.forEach(result => {
+        if (result.status === 'fulfilled') successCount++;
+        else errorCount++;
+      });
+    }
+    
+    // Limpiar selección
+    clearSelection(section);
+    
+    // Recargar datos
+    await reloadFunction();
+    
+    // Mostrar resultado
+    if (errorCount === 0) {
+      showNotification(`${successCount} elemento(s) eliminado(s) correctamente`, 'success');
+    } else {
+      showNotification(`${successCount} eliminado(s), ${errorCount} error(es)`, 'warning');
+    }
+    
+  } catch (error) {
+    console.error('Error en eliminación masiva:', error);
+    showNotification('Error al eliminar elementos', 'error');
+  }
+}
+
+// ===================================
+// FIN FUNCIONES DE SELECCIÓN MÚLTIPLE
+// ===================================
+
 // ===================================
 // 0. INICIALIZACIÓN Y AUTENTICACIÓN
 // ===================================
@@ -264,6 +399,9 @@ function initTabs() {
 async function loadNews() {
   const container = document.getElementById('newsContainer');
   
+  // Limpiar selección al recargar
+  clearSelection('news');
+  
   try {
     const response = await fetch(`${API_URL}/news?limit=100`);
     const data = await response.json();
@@ -315,8 +453,18 @@ function createNewsCard(news) {
   };
   
   return `
-    <div class="news-card border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-lg transition-all">
+    <div class="news-card border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-lg transition-all" data-section="news">
       <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
+        <!-- Checkbox de selección -->
+        <div class="flex items-start pt-2">
+          <input 
+            type="checkbox" 
+            class="item-checkbox w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            data-item-id="${news._id}"
+            onchange="toggleItemSelection('news', '${news._id}', this.checked)"
+          />
+        </div>
+        
         ${news.imagen ? `
           <img src="${API_URL.replace('/api', '')}${news.imagen}" alt="${news.titulo}" class="w-full sm:w-24 md:w-32 h-48 sm:h-24 md:h-32 object-cover rounded-lg flex-shrink-0">
         ` : `
@@ -509,8 +657,12 @@ async function editNews(id) {
 // ===================================
 // 7. ELIMINAR NOTICIA (REQUIERE AUTH)
 // ===================================
-async function deleteNews(id, title) {
-  if (!confirm(`¿Estás seguro de eliminar la noticia "${title}"?\n\nEsta acción no se puede deshacer.`)) {
+async function deleteNews(id, silentOrTitle = false) {
+  // Si silentOrTitle es boolean true, es modo silencioso (para bulk delete)
+  const isSilent = silentOrTitle === true;
+  const title = typeof silentOrTitle === 'string' ? silentOrTitle : '';
+  
+  if (!isSilent && !confirm(`¿Estás seguro de eliminar la noticia "${title}"?\n\nEsta acción no se puede deshacer.`)) {
     return;
   }
   
@@ -525,17 +677,25 @@ async function deleteNews(id, title) {
       throw new Error(data.message || 'Error al eliminar la noticia');
     }
     
-    showNotification('✅ Noticia eliminada correctamente', 'success');
-    loadNews();
+    if (!isSilent) {
+      showNotification('✅ Noticia eliminada correctamente', 'success');
+      loadNews();
+    }
+    
+    return { success: true };
     
   } catch (error) {
     console.error('Error al eliminar:', error);
     
-    if (error.message === 'Sesión expirada') {
-      Auth.handleAuthError(error);
-    } else {
-      showNotification('❌ ' + error.message, 'error');
+    if (!isSilent) {
+      if (error.message === 'Sesión expirada') {
+        Auth.handleAuthError(error);
+      } else {
+        showNotification('❌ ' + error.message, 'error');
+      }
     }
+    
+    throw error;
   }
 }
 
@@ -545,6 +705,9 @@ async function deleteNews(id, title) {
 async function loadContacts(filter = 'all') {
   const container = document.getElementById('contactsContainer');
   currentFilter = filter;
+  
+  // Limpiar selección al recargar
+  clearSelection('contacts');
   
   try {
     const response = await Auth.authFetch(`${API_URL}/contact`);
@@ -584,10 +747,7 @@ async function loadContacts(filter = 'all') {
     
     container.innerHTML = contacts.map(contact => createContactCard(contact)).join('');
     
-    // Agregar event listeners
-    document.querySelectorAll('.contact-card').forEach(card => {
-      card.addEventListener('click', () => viewContact(card.dataset.id));
-    });
+    // Event listeners ya están en el HTML (onclick en las tarjetas)
     
   } catch (error) {
     console.error('Error al cargar contactos:', error);
@@ -622,28 +782,44 @@ function createContactCard(contact) {
   const borderClass = !contact.leido ? 'border-l-4 border-orange-500' : 'border-l-4 border-transparent';
   
   return `
-    <div class="contact-card bg-white rounded-lg shadow hover:shadow-lg transition-all cursor-pointer p-4 md:p-6 ${borderClass}" data-id="${contact._id}">
-      <div class="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3">
-        <div class="flex-1 w-full sm:w-auto">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-            <h3 class="text-base md:text-lg font-bold text-gray-900 break-words">${contact.nombre}</h3>
-            ${statusBadge}
+    <div class="contact-card bg-white rounded-lg shadow hover:shadow-lg transition-all p-4 md:p-6 ${borderClass}" data-section="contacts">
+      <div class="flex gap-3 mb-3">
+        <!-- Checkbox de selección -->
+        <div class="flex items-start pt-1">
+          <input 
+            type="checkbox" 
+            class="item-checkbox w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            data-item-id="${contact._id}"
+            onchange="toggleItemSelection('contacts', '${contact._id}', this.checked)"
+            onclick="event.stopPropagation()"
+          />
+        </div>
+        
+        <!-- Contenido clickeable -->
+        <div class="flex-1 cursor-pointer" onclick="viewContact('${contact._id}')">
+          <div class="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3">
+            <div class="flex-1 w-full sm:w-auto">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                <h3 class="text-base md:text-lg font-bold text-gray-900 break-words">${contact.nombre}</h3>
+                ${statusBadge}
+              </div>
+              <p class="text-xs md:text-sm text-blue-600 break-all">${contact.email}</p>
+            </div>
+            <div class="text-xs md:text-sm text-gray-500 flex-shrink-0">
+              <p>📅 ${fecha}</p>
+            </div>
           </div>
-          <p class="text-xs md:text-sm text-blue-600 break-all">${contact.email}</p>
+          
+          <div class="bg-gray-50 rounded-lg p-3 mt-3">
+            <p class="text-gray-700 text-xs md:text-sm line-clamp-2">${contact.mensaje}</p>
+          </div>
+          
+          <div class="flex items-center justify-end mt-3 gap-3 text-xs text-gray-500 flex-wrap">
+            ${!contact.leido ? '<span class="flex items-center"><span class="w-2 h-2 bg-orange-500 rounded-full mr-1 animate-pulse"></span> Sin leer</span>' : ''}
+            ${contact.leido ? '<span class="flex items-center gap-1">✓ Leído</span>' : ''}
+            ${contact.respondido ? '<span class="flex items-center gap-1">↩️ Respondido</span>' : ''}
+          </div>
         </div>
-        <div class="text-xs md:text-sm text-gray-500 flex-shrink-0">
-          <p>📅 ${fecha}</p>
-        </div>
-      </div>
-      
-      <div class="bg-gray-50 rounded-lg p-3 mt-3">
-        <p class="text-gray-700 text-xs md:text-sm line-clamp-2">${contact.mensaje}</p>
-      </div>
-      
-      <div class="flex items-center justify-end mt-3 gap-3 text-xs text-gray-500 flex-wrap">
-        ${!contact.leido ? '<span class="flex items-center"><span class="w-2 h-2 bg-orange-500 rounded-full mr-1 animate-pulse"></span> Sin leer</span>' : ''}
-        ${contact.leido ? '<span class="flex items-center gap-1">✓ Leído</span>' : ''}
-        ${contact.respondido ? '<span class="flex items-center gap-1">↩️ Respondido</span>' : ''}
       </div>
     </div>
   `;
@@ -762,8 +938,8 @@ async function updateContactStatus(id, updates) {
 // ===================================
 // 13. ELIMINAR CONTACTO (REQUIERE AUTH)
 // ===================================
-async function deleteContact(id) {
-  if (!confirm('¿Estás seguro de eliminar este mensaje? Esta acción no se puede deshacer.')) {
+async function deleteContact(id, silent = false) {
+  if (!silent && !confirm('¿Estás seguro de eliminar este mensaje? Esta acción no se puede deshacer.')) {
     return;
   }
   
@@ -778,20 +954,27 @@ async function deleteContact(id) {
       throw new Error(data.message || 'Error al eliminar');
     }
     
-    showNotification('✓ Mensaje eliminado correctamente', 'success');
-    document.getElementById('contactModal').classList.add('hidden');
+    if (!silent) {
+      showNotification('✓ Mensaje eliminado correctamente', 'success');
+      document.getElementById('contactModal').classList.add('hidden');
+      await loadContacts(currentFilter);
+      await loadStats();
+    }
     
-    await loadContacts(currentFilter);
-    await loadStats();
+    return { success: true };
     
   } catch (error) {
     console.error('Error:', error);
     
-    if (error.message === 'Sesión expirada') {
-      Auth.handleAuthError(error);
-    } else {
-      showNotification('❌ ' + error.message, 'error');
+    if (!silent) {
+      if (error.message === 'Sesión expirada') {
+        Auth.handleAuthError(error);
+      } else {
+        showNotification('❌ ' + error.message, 'error');
+      }
     }
+    
+    throw error;
   }
 }
 
@@ -1378,6 +1561,9 @@ async function loadEmpleados() {
   
   container.innerHTML = '<p class="text-center text-gray-500">⏳ Cargando empleados...</p>';
   
+  // Limpiar selección al recargar
+  clearSelection('empleados');
+  
   try {
     const response = await Auth.authFetch(`${API_URL}/admins/empleados`);
     const data = await response.json();
@@ -1415,40 +1601,54 @@ function displayEmpleados(empleados) {
   }
   
   const empleadosHTML = empleados.map(empleado => `
-    <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-500">
-      <div class="flex justify-between items-start mb-4">
-        <div>
-          <h3 class="text-xl font-bold text-gray-800 mb-1">${empleado.nombre || empleado.username}</h3>
-          <p class="text-sm text-gray-600">
-            <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-              👔 Empleado
-            </span>
-          </p>
+    <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-500" data-section="empleados">
+      <div class="flex items-start gap-4 mb-4">
+        <!-- Checkbox de selección -->
+        <div class="pt-1">
+          <input 
+            type="checkbox" 
+            class="item-checkbox w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            data-item-id="${empleado._id}"
+            onchange="toggleItemSelection('empleados', '${empleado._id}', this.checked)"
+          />
         </div>
-        <div class="flex gap-2">
-          <button 
-            onclick="showEmpleadoModal('${empleado._id}')"
-            class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
-            title="Editar"
-          >
-            ✏️
-          </button>
-          <button 
-            onclick="deleteEmpleado('${empleado._id}', '${empleado.username}')"
-            class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
-            title="Eliminar"
-          >
-            🗑️
-          </button>
+        
+        <div class="flex-1">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800 mb-1">${empleado.nombre || empleado.username}</h3>
+              <p class="text-sm text-gray-600">
+                <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                  👔 Empleado
+                </span>
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                onclick="showEmpleadoModal('${empleado._id}')"
+                class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
+                title="Editar"
+              >
+                ✏️
+              </button>
+              <button 
+                onclick="deleteEmpleado('${empleado._id}', '${empleado.username}')"
+                class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+                title="Eliminar"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          
+          <div class="space-y-2 text-sm text-gray-600">
+            <p><strong>Usuario:</strong> ${empleado.username}</p>
+            <p><strong>Email:</strong> ${empleado.email || '<em>No proporcionado</em>'}</p>
+            <p class="text-xs text-gray-400">
+              <strong>Creado:</strong> ${new Date(empleado.createdAt).toLocaleDateString('es-ES')}
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <div class="space-y-2 text-sm text-gray-600">
-        <p><strong>Usuario:</strong> ${empleado.username}</p>
-        <p><strong>Email:</strong> ${empleado.email || '<em>No proporcionado</em>'}</p>
-        <p class="text-xs text-gray-400">
-          <strong>Creado:</strong> ${new Date(empleado.createdAt).toLocaleDateString('es-ES')}
-        </p>
       </div>
     </div>
   `).join('');
@@ -1608,8 +1808,8 @@ async function handleEmpleadoSubmit(event) {
 }
 
 // Eliminar empleado
-async function deleteEmpleado(empleadoId, username) {
-  if (!confirm(`¿Eliminar al empleado "${username}"?\n\nEsta acción no se puede deshacer.`)) {
+async function deleteEmpleado(empleadoId, username, silent = false) {
+  if (!silent && !confirm(`¿Eliminar al empleado "${username}"?\n\nEsta acción no se puede deshacer.`)) {
     return;
   }
   
@@ -1621,10 +1821,16 @@ async function deleteEmpleado(empleadoId, username) {
     const data = await response.json();
     
     if (data.success) {
-      showNotification('Empleado eliminado correctamente', 'success');
-      loadEmpleados();
+      if (!silent) {
+        showNotification('Empleado eliminado correctamente', 'success');
+        loadEmpleados();
+      }
+      return { success: true };
     } else {
-      showNotification(data.message || 'Error al eliminar', 'error');
+      if (!silent) {
+        showNotification(data.message || 'Error al eliminar', 'error');
+      }
+      return { success: false };
     }
     
   } catch (error) {
@@ -1632,9 +1838,10 @@ async function deleteEmpleado(empleadoId, username) {
     
     if (error.message === 'Sesión expirada') {
       Auth.handleAuthError(error);
-    } else {
+    } else if (!silent) {
       showNotification('Error al eliminar empleado', 'error');
     }
+    return { success: false };
   }
 }
 
@@ -1948,6 +2155,9 @@ async function loadEvents() {
   
   container.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div></div>';
   
+  // Limpiar selección al recargar
+  clearSelection('events');
+  
   try {
     const response = await Auth.authFetch(`${API_URL}/events`);
     const data = await response.json();
@@ -1979,8 +2189,18 @@ async function loadEvents() {
       const imageUrl = event.image ? `${SERVER_URL}${event.image}` : null;
       
       return `
-        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow" style="border-left: 4px solid ${event.color}">
+        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow" style="border-left: 4px solid ${event.color}" data-section="events">
           <div class="flex items-start">
+            <!-- Checkbox de selección -->
+            <div class="p-4 flex items-start">
+              <input 
+                type="checkbox" 
+                class="item-checkbox w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer mt-1"
+                data-item-id="${event._id}"
+                onchange="toggleItemSelection('events', '${event._id}', this.checked)"
+              />
+            </div>
+            
             ${imageUrl ? `
               <div class="w-24 h-24 flex-shrink-0">
                 <img src="${imageUrl}" alt="${event.title}" class="w-full h-full object-cover rounded-l-lg" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl\\'>🎉</div>'">
@@ -2265,8 +2485,10 @@ async function editEvent(id) {
   openEventModal(id);
 }
 
-async function deleteEvent(id) {
-  if (!confirm('¿Estás seguro de eliminar este evento?')) return;
+async function deleteEvent(id, silent = false) {
+  if (!silent && !confirm('¿Estás seguro de eliminar este evento?')) {
+    return { success: false };
+  }
   
   try {
     const response = await Auth.authFetch(`${API_URL}/events/${id}`, {
@@ -2276,12 +2498,19 @@ async function deleteEvent(id) {
     const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
-    showNotification(data.message, 'success');
-    loadEvents();
+    if (!silent) {
+      showNotification(data.message, 'success');
+      loadEvents();
+    }
+    
+    return { success: true };
     
   } catch (error) {
     console.error('Error:', error);
-    showNotification(error.message || 'Error al eliminar evento', 'error');
+    if (!silent) {
+      showNotification(error.message || 'Error al eliminar evento', 'error');
+    }
+    return { success: false };
   }
 }
 
@@ -2350,6 +2579,9 @@ async function loadGallery() {
   
   grid.innerHTML = '<div class="col-span-full text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div></div>';
   
+  // Limpiar selección al recargar
+  clearSelection('gallery');
+  
   try {
     const category = document.getElementById('filterCategory')?.value || '';
     const featured = document.getElementById('filterFeatured')?.checked;
@@ -2376,7 +2608,17 @@ async function loadGallery() {
     }
     
     grid.innerHTML = data.data.map(image => `
-      <div class="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+      <div class="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow" data-section="gallery">
+        <!-- Checkbox de selección -->
+        <div class="absolute top-2 left-2 z-10">
+          <input 
+            type="checkbox" 
+            class="item-checkbox w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white shadow-lg"
+            data-item-id="${image._id}"
+            onchange="toggleItemSelection('gallery', '${image._id}', this.checked)"
+          />
+        </div>
+        
         <div class="aspect-square overflow-hidden bg-gray-100">
           <img src="${image.imageUrl}" alt="${image.altText || image.title}" 
                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
@@ -2582,8 +2824,10 @@ async function toggleImageStatus(id) {
   }
 }
 
-async function deleteImage(id) {
-  if (!confirm('¿Estás seguro de eliminar esta imagen? Se eliminará permanentemente del servidor.')) return;
+async function deleteImage(id, silent = false) {
+  if (!silent && !confirm('¿Estás seguro de eliminar esta imagen? Se eliminará permanentemente del servidor.')) {
+    return { success: false };
+  }
   
   try {
     const response = await Auth.authFetch(`${API_URL}/gallery/${id}`, {
@@ -2593,12 +2837,19 @@ async function deleteImage(id) {
     const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
-    showNotification(data.message, 'success');
-    loadGallery();
+    if (!silent) {
+      showNotification(data.message, 'success');
+      loadGallery();
+    }
+    
+    return { success: true };
     
   } catch (error) {
     console.error('Error:', error);
-    showNotification(error.message || 'Error al eliminar imagen', 'error');
+    if (!silent) {
+      showNotification(error.message || 'Error al eliminar imagen', 'error');
+    }
+    return { success: false };
   }
 }
 
@@ -2700,6 +2951,9 @@ function applyTimeRecordsFilters() {
 async function loadTimeRecords() {
   const tbody = document.getElementById('timeRecordsTableBody');
   
+  // Limpiar selección al recargar
+  clearSelection('timeRecords');
+  
   try {
     // Construir query params
     const params = new URLSearchParams({
@@ -2714,7 +2968,7 @@ async function loadTimeRecords() {
     if (!data.success || data.data.registros.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+          <td colspan="7" class="px-6 py-12 text-center text-gray-500">
             <div class="text-6xl mb-4">📭</div>
             <p class="text-lg">No hay registros que mostrar</p>
           </td>
@@ -2743,7 +2997,15 @@ async function loadTimeRecords() {
       const empleadoEliminado = !record.empleado;
       
       return `
-        <tr class="hover:bg-gray-50 transition-colors ${empleadoEliminado ? 'bg-gray-50' : ''}">
+        <tr class="hover:bg-gray-50 transition-colors ${empleadoEliminado ? 'bg-gray-50' : ''}" data-section="timeRecords">
+          <td class="px-6 py-4 text-center">
+            <input 
+              type="checkbox" 
+              class="item-checkbox w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              data-item-id="${record._id}"
+              onchange="toggleItemSelection('timeRecords', '${record._id}', this.checked)"
+            />
+          </td>
           <td class="px-6 py-4">
             <div class="font-semibold text-gray-800 ${empleadoEliminado ? 'text-gray-500' : ''}">
               ${empleadoNombre}
@@ -2796,7 +3058,7 @@ async function loadTimeRecords() {
     console.error('Error:', error);
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="px-6 py-8 text-center text-red-600">
+        <td colspan="7" class="px-6 py-8 text-center text-red-600">
           ❌ Error al cargar registros: ${error.message}
         </td>
       </tr>
@@ -2942,8 +3204,10 @@ async function handleEditTimeRecord(e) {
   }
 }
 
-async function deleteTimeRecord(id) {
-  if (!confirm('¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.')) return;
+async function deleteTimeRecord(id, silent = false) {
+  if (!silent && !confirm('¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.')) {
+    return { success: false };
+  }
   
   try {
     const response = await Auth.authFetch(`${API_URL}/time-records/admin/${id}`, {
@@ -2953,22 +3217,83 @@ async function deleteTimeRecord(id) {
     const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
-    showNotification('Registro eliminado correctamente', 'success');
-    loadTimeRecords();
-    loadTimeRecordsSummary();
+    if (!silent) {
+      showNotification('Registro eliminado correctamente', 'success');
+      loadTimeRecords();
+      loadTimeRecordsSummary();
+    }
+    
+    return { success: true };
     
   } catch (error) {
     console.error('Error:', error);
-    showNotification(error.message || 'Error al eliminar registro', 'error');
+    if (!silent) {
+      showNotification(error.message || 'Error al eliminar registro', 'error');
+    }
+    return { success: false };
   }
 }
 
-function exportTimeRecords() {
-  // Obtener todos los registros visibles en la tabla
-  const tbody = document.getElementById('timeRecordsTableBody');
-  const rows = tbody.querySelectorAll('tr');
+function exportTimeRecords(selectedOnly = false) {
+  let recordsToExport = [];
   
-  if (rows.length === 0 || rows[0].cells.length === 1) {
+  if (selectedOnly) {
+    // Exportar solo los seleccionados
+    const selectedIds = Array.from(bulkSelection.timeRecords);
+    
+    if (selectedIds.length === 0) {
+      showNotification('No hay registros seleccionados para exportar', 'warning');
+      return;
+    }
+    
+    // Obtener los datos de los registros seleccionados
+    const tbody = document.getElementById('timeRecordsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+      const checkbox = row.querySelector('.item-checkbox');
+      if (checkbox && checkbox.checked) {
+        const cells = row.cells;
+        if (cells.length > 1) {
+          recordsToExport.push({
+            empleado: cells[1].querySelector('.font-semibold')?.textContent || '',
+            email: cells[1].querySelector('.text-xs')?.textContent || '',
+            tipo: cells[2].textContent.trim(),
+            fecha: cells[3].querySelector('.font-semibold')?.textContent || '',
+            hora: cells[3].querySelector('.text-xs')?.textContent || '',
+            ubicacion: cells[4].textContent.trim(),
+            horas: cells[5].textContent.trim()
+          });
+        }
+      }
+    });
+  } else {
+    // Exportar todos los registros visibles
+    const tbody = document.getElementById('timeRecordsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length === 0 || rows[0].cells.length === 1) {
+      showNotification('No hay registros para exportar', 'warning');
+      return;
+    }
+    
+    rows.forEach(row => {
+      const cells = row.cells;
+      if (cells.length > 1) {
+        recordsToExport.push({
+          empleado: cells[1].querySelector('.font-semibold')?.textContent || '',
+          email: cells[1].querySelector('.text-xs')?.textContent || '',
+          tipo: cells[2].textContent.trim(),
+          fecha: cells[3].querySelector('.font-semibold')?.textContent || '',
+          hora: cells[3].querySelector('.text-xs')?.textContent || '',
+          ubicacion: cells[4].textContent.trim(),
+          horas: cells[5].textContent.trim()
+        });
+      }
+    });
+  }
+  
+  if (recordsToExport.length === 0) {
     showNotification('No hay registros para exportar', 'warning');
     return;
   }
@@ -2976,19 +3301,8 @@ function exportTimeRecords() {
   // Crear CSV
   let csv = 'Empleado,Email,Tipo,Fecha,Hora,Ubicación,Horas Trabajadas\n';
   
-  rows.forEach(row => {
-    const cells = row.cells;
-    if (cells.length > 1) {
-      const empleado = cells[0].querySelector('.font-semibold')?.textContent || '';
-      const email = cells[0].querySelector('.text-xs')?.textContent || '';
-      const tipo = cells[1].textContent.trim();
-      const fecha = cells[2].querySelector('.font-semibold')?.textContent || '';
-      const hora = cells[2].querySelector('.text-xs')?.textContent || '';
-      const ubicacion = cells[3].textContent.trim();
-      const horas = cells[4].textContent.trim();
-      
-      csv += `"${empleado}","${email}","${tipo}","${fecha}","${hora}","${ubicacion}","${horas}"\n`;
-    }
+  recordsToExport.forEach(record => {
+    csv += `"${record.empleado}","${record.email}","${record.tipo}","${record.fecha}","${record.hora}","${record.ubicacion}","${record.horas}"\n`;
   });
   
   // Descargar archivo
@@ -2996,20 +3310,27 @@ function exportTimeRecords() {
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   const fecha = new Date().toISOString().split('T')[0];
+  const suffix = selectedOnly ? `_seleccionados_${recordsToExport.length}` : '';
   
   link.setAttribute('href', url);
-  link.setAttribute('download', `registros_tiempo_${fecha}.csv`);
+  link.setAttribute('download', `registros_tiempo${suffix}_${fecha}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   
-  showNotification('CSV exportado correctamente', 'success');
+  const message = selectedOnly 
+    ? `${recordsToExport.length} registro(s) seleccionado(s) exportado(s) correctamente`
+    : 'CSV exportado correctamente';
+  
+  showNotification(message, 'success');
 }
+
 
 // Hacer funciones accesibles globalmente para onclick
 window.editTimeRecord = editTimeRecord;
 window.deleteTimeRecord = deleteTimeRecord;
+window.exportTimeRecords = exportTimeRecords;
 window.editEvent = editEvent;
 window.deleteEvent = deleteEvent;
 window.showEditAdminModal = showEditAdminModal;
@@ -3024,6 +3345,13 @@ window.editImage = editImage;
 window.toggleImageFeatured = toggleImageFeatured;
 window.toggleImageStatus = toggleImageStatus;
 window.deleteImage = deleteImage;
+window.viewContact = viewContact;
+
+// Funciones de selección múltiple globales
+window.toggleItemSelection = toggleItemSelection;
+window.toggleSelectAll = toggleSelectAll;
+window.clearSelection = clearSelection;
+window.bulkDelete = bulkDelete;
 
 // ===================================
 // INICIALIZACIÓN

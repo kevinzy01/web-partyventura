@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administración - Partyventura</title>
-  <link href="/index.css?v=25" rel="stylesheet">
-  <link href="/src/styles/styles.css?v=25" rel="stylesheet">
+  <link href="/index.css?v=27" rel="stylesheet">
+  <link href="/src/styles/styles.css?v=27" rel="stylesheet">
   <link rel="icon" type="image/png" href="/assets/icons/png/logo-partyventura.png">
   <style>
     :root {
@@ -721,12 +721,38 @@
         </button>
       </div>
 
+      <!-- Barra de acción masiva -->
+      <div id="bulkActionBarNews" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-blue-800 font-semibold">
+            <span class="selected-count">0</span> elemento(s) seleccionado(s)
+          </span>
+          <button onclick="clearSelection('news')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+            Limpiar selección
+          </button>
+        </div>
+        <button onclick="bulkDelete('news', deleteNews, loadNews)" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          🗑️ Eliminar seleccionados
+        </button>
+      </div>
+
       <!-- Lista de Noticias -->
       <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
-        <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 flex items-center">
-          <span class="text-2xl md:text-3xl mr-2 md:mr-3">📰</span>
-          Noticias Publicadas
-        </h2>
+        <div class="flex items-center justify-between mb-4 md:mb-6">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+            <span class="text-2xl md:text-3xl mr-2 md:mr-3">📰</span>
+            Noticias Publicadas
+          </h2>
+          <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+            <input 
+              type="checkbox" 
+              id="selectAllNews"
+              class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              onchange="toggleSelectAll('news', this.checked)"
+            />
+            Seleccionar todo
+          </label>
+        </div>
         
         <div id="newsContainer" class="space-y-4">
           <div class="text-center py-12 text-gray-500">
@@ -739,12 +765,38 @@
 
     <!-- Contacts Section -->
     <div id="contactsSection" class="admin-container hidden">
+      <!-- Barra de acción masiva -->
+      <div id="bulkActionBarContacts" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-blue-800 font-semibold">
+            <span class="selected-count">0</span> elemento(s) seleccionado(s)
+          </span>
+          <button onclick="clearSelection('contacts')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+            Limpiar selección
+          </button>
+        </div>
+        <button onclick="bulkDelete('contacts', deleteContact, () => loadContacts(currentFilter))" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          🗑️ Eliminar seleccionados
+        </button>
+      </div>
+      
       <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
-            <span class="text-2xl md:text-3xl mr-2 md:mr-3">📧</span>
-            Mensajes de Contacto
-          </h2>
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+              <span class="text-2xl md:text-3xl mr-2 md:mr-3">📧</span>
+              Mensajes de Contacto
+            </h2>
+            <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+              <input 
+                type="checkbox" 
+                id="selectAllContacts"
+                class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                onchange="toggleSelectAll('contacts', this.checked)"
+              />
+              Seleccionar todo
+            </label>
+          </div>
           <div class="flex gap-2 w-full sm:w-auto">
             <button id="btnFilterAll" class="filter-btn flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold bg-orange-100 text-orange-600 transition-all">
               Todos
@@ -791,12 +843,38 @@
 
     <!-- Empleados Section (Admin y Superadmin) -->
     <div id="empleadosSection" class="admin-container hidden">
+      <!-- Barra de acción masiva -->
+      <div id="bulkActionBarEmpleados" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-blue-800 font-semibold">
+            <span class="selected-count">0</span> elemento(s) seleccionado(s)
+          </span>
+          <button onclick="clearSelection('empleados')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+            Limpiar selección
+          </button>
+        </div>
+        <button onclick="bulkDelete('empleados', deleteEmpleado, loadEmpleados)" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          🗑️ Eliminar seleccionados
+        </button>
+      </div>
+      
       <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
-            <span class="text-2xl md:text-3xl mr-2 md:mr-3">👔</span>
-            Gestión de Empleados
-          </h2>
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+              <span class="text-2xl md:text-3xl mr-2 md:mr-3">👔</span>
+              Gestión de Empleados
+            </h2>
+            <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+              <input 
+                type="checkbox" 
+                id="selectAllEmpleados"
+                class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                onchange="toggleSelectAll('empleados', this.checked)"
+              />
+              Seleccionar todo
+            </label>
+          </div>
           <button id="btnNewEmpleado" class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-lg transition-all">
             ➕ Nuevo Empleado
           </button>
@@ -1455,11 +1533,37 @@
       </button>
     </div>
 
+    <!-- Barra de acción masiva -->
+    <div id="bulkActionBarEvents" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-blue-800 font-semibold">
+          <span class="selected-count">0</span> elemento(s) seleccionado(s)
+        </span>
+        <button onclick="clearSelection('events')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+          Limpiar selección
+        </button>
+      </div>
+      <button onclick="bulkDelete('events', deleteEvent, loadEvents)" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+        🗑️ Eliminar seleccionados
+      </button>
+    </div>
+
     <div class="bg-white rounded-xl shadow-lg p-6">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <span class="text-3xl mr-3">📅</span>
-        Eventos del Calendario
-      </h2>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+          <span class="text-3xl mr-3">📅</span>
+          Eventos del Calendario
+        </h2>
+        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+          <input 
+            type="checkbox" 
+            id="selectAllEvents"
+            class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            onchange="toggleSelectAll('events', this.checked)"
+          />
+          Seleccionar todo
+        </label>
+      </div>
       
       <div id="eventsListContainer" class="space-y-4">
         <div class="text-center py-12 text-gray-500">
@@ -1502,11 +1606,37 @@
       </div>
     </div>
 
+    <!-- Barra de acción masiva -->
+    <div id="bulkActionBarGallery" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-blue-800 font-semibold">
+          <span class="selected-count">0</span> elemento(s) seleccionado(s)
+        </span>
+        <button onclick="clearSelection('gallery')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+          Limpiar selección
+        </button>
+      </div>
+      <button onclick="bulkDelete('gallery', deleteImage, loadGallery)" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+        🗑️ Eliminar seleccionados
+      </button>
+    </div>
+
     <div class="bg-white rounded-xl shadow-lg p-6">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <span class="text-3xl mr-3">🖼️</span>
-        Galería de Imágenes
-      </h2>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+          <span class="text-3xl mr-3">🖼️</span>
+          Galería de Imágenes
+        </h2>
+        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+          <input 
+            type="checkbox" 
+            id="selectAllGallery"
+            class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            onchange="toggleSelectAll('gallery', this.checked)"
+          />
+          Seleccionar todo
+        </label>
+      </div>
       
       <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <div class="col-span-full text-center py-12 text-gray-500">
@@ -1581,14 +1711,45 @@
       </div>
     </div>
 
+    <!-- Barra de acción masiva -->
+    <div id="bulkActionBarTimeRecords" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-blue-800 font-semibold">
+          <span class="selected-count">0</span> elemento(s) seleccionado(s)
+        </span>
+        <button onclick="clearSelection('timeRecords')" class="text-sm text-blue-600 hover:text-blue-800 underline">
+          Limpiar selección
+        </button>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="exportTimeRecords(true)" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          📥 Exportar CSV
+        </button>
+        <button onclick="bulkDelete('timeRecords', deleteTimeRecord, () => { loadTimeRecords(); loadTimeRecordsSummary(); })" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+          🗑️ Eliminar seleccionados
+        </button>
+      </div>
+    </div>
+
     <!-- Tabla de registros -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
       <div class="p-6 border-b border-gray-200">
         <div class="flex items-center justify-between">
-          <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-            <span class="text-3xl mr-3">⏱️</span>
-            Registros de Tiempo
-          </h2>
+          <div class="flex items-center gap-3">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+              <span class="text-3xl mr-3">⏱️</span>
+              Registros de Tiempo
+            </h2>
+            <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors">
+              <input 
+                type="checkbox" 
+                id="selectAllTimeRecords"
+                class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                onchange="toggleSelectAll('timeRecords', this.checked)"
+              />
+              Seleccionar todo
+            </label>
+          </div>
           <button id="btnExportTimeRecords" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm">
             📥 Exportar CSV
           </button>
@@ -1599,6 +1760,9 @@
         <table class="w-full">
           <thead class="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-12">
+                <span class="sr-only">Selección</span>
+              </th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Empleado</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha y Hora</th>
@@ -1609,7 +1773,7 @@
           </thead>
           <tbody id="timeRecordsTableBody" class="divide-y divide-gray-200">
             <tr>
-              <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                 <div class="text-6xl mb-4">⏳</div>
                 <p class="text-lg">Cargando registros...</p>
               </td>
@@ -2085,9 +2249,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/src/js/modules/config.js?v=26"></script>
-  <script src="/src/js/modules/auth.js?v=26"></script>
-  <script src="/src/js/modules/utils.js?v=26"></script>
-  <script src="/src/js/pages/admin.js?v=40"></script>
+  <script src="/src/js/modules/config.js?v=29"></script>
+  <script src="/src/js/modules/auth.js?v=29"></script>
+  <script src="/src/js/modules/utils.js?v=29"></script>
+  <script src="/src/js/pages/admin.js?v=43"></script>
 </body>
 </html>
