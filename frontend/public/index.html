@@ -12,6 +12,14 @@
   
   <!-- Leaflet CSS para el mapa -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Preload primera imagen del slideshow para carga instantánea -->
+  <link rel="preload" href="assets/images/IMG_7089.jpg" as="image" />
+  
+  <!-- Prefetch siguientes imágenes para anticipar navegación -->
+  <link rel="prefetch" href="assets/images/IMG_7097.jpg" as="image" />
+  <link rel="prefetch" href="assets/images/IMG_7101.jpg" as="image" />
+  
   <style>
     /* Ocultar scrollbar en el carousel pero mantener funcionalidad */
     .scrollbar-hide {
@@ -310,6 +318,170 @@
     #cardContainer > article > div:last-child {
       flex-shrink: 0 !important;
     }
+    
+    /* SLIDESHOW DE INSTALACIONES */
+    .instalaciones-slideshow {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .instalaciones-slide {
+      display: none;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .instalaciones-slide.active {
+      display: block;
+      animation: slideIn 0.8s ease-in-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: scale(1.05);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    .instalaciones-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    
+    .instalaciones-slide img.loaded {
+      opacity: 1;
+    }
+    
+    /* Placeholder con blur mientras carga */
+    .instalaciones-slide::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      z-index: 1;
+    }
+    
+    .instalaciones-slide.image-loaded::before {
+      display: none;
+    }
+    
+    /* Gradiente para texto legible */
+    .instalaciones-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.1) 70%, transparent 100%);
+    }
+    
+    /* Controles de navegación */
+    .instalaciones-prev,
+    .instalaciones-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      border: none;
+      padding: 1rem;
+      cursor: pointer;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 10;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    
+    .instalaciones-prev:hover,
+    .instalaciones-next:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .instalaciones-prev {
+      left: 1rem;
+    }
+    
+    .instalaciones-next {
+      right: 1rem;
+    }
+    
+    /* Dots indicadores */
+    .instalaciones-dots {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.75rem;
+      z-index: 10;
+    }
+    
+    .instalaciones-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .instalaciones-dot:hover {
+      background: rgba(255, 255, 255, 0.8);
+      transform: scale(1.2);
+    }
+    
+    .instalaciones-dot.active {
+      background: rgba(255, 255, 255, 1);
+      transform: scale(1.3);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Responsive: ocultar flechas en móvil */
+    @media (max-width: 640px) {
+      .instalaciones-prev,
+      .instalaciones-next {
+        width: 40px;
+        height: 40px;
+        padding: 0.75rem;
+        font-size: 1.25rem;
+      }
+      
+      .instalaciones-prev {
+        left: 0.5rem;
+      }
+      
+      .instalaciones-next {
+        right: 0.5rem;
+      }
+    }
+    
+    /* Altura del slideshow de instalaciones */
+    #instalaciones {
+      height: 550px;
+    }
+    
+    @media (min-width: 1024px) {
+      #instalaciones {
+        height: 800px;
+      }
+    }
   </style>
 </head>
 <body class="bg-white text-gray-800">
@@ -324,6 +496,7 @@
         <a href="#inicio" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Inicio</a>
         <a href="#tarifas" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Tarifas</a>
         <a href="#servicios" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Servicios</a>
+        <a href="#instalaciones" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Instalaciones</a>
         <a href="#horarios" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Horarios</a>
         <a href="#calendario" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Eventos</a>
         <a href="#galeria" class="text-gray-800 hover:text-orange-500 font-semibold transition-all hover:scale-110">Galería</a>
@@ -351,6 +524,9 @@
           </a>
           <a href="#servicios" class="flex-shrink-0 px-4 py-2 text-xs font-semibold text-gray-600 rounded-full whitespace-nowrap transition-all">
             SERVICIOS
+          </a>
+          <a href="#instalaciones" class="flex-shrink-0 px-4 py-2 text-xs font-semibold text-gray-600 rounded-full whitespace-nowrap transition-all">
+            INSTALACIONES
           </a>
           <a href="#horarios" class="flex-shrink-0 px-4 py-2 text-xs font-semibold text-gray-600 rounded-full whitespace-nowrap transition-all">
             HORARIOS
@@ -785,6 +961,107 @@
     </div>
   </section>
 
+  <!-- INSTALACIONES - SLIDESHOW -->
+  <section id="instalaciones" class="relative bg-gray-900">
+    <div class="instalaciones-slideshow h-full">
+      <!-- Slide 1 -->
+      <div class="instalaciones-slide active">
+        <img src="assets/images/IMG_7089.jpg" alt="Área de trampolines" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Área de Trampolines</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Más de 50 trampolines interconectados para saltos ilimitados</p>
+        </div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7097.jpg" alt="Zona de juegos" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Zona de Juegos</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Espacios seguros y divertidos para todas las edades</p>
+        </div>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7101.jpg" alt="Área infantil" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Área Infantil</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Diseñada especialmente para los más pequeños</p>
+        </div>
+      </div>
+
+      <!-- Slide 4 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7102.jpg" alt="Zona de actividades" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Zona de Actividades</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Variedad de juegos y desafíos para toda la familia</p>
+        </div>
+      </div>
+
+      <!-- Slide 5 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7103.jpg" alt="Pista de obstáculos" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Pista de Obstáculos</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Pon a prueba tu agilidad y equilibrio</p>
+        </div>
+      </div>
+
+      <!-- Slide 6 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7108.jpg" alt="Zona de saltos" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Zona de Saltos Libre</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Salta sin límites en nuestro espacio principal</p>
+        </div>
+      </div>
+
+      <!-- Slide 7 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7109.jpg" alt="Área de descanso" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Área de Descanso</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Zonas cómodas para recuperar energías</p>
+        </div>
+      </div>
+
+      <!-- Slide 8 -->
+      <div class="instalaciones-slide">
+        <img src="assets/images/IMG_7110.jpg" alt="Vista general" loading="lazy">
+        <div class="instalaciones-overlay"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
+          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Nuestras Instalaciones</h3>
+          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Un parque completo para disfrutar al máximo</p>
+        </div>
+      </div>
+
+      <!-- Controles de navegación -->
+      <button class="instalaciones-prev" aria-label="Anterior">❮</button>
+      <button class="instalaciones-next" aria-label="Siguiente">❯</button>
+
+      <!-- Dots indicadores -->
+      <div class="instalaciones-dots">
+        <span class="instalaciones-dot active" data-slide="0"></span>
+        <span class="instalaciones-dot" data-slide="1"></span>
+        <span class="instalaciones-dot" data-slide="2"></span>
+        <span class="instalaciones-dot" data-slide="3"></span>
+        <span class="instalaciones-dot" data-slide="4"></span>
+        <span class="instalaciones-dot" data-slide="5"></span>
+        <span class="instalaciones-dot" data-slide="6"></span>
+        <span class="instalaciones-dot" data-slide="7"></span>
+      </div>
+    </div>
+  </section>
+
   <!-- HORARIOS -->
   <section id="horarios" class="py-12 lg:py-20">
     <h2 class="text-3xl lg:text-5xl font-bold text-center mb-8 lg:mb-12">Horarios</h2>
@@ -1144,6 +1421,173 @@
         radius: 200
       }).addTo(map);
     });
+  </script>
+
+  <!-- SLIDESHOW DE INSTALACIONES -->
+  <script>
+    (function() {
+      let currentSlide = 0;
+      let slideInterval;
+      const slides = document.querySelectorAll('.instalaciones-slide');
+      const dots = document.querySelectorAll('.instalaciones-dot');
+      const prevBtn = document.querySelector('.instalaciones-prev');
+      const nextBtn = document.querySelector('.instalaciones-next');
+      
+      // Función para mostrar slide específico
+      function showSlide(index) {
+        // Asegurar que el índice esté en rango
+        if (index >= slides.length) {
+          currentSlide = 0;
+        } else if (index < 0) {
+          currentSlide = slides.length - 1;
+        } else {
+          currentSlide = index;
+        }
+        
+        // Ocultar todos los slides
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        // Mostrar slide actual
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+        
+        // Precargar imágenes cercanas
+        preloadNearbyImages(currentSlide);
+      }
+      
+      // Navegación siguiente
+      function nextSlide() {
+        showSlide(currentSlide + 1);
+      }
+      
+      // Navegación anterior
+      function prevSlide() {
+        showSlide(currentSlide - 1);
+      }
+      
+      // Auto-play cada 5 segundos
+      function startAutoPlay() {
+        slideInterval = setInterval(nextSlide, 5000);
+      }
+      
+      // Detener auto-play
+      function stopAutoPlay() {
+        clearInterval(slideInterval);
+      }
+      
+      // Event listeners para botones
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          prevSlide();
+          stopAutoPlay();
+          startAutoPlay(); // Reiniciar el timer
+        });
+      }
+      
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          nextSlide();
+          stopAutoPlay();
+          startAutoPlay(); // Reiniciar el timer
+        });
+      }
+      
+      // Event listeners para dots
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+          showSlide(index);
+          stopAutoPlay();
+          startAutoPlay(); // Reiniciar el timer
+        });
+      });
+      
+      // Pausar auto-play al pasar el mouse
+      const slideshowContainer = document.querySelector('.instalaciones-slideshow');
+      if (slideshowContainer) {
+        slideshowContainer.addEventListener('mouseenter', stopAutoPlay);
+        slideshowContainer.addEventListener('mouseleave', startAutoPlay);
+      }
+      
+      // Soporte para swipe en móvil
+      let touchStartX = 0;
+      let touchEndX = 0;
+      
+      if (slideshowContainer) {
+        slideshowContainer.addEventListener('touchstart', (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        slideshowContainer.addEventListener('touchend', (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+        }, { passive: true });
+      }
+      
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+          if (diff > 0) {
+            // Swipe izquierda - siguiente
+            nextSlide();
+          } else {
+            // Swipe derecha - anterior
+            prevSlide();
+          }
+          stopAutoPlay();
+          startAutoPlay();
+        }
+      }
+      
+      // Función para cargar imagen de forma progresiva
+      function loadImage(img, slideElement) {
+        if (!img.dataset.loaded) {
+          const imageLoader = new Image();
+          imageLoader.onload = function() {
+            img.src = this.src;
+            img.classList.add('loaded');
+            slideElement.classList.add('image-loaded');
+            img.dataset.loaded = 'true';
+          };
+          imageLoader.src = img.getAttribute('src');
+        }
+      }
+      
+      // Precargar imágenes cercanas al slide actual
+      function preloadNearbyImages(index) {
+        const indicesToLoad = [
+          index,
+          (index + 1) % slides.length,
+          (index + 2) % slides.length,
+          (index - 1 + slides.length) % slides.length
+        ];
+        
+        indicesToLoad.forEach(i => {
+          const slide = slides[i];
+          const img = slide.querySelector('img');
+          if (img) {
+            loadImage(img, slide);
+          }
+        });
+      }
+      
+      // Cargar primeras imágenes inmediatamente
+      preloadNearbyImages(0);
+      
+      // Iniciar auto-play al cargar
+      startAutoPlay();
+      
+      // Pausar cuando la ventana pierde foco
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          stopAutoPlay();
+        } else {
+          startAutoPlay();
+        }
+      });
+    })();
   </script>
 
 </body>

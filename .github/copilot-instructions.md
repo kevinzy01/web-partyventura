@@ -524,6 +524,118 @@ app.use((req, res, next) => {
 - `min-height` debe ser suficiente para la tarjeta con más contenido
 - Badges con `position: absolute` deben estar en tarjetas con `position: relative`
 
+## Sistema de Slideshow de Instalaciones
+
+**Implementado**: Slideshow full-width con auto-play y navegación manual en sección "Instalaciones".
+
+**Ubicación**: `/frontend/public/index.html` - Entre secciones "¿Qué Ofrecemos?" y "Horarios"
+
+**Características**:
+1. **8 slides** con imágenes de las instalaciones del parque
+2. **Auto-play** cada 5 segundos con pausa al interactuar
+3. **Navegación manual** con botones prev/next estilizados
+4. **Indicadores de puntos** (dots) con estado activo
+5. **Soporte táctil** (swipe) para dispositivos móviles
+6. **Texto superpuesto** con gradiente oscuro para legibilidad
+7. **Altura responsive**: 550px móvil, 800px desktop (controlado por CSS custom)
+8. **Lazy loading progresivo** para optimización
+9. **Animación slideIn** suave (0.8s ease-in-out)
+10. **Pausa automática** al perder foco o cambiar de pestaña
+
+**Estructura de Archivos**:
+- **Imágenes**: `/frontend/public/assets/images/IMG_*.jpg` (8 archivos)
+- **Originales**: `/frontend/public/assets/images/originales/` (backup sin comprimir)
+- **CSS**: Dentro de `<style>` en `<head>` del index.html (líneas ~314-463)
+- **HTML**: Sección `#instalaciones` (líneas ~937-1045)
+- **JavaScript**: IIFE antes de `</body>` (líneas ~1420-1595)
+
+**Optimizaciones de Carga**:
+1. **Preload** de primera imagen en `<head>` (carga instantánea)
+2. **Prefetch** de siguientes 2 imágenes (anticipación)
+3. **Lazy loading progresivo** de imágenes cercanas al slide actual
+4. **Compresión de imágenes** al 85% de calidad (reducción del 76%)
+5. **Placeholder con gradiente** mientras carga
+6. **Fade-in smooth** (opacity transition 0.5s)
+
+**Rendimiento**:
+- Tamaño original total: 26.61 MB
+- Tamaño comprimido total: 6.36 MB
+- Reducción: 76.1% (ahorro de 20.25 MB)
+- Máximo ancho: 1920px (optimizado para HD)
+
+**Contenido de Slides**:
+1. IMG_7089.jpg - "Área de Trampolines" - "Más de 50 trampolines interconectados"
+2. IMG_7097.jpg - "Zona de Juegos" - "Espacios seguros para todas las edades"
+3. IMG_7101.jpg - "Área Infantil" - "Diseñada para los más pequeños"
+4. IMG_7102.jpg - "Zona de Actividades" - "Variedad de juegos y desafíos"
+5. IMG_7103.jpg - "Pista de Obstáculos" - "Pon a prueba tu agilidad"
+6. IMG_7108.jpg - "Zona de Saltos Libre" - "Salta sin límites"
+7. IMG_7109.jpg - "Área de Descanso" - "Zonas cómodas para recuperar energías"
+8. IMG_7110.jpg - "Nuestras Instalaciones" - "Un parque completo"
+
+**CSS Classes Creadas**:
+- `.instalaciones-slideshow` - Contenedor principal
+- `.instalaciones-slide` - Slide individual
+- `.instalaciones-slide.active` - Slide activo con animación
+- `.instalaciones-slide img.loaded` - Imagen cargada con opacity 1
+- `.instalaciones-slide.image-loaded::before` - Oculta placeholder
+- `.instalaciones-overlay` - Gradiente para texto legible
+- `.instalaciones-prev/next` - Botones de navegación
+- `.instalaciones-dots` - Contenedor de indicadores
+- `.instalaciones-dot` - Indicador individual
+- `.instalaciones-dot.active` - Indicador activo
+- `#instalaciones` - Altura controlada por CSS (no Tailwind)
+
+**JavaScript Functions**:
+- `showSlide(index)` - Muestra slide específico y precarga cercanos
+- `nextSlide()` - Navega al siguiente
+- `prevSlide()` - Navega al anterior
+- `startAutoPlay()` - Inicia intervalo de 5 segundos
+- `stopAutoPlay()` - Detiene intervalo
+- `loadImage(img, slideElement)` - Carga progresiva con fade-in
+- `preloadNearbyImages(index)` - Precarga 4 imágenes cercanas
+- `handleSwipe()` - Detecta gestos táctiles
+
+**Event Listeners**:
+- Click en botones prev/next (reinicia auto-play)
+- Click en dots (salta a slide específico)
+- Hover en slideshow (pausa auto-play)
+- Mouse leave (reanuda auto-play)
+- Touch start/end (swipe gestures)
+- Visibility change (pausa al cambiar pestaña)
+
+**Navegación**:
+- Header desktop: Link "Instalaciones" entre "Servicios" y "Horarios" (línea ~461)
+- Header mobile: Link "INSTALACIONES" en navegación scrollable (línea ~490)
+
+**Script de Compresión**:
+- Ubicación: `/scripts/compress-images.ps1`
+- Uso: `.\scripts\compress-images.ps1`
+- Función: Comprime imágenes a 1920px máx, calidad 85%, guarda originales en backup
+- Tecnología: System.Drawing de .NET con HighQualityBicubic interpolation
+
+**Importante - Altura Responsive**:
+- **NO usar** clases Tailwind `h-[Npx]` o `lg:h-[Npx]` (no funcionan con CDN)
+- **SIEMPRE usar** CSS custom con media queries:
+  ```css
+  #instalaciones {
+    height: 550px;
+  }
+  
+  @media (min-width: 1024px) {
+    #instalaciones {
+      height: 800px;
+    }
+  }
+  ```
+
+**Problema Común - Modo Development en Ngrok**:
+Si el slideshow o la página en general muestra errores CORS al acceder vía Ngrok:
+1. Verificar `/frontend/src/js/modules/config.js`
+2. Cambiar `const MODE = 'development'` a `'production'`
+3. Esto hace que la app use la URL de Ngrok en vez de localhost
+4. Recargar página con Ctrl + Shift + R
+
 ## Información de Horarios del Local
 
 **Horarios Actuales** (actualizados octubre 2025):

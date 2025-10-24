@@ -5,7 +5,7 @@
 
 // === CONFIGURACIÓN DE ENTORNO ===
 // Cambia MODE entre 'development' y 'production'
-const MODE = 'development'; // Cambiar a 'production' cuando uses Ngrok
+const MODE = 'production'; // Cambiar a 'production' cuando uses Ngrok
 
 // Configuración de URLs
 const CONFIG_URLS = {
