@@ -453,6 +453,23 @@
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     }
     
+    /* Efecto de iluminación para iconos sincronizados */
+    .servicio-icon {
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .servicio-icon.active {
+      box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3) !important;
+      transform: scale(1.15) !important;
+      background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(249, 115, 22, 0.4)) !important;
+    }
+    
+    .servicio-icon:hover {
+      transform: scale(1.1);
+      cursor: pointer;
+    }
+    
     /* Responsive: ocultar flechas en móvil */
     @media (max-width: 640px) {
       .instalaciones-prev,
@@ -768,6 +785,7 @@
           <ul class="text-sm text-gray-700 space-y-2 mb-6 font-medium">
             <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Niño + Adulto juntos</li>
             <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Área infantil segura</li>
+            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Calcetines obligatorios (2€)</li>            
             <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Supervisión constante</li>
           </ul>
         </div>
@@ -921,42 +939,42 @@
   <!-- ¿QUÉ OFRECEMOS? -->
   <section id="servicios" class="py-12 lg:py-20 bg-gray-50">
     <h2 class="text-3xl lg:text-6xl font-bold text-center mb-8 lg:mb-16">¿Qué Ofrecemos?</h2>
-    <div class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10 px-4 lg:px-8">
-      <div class="text-center group">
-        <div class="w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl mx-auto mb-4 lg:mb-6 flex items-center justify-center shadow-md group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <span class="text-4xl lg:text-5xl">🏀</span>
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-center items-start gap-4 lg:gap-8 px-4 lg:px-8">
+      <div class="text-center group flex flex-col items-center" style="width: 100px;">
+        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="0">
+          <span class="text-3xl lg:text-4xl">🏀</span>
         </div>
-        <p class="text-sm lg:text-xl font-semibold text-gray-800">Trampolines profesionales</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Trampolines profesionales</p>
       </div>
-      <div class="text-center group">
-        <div class="w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mx-auto mb-4 lg:mb-6 flex items-center justify-center shadow-md group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <span class="text-4xl lg:text-5xl">🥷</span>
+      <div class="text-center group flex flex-col items-center" style="width: 100px;">
+        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="4">
+          <span class="text-3xl lg:text-4xl">🥷</span>
         </div>
-        <p class="text-sm lg:text-xl font-semibold text-gray-800">Zona Ninja Warrior</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Zona Ninja Warrior</p>
       </div>
-      <div class="text-center group">
-        <div class="w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-2xl mx-auto mb-4 lg:mb-6 flex items-center justify-center shadow-md group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <span class="text-4xl lg:text-5xl">🌊</span>
+      <div class="text-center group flex flex-col items-center" style="width: 100px;">
+        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="1">
+          <span class="text-3xl lg:text-4xl">🌊</span>
         </div>
-        <p class="text-sm lg:text-xl font-semibold text-gray-800">Piscina de foam</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Piscina de foam</p>
       </div>
-      <div class="text-center group">
-        <div class="w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mx-auto mb-4 lg:mb-6 flex items-center justify-center shadow-md group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <span class="text-4xl lg:text-5xl">👶</span>
+      <div class="text-center group flex flex-col items-center" style="width: 100px;">
+        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="2">
+          <span class="text-3xl lg:text-4xl">👶</span>
         </div>
-        <p class="text-sm lg:text-xl font-semibold text-gray-800">Área infantil segura</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Área infantil segura</p>
       </div>
-      <div class="text-center group">
-        <div class="w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mx-auto mb-4 lg:mb-6 flex items-center justify-center shadow-md group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <span class="text-4xl lg:text-5xl">👨‍🏫</span>
+      <div class="text-center group flex flex-col items-center" style="width: 100px;">
+        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
+          <span class="text-3xl lg:text-4xl">👨‍🏫</span>
         </div>
-        <p class="text-sm lg:text-xl font-semibold text-gray-800">Monitores cualificados</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Monitores cualificados</p>
       </div>
-      <div class="text-center group">
-        <div class="w-20 h-20 lg:w-28 lg:h-28 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mx-auto mb-4 lg:mb-6 flex items-center justify-center shadow-md group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <span class="text-4xl lg:text-5xl">🎂</span>
+      <div class="text-center group flex flex-col items-center" style="width: 100px;">
+        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
+          <span class="text-3xl lg:text-4xl">🎂</span>
         </div>
-        <p class="text-sm lg:text-xl font-semibold text-gray-800">Salas de cumpleaños</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Salas de cumpleaños</p>
       </div>
     </div>
   </section>
@@ -1432,6 +1450,21 @@
       const dots = document.querySelectorAll('.instalaciones-dot');
       const prevBtn = document.querySelector('.instalaciones-prev');
       const nextBtn = document.querySelector('.instalaciones-next');
+      const servicioIcons = document.querySelectorAll('.servicio-icon');
+      
+      // Función para actualizar iconos activos según el slide actual
+      function updateActiveIcons() {
+        // Limpiar todos los iconos
+        servicioIcons.forEach(icon => icon.classList.remove('active'));
+        
+        // Activar el icono correspondiente al slide actual
+        servicioIcons.forEach(icon => {
+          const linkedSlide = icon.getAttribute('data-slide');
+          if (linkedSlide !== 'null' && parseInt(linkedSlide) === currentSlide) {
+            icon.classList.add('active');
+          }
+        });
+      }
       
       // Función para mostrar slide específico
       function showSlide(index) {
@@ -1451,6 +1484,9 @@
         // Mostrar slide actual
         slides[currentSlide].classList.add('active');
         dots[currentSlide].classList.add('active');
+        
+        // Actualizar iconos activos
+        updateActiveIcons();
         
         // Precargar imágenes cercanas
         preloadNearbyImages(currentSlide);
@@ -1499,6 +1535,34 @@
           showSlide(index);
           stopAutoPlay();
           startAutoPlay(); // Reiniciar el timer
+        });
+      });
+      
+      // Event listeners para iconos de servicios
+      servicioIcons.forEach(icon => {
+        icon.addEventListener('click', () => {
+          const linkedSlide = icon.getAttribute('data-slide');
+          
+          // Solo navegar si el icono tiene un slide vinculado
+          if (linkedSlide !== 'null') {
+            const slideIndex = parseInt(linkedSlide);
+            
+            // Scroll suave a la sección de instalaciones
+            const instalacionesSection = document.getElementById('instalaciones');
+            if (instalacionesSection) {
+              instalacionesSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+              });
+            }
+            
+            // Cambiar al slide correspondiente después de un pequeño delay
+            setTimeout(() => {
+              showSlide(slideIndex);
+              stopAutoPlay();
+              startAutoPlay(); // Reiniciar el timer
+            }, 600); // Delay para permitir que el scroll termine
+          }
         });
       });
       
@@ -1575,6 +1639,9 @@
       
       // Cargar primeras imágenes inmediatamente
       preloadNearbyImages(0);
+      
+      // Activar icono inicial
+      updateActiveIcons();
       
       // Iniciar auto-play al cargar
       startAutoPlay();

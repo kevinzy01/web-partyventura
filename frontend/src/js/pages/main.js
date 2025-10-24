@@ -4,61 +4,10 @@
 // ===================================
 
 // ===================================
-// 0. CARGAR HORARIOS Y TARIFAS DESDE EL BACKEND
+// 0. CARGAR TARIFAS DESDE EL BACKEND
 // ===================================
 
 // API_URL ya está definido en config.js, no lo redeclaramos aquí
-
-// Cargar horarios de la base de datos
-async function loadSchedules() {
-  try {
-    const response = await fetch(`${API_URL}/schedules/public?type=horario`);
-    const data = await response.json();
-    
-    if (!data.success || !data.data || data.data.length === 0) {
-      console.log('No hay horarios configurados, usando datos por defecto');
-      return;
-    }
-    
-    // Renderizar horarios en la tabla
-    const schedules = data.data.filter(s => s.isActive);
-    const horariosSection = document.querySelector('#horarios .divide-y');
-    
-    if (!horariosSection) {
-      console.warn('No se encontró la sección de horarios');
-      return;
-    }
-    
-    // Limpiar horarios actuales
-    horariosSection.innerHTML = '';
-    
-    // Renderizar cada horario
-    schedules.forEach(schedule => {
-      const daysText = schedule.days && schedule.days.length > 0 
-        ? schedule.days.join(', ')
-        : schedule.title;
-      
-      const timeText = schedule.openTime && schedule.closeTime
-        ? `${schedule.openTime} - ${schedule.closeTime}`
-        : schedule.description || '-';
-      
-      const row = document.createElement('div');
-      row.className = 'flex';
-      row.innerHTML = `
-        <div class="w-2/5 p-3 lg:p-5 text-center lg:text-lg">${daysText}</div>
-        <div class="w-3/5 p-3 lg:p-5 text-center lg:text-lg">${timeText}</div>
-      `;
-      
-      horariosSection.appendChild(row);
-    });
-    
-    console.log(`✅ ${schedules.length} horarios cargados desde la base de datos`);
-    
-  } catch (error) {
-    console.error('Error al cargar horarios:', error);
-    console.log('Se mantendrán los horarios por defecto del HTML');
-  }
-}
 
 // Cargar tarifas de la base de datos
 async function loadTarifas() {
@@ -1218,8 +1167,7 @@ function initCalendar() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Partyventura website loaded');
   
-  // Cargar horarios y tarifas desde el backend
-  loadSchedules();
+  // Cargar tarifas desde el backend
   loadTarifas();
   
   // Inicializar todos los módulos

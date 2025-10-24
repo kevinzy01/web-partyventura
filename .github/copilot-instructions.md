@@ -636,6 +636,154 @@ Si el slideshow o la página en general muestra errores CORS al acceder vía Ngr
 3. Esto hace que la app use la URL de Ngrok en vez de localhost
 4. Recargar página con Ctrl + Shift + R
 
+## Sincronización Bidireccional Iconos ↔ Slideshow
+
+**Implementado**: Sistema de vinculación interactiva entre iconos de servicios y slideshow de instalaciones.
+
+**Funcionalidad:**
+
+### **1. Click en Icono → Navega al Slide**
+- Al hacer click en un icono de "¿Qué Ofrecemos?", se navega automáticamente al slide correspondiente
+- Scroll suave a la sección de instalaciones con `scrollIntoView({ behavior: 'smooth', block: 'center' })`
+- Delay coordinado de 600ms para permitir que el scroll termine antes de cambiar el slide
+- Se reinicia el auto-play timer tras la interacción
+
+### **2. Slide Activo → Ilumina Icono**
+- Cuando un slide está activo en el slideshow, su icono correspondiente se ilumina automáticamente
+- Efecto visual:
+  - Glow naranja suave: `box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3)`
+  - Scale aumentado a 1.15x
+  - Gradiente de fondo semi-transparente naranja
+- Se actualiza en cada cambio de slide (manual, auto-play, swipe, dots)
+
+### **3. Mapeo de Servicios a Slides**
+```javascript
+// Atributo data-slide en cada icono
+🏀 Trampolines profesionales → data-slide="0" → Slide 0 (Área de Trampolines)
+🥷 Zona Ninja Warrior      → data-slide="4" → Slide 4 (Pista de Obstáculos)
+🌊 Piscina de foam         → data-slide="1" → Slide 1 (Zona de Juegos)
+👶 Área infantil segura    → data-slide="2" → Slide 2 (Área Infantil)
+👨‍🏫 Monitores cualificados  → data-slide="null" → Sin vinculación (servicio)
+🎂 Salas de cumpleaños     → data-slide="null" → Sin vinculación (servicio)
+```
+
+### **4. CSS Implementado**
+```css
+/* Clase base para iconos */
+.servicio-icon {
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estado activo cuando slide correspondiente está visible */
+.servicio-icon.active {
+  box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3) !important;
+  transform: scale(1.15) !important;
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(249, 115, 22, 0.4)) !important;
+}
+
+/* Hover sutil */
+.servicio-icon:hover {
+  transform: scale(1.1);
+  cursor: pointer;
+}
+```
+
+### **5. JavaScript Implementado**
+
+**Función principal:**
+```javascript
+function updateActiveIcons() {
+  // Limpiar todos los iconos
+  servicioIcons.forEach(icon => icon.classList.remove('active'));
+  
+  // Activar el icono correspondiente al slide actual
+  servicioIcons.forEach(icon => {
+    const linkedSlide = icon.getAttribute('data-slide');
+    if (linkedSlide !== 'null' && parseInt(linkedSlide) === currentSlide) {
+      icon.classList.add('active');
+    }
+  });
+}
+```
+
+**Event listeners:**
+```javascript
+// Click en icono navega al slide
+servicioIcons.forEach(icon => {
+  icon.addEventListener('click', () => {
+    const linkedSlide = icon.getAttribute('data-slide');
+    if (linkedSlide !== 'null') {
+      const slideIndex = parseInt(linkedSlide);
+      
+      // Scroll suave
+      instalacionesSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Cambiar slide con delay
+      setTimeout(() => {
+        showSlide(slideIndex);
+        stopAutoPlay();
+        startAutoPlay();
+      }, 600);
+    }
+  });
+});
+```
+
+**Integración con showSlide:**
+```javascript
+function showSlide(index) {
+  // ... código existente ...
+  
+  // Actualizar iconos activos
+  updateActiveIcons();
+  
+  // Precargar imágenes cercanas
+  preloadNearbyImages(currentSlide);
+}
+```
+
+### **6. Diseño de Iconos**
+
+**Tamaños:**
+- Móvil: `w-16 h-16` (64px)
+- Desktop: `w-20 h-20` (80px)
+- Emoji: `text-3xl lg:text-4xl`
+
+**Layout:**
+- Flexbox con `flex-wrap` para responsividad
+- `justify-center` para centrado horizontal
+- `items-start` para alineación superior
+- Ancho fijo: `width: 100px` por item (consistencia)
+- `flex-shrink-0` en iconos para evitar compresión
+
+**Estructura HTML:**
+```html
+<div class="... flex flex-wrap justify-center items-start ...">
+  <div class="... flex flex-col items-center" style="width: 100px;">
+    <div class="servicio-icon ... flex-shrink-0" data-slide="0">
+      <span>🏀</span>
+    </div>
+    <p>Trampolines profesionales</p>
+  </div>
+</div>
+```
+
+### **7. Buenas Prácticas Aplicadas**
+- ✅ IIFE para scope isolation en slideshow
+- ✅ Event delegation donde aplica
+- ✅ Transiciones CSS suaves con cubic-bezier
+- ✅ Código autodocumentado con nombres descriptivos
+- ✅ Sin dependencias externas
+- ✅ Performance: `updateActiveIcons()` solo actualiza cuando necesario
+- ✅ Accesibilidad: Cursor pointer y estados hover claros
+
+### **8. Notas de Implementación**
+- Los iconos sin vinculación (`data-slide="null"`) no son clickeables para slideshow
+- El delay de 600ms en el click está calibrado para el scroll suave
+- La función `updateActiveIcons()` se llama en la inicialización para activar el primer icono
+- El sistema es totalmente independiente del auto-play del slideshow
+
 ## Información de Horarios del Local
 
 **Horarios Actuales** (actualizados octubre 2025):
@@ -643,11 +791,19 @@ Si el slideshow o la página en general muestra errores CORS al acceder vía Ngr
 - **Viernes a Domingo**: 10:00 - 22:00
 - **Vísperas de Festivo y Festivos**: 10:00 - 22:00
 
-**Ubicaciones en el código**:
-1. Sección "Horarios" (tabla): `/frontend/public/index.html` líneas 761-774
-2. Sección "¿Dónde Estamos?" (footer): `/frontend/public/index.html` línea 935
+**Implementación**: 
+- ✅ **Horarios 100% estáticos** en HTML (no se cargan desde BD)
+- ❌ Función `loadSchedules()` **eliminada completamente** de `main.js`
+- ✅ Tarifas siguen siendo dinámicas vía `loadTarifas()`
 
-**Importante**: Al actualizar horarios, verificar ambas ubicaciones para mantener consistencia.
+**Ubicaciones en el código**:
+1. Sección "Horarios" (tabla): `/frontend/public/index.html` líneas ~1091-1103
+2. Sección "¿Dónde Estamos?" (footer): `/frontend/public/index.html` línea ~1350
+
+**Importante**: 
+- Al actualizar horarios, verificar ambas ubicaciones para mantener consistencia
+- NO intentar cargar horarios desde la API - son estáticos por diseño
+- Si se necesita funcionalidad dinámica en el futuro, reimplementar `loadSchedules()`
 
 ## Archivos Clave para Contexto
 
