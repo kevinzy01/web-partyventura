@@ -1083,6 +1083,74 @@ mobileNavLinks.forEach(link => {
 - ✅ **Sin resaltado**: Enlaces móviles no quedan "pegados" tras click
 - ✅ **UX mejorado**: Títulos siempre visibles con espacio superior
 
+## Sistema de Carousel de Tarifas (3 Dots)
+
+**Implementado**: Carousel horizontal con navegación por posiciones fijas (octubre 2025).
+
+**Arquitectura Simple**:
+- **3 Dots Fijos**: Inicio (0%), Medio (50%), Fin (100%)
+- **7 Tarjetas**: Scroll horizontal con snap opcional
+- **Auto-scroll**: Cada 4 segundos entre posiciones
+- **Detección Manual**: Actualiza dots según porcentaje de scroll
+
+**Ubicación**: `/frontend/src/js/pages/main.js` - Función `initCarousel()` (líneas ~1-135)
+
+**Lógica de Dots**:
+```javascript
+// Generación de 3 dots fijos
+const dotPositions = ['start', 'middle', 'end'];
+
+// Actualización basada en porcentaje de scroll
+if (scrollLeft < scrollWidth * 0.33) {
+  newDotIndex = 0; // start
+} else if (scrollLeft < scrollWidth * 0.66) {
+  newDotIndex = 1; // middle
+} else {
+  newDotIndex = 2; // end
+}
+```
+
+**Navegación por Click**:
+```javascript
+function scrollToPosition(position) {
+  const scrollWidth = cardContainer.scrollWidth - cardContainer.offsetWidth;
+  let scrollTarget = 0;
+  
+  if (position === 'start') {
+    scrollTarget = 0;
+  } else if (position === 'middle') {
+    scrollTarget = scrollWidth / 2;
+  } else if (position === 'end') {
+    scrollTarget = scrollWidth;
+  }
+  
+  cardContainer.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+}
+```
+
+**Event Listeners**:
+- **Click en dots**: Navega a posición específica
+- **Scroll manual**: Actualiza dot activo con debounce de 150ms
+- **Hover en contenedor**: Pausa auto-scroll permanentemente
+- **Touch en móvil**: Pausa auto-scroll al detectar gesto
+
+**Auto-scroll**:
+- Intervalo de 4 segundos
+- Se pausa al hover o touch del usuario
+- Usa flag `userInteracted` para prevenir reinicio
+
+**Características**:
+- ✅ **Simplicidad**: Solo 3 estados posibles (inicio/medio/fin)
+- ✅ **Robustez**: Sin cálculos complejos de proximidad
+- ✅ **UX**: Dots siempre se actualizan correctamente
+- ✅ **Performance**: Debounce para evitar updates excesivos
+- ✅ **Responsive**: Funciona en mobile y desktop
+
+**Importante**:
+- NO usar más de 3 dots - la lógica está diseñada para posiciones fijas
+- Si se necesitan más dots, hay que reimplementar con lógica de proximidad
+- El auto-scroll se detiene permanentemente tras interacción del usuario
+
 ## Información de Horarios del Local
 
 **Horarios Actuales** (actualizados octubre 2025):

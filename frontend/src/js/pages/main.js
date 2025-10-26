@@ -8,34 +8,43 @@
 // ===================================
 function initCarousel() {
   const cardContainer = document.getElementById('cardContainer');
-  if (!cardContainer) return;
-  
-  const cards = cardContainer.querySelectorAll('article');
-  if (cards.length === 0) return;
-  
-  const dotsContainer = document.getElementById('dots');
-  if (!dotsContainer) return;
-  
-  // Generar dots dinámicamente según el número de tarjetas
-  dotsContainer.innerHTML = '';
-  const numDots = Math.min(Math.ceil(cards.length / 3), 5); // Máximo 5 dots
-  
-  for (let i = 0; i < numDots; i++) {
-    const dot = document.createElement('span');
-    dot.className = `dot w-3 h-3 lg:w-4 lg:h-4 ${i === 0 ? 'bg-orange-500' : 'bg-gray-300'} rounded-full transition-all duration-300 cursor-pointer hover:scale-125`;
-    dot.dataset.index = i;
-    dotsContainer.appendChild(dot);
+  if (!cardContainer) {
+    console.warn('Card container not found');
+    return;
   }
   
+  const cards = cardContainer.querySelectorAll('article');
+  if (cards.length === 0) {
+    console.warn('No cards found in container');
+    return;
+  }
+  
+  const dotsContainer = document.getElementById('dots');
+  if (!dotsContainer) {
+    console.warn('Dots container not found');
+    return;
+  }
+  
+  // Generar dots: 3 dots fijos (start, middle, end)
+  dotsContainer.innerHTML = '';
+  const dotPositions = ['start', 'middle', 'end'];
+  
+  dotPositions.forEach((position, idx) => {
+    const dot = document.createElement('span');
+    dot.className = `dot w-3 h-3 lg:w-4 lg:h-4 ${idx === 0 ? 'bg-orange-500' : 'bg-gray-300'} rounded-full transition-all duration-300 cursor-pointer hover:scale-125`;
+    dot.dataset.position = position;
+    dotsContainer.appendChild(dot);
+  });
+  
   const dots = dotsContainer.querySelectorAll('.dot');
-  let currentIndex = 0;
+  let currentDotIndex = 0;
   let autoScrollInterval;
-  let userInteracted = false; // Flag para detectar interacción del usuario
+  let userInteracted = false;
 
-  // Function to update active dot
-  function updateDots() {
-    dots.forEach((dot, index) => {
-      if (index === currentIndex) {
+  // Actualizar dots activos
+  function updateDots(index) {
+    dots.forEach((dot, i) => {
+      if (i === index) {
         dot.classList.remove('bg-gray-300');
         dot.classList.add('bg-orange-500');
       } else {
@@ -43,87 +52,95 @@ function initCarousel() {
         dot.classList.add('bg-gray-300');
       }
     });
+    currentDotIndex = index;
   }
 
-  // Function to scroll to specific card
-  function scrollToCard(index) {
-    // Calcular el scroll necesario basado en el ancho de las tarjetas visibles
-    const cardWidth = cards[0].offsetWidth;
-    const gap = 16; // gap entre tarjetas (space-x-4 = 1rem = 16px en lg, space-x-6 = 1.5rem = 24px)
-    const actualGap = window.innerWidth >= 1024 ? 24 : 16;
+  // Scroll a una posición específica
+  function scrollToPosition(position) {
+    const scrollWidth = cardContainer.scrollWidth - cardContainer.offsetWidth;
+    let scrollTarget = 0;
     
-    // Scroll suave hacia la tarjeta
-    const scrollPosition = index * (cardWidth + actualGap);
+    if (position === 'start') {
+      scrollTarget = 0;
+    } else if (position === 'middle') {
+      scrollTarget = scrollWidth / 2;
+    } else if (position === 'end') {
+      scrollTarget = scrollWidth;
+    }
+    
     cardContainer.scrollTo({
-      left: scrollPosition,
+      left: scrollTarget,
       behavior: 'smooth'
     });
-    
-    currentIndex = index;
-    updateDots();
   }
 
-  // Auto scroll function
+  // Click en dots
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      userInteracted = true;
+      stopAutoScroll();
+      const position = dot.dataset.position;
+      scrollToPosition(position);
+      updateDots(index);
+    });
+  });
+
+  // Auto scroll
   function autoScroll() {
-    currentIndex = (currentIndex + 1) % dots.length; // Usar dots.length en lugar de cards.length
-    scrollToCard(currentIndex);
+    currentDotIndex = (currentDotIndex + 1) % dots.length;
+    const position = dotPositions[currentDotIndex];
+    scrollToPosition(position);
+    updateDots(currentDotIndex);
   }
 
-  // Start auto scroll
   function startAutoScroll() {
     if (!userInteracted) {
-      autoScrollInterval = setInterval(autoScroll, 4000); // Change card every 4 seconds
+      autoScrollInterval = setInterval(autoScroll, 4000);
     }
   }
 
-  // Stop auto scroll
   function stopAutoScroll() {
     clearInterval(autoScrollInterval);
   }
 
-  // Add click listeners to dots
-  dots.forEach((dot, index) => {
-    dot.addEventListener('click', () => {
-      userInteracted = true; // Marcar que el usuario interactuó
-      stopAutoScroll();
-      scrollToCard(index);
-    });
-  });
-
-  // Pause auto scroll on hover (permanentemente)
+  // Pausar al hover
   cardContainer.addEventListener('mouseenter', () => {
-    userInteracted = true; // Marcar que el usuario interactuó
+    userInteracted = true;
     stopAutoScroll();
   });
 
-  // Handle manual scroll to update dots and stop auto scroll
+  // Detectar scroll manual y actualizar dots
   let scrollTimeout;
   cardContainer.addEventListener('scroll', () => {
-    const cardWidth = cards[0].offsetWidth;
-    const actualGap = window.innerWidth >= 1024 ? 24 : 16;
-    const scrollIndex = Math.round(cardContainer.scrollLeft / (cardWidth + actualGap));
-    
-    // Clear previous timeout
     clearTimeout(scrollTimeout);
     
-    // Detectar si es scroll manual del usuario
     scrollTimeout = setTimeout(() => {
-      if (scrollIndex !== currentIndex && scrollIndex >= 0 && scrollIndex < dots.length) {
-        userInteracted = true; // Marcar que el usuario interactuó
-        stopAutoScroll();
-        currentIndex = scrollIndex;
-        updateDots();
+      const scrollLeft = cardContainer.scrollLeft;
+      const scrollWidth = cardContainer.scrollWidth - cardContainer.offsetWidth;
+      
+      let newDotIndex = 0;
+      
+      if (scrollLeft < scrollWidth * 0.33) {
+        newDotIndex = 0; // start
+      } else if (scrollLeft < scrollWidth * 0.66) {
+        newDotIndex = 1; // middle
+      } else {
+        newDotIndex = 2; // end
       }
-    }, 50);
+      
+      if (newDotIndex !== currentDotIndex) {
+        updateDots(newDotIndex);
+      }
+    }, 150);
   });
 
-  // Detectar touch/swipe en móviles
+  // Touch en móvil
   cardContainer.addEventListener('touchstart', () => {
-    userInteracted = true; // Marcar que el usuario interactuó
+    userInteracted = true;
     stopAutoScroll();
   });
 
-  // Start auto scroll when carousel is initialized
+  // Iniciar auto scroll
   startAutoScroll();
   
   // Forzar overflow correcto: horizontal con scroll, vertical visible para hover

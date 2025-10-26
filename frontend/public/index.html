@@ -1208,7 +1208,7 @@
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">SpiderWall</h3>
-          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Desafía la gravedad, pega tu mejor salto!</p>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Salta alto, quédate pegado!</p>
         </div>
       </div>
 
@@ -1851,20 +1851,28 @@
             // Verificar que slideIndex es válido
             if (isNaN(slideIndex)) return;
             
-            // Scroll suave a la sección de instalaciones
-            const instalacionesSection = document.getElementById('instalaciones');
-            if (instalacionesSection) {
-              instalacionesSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-              });
-            }
-            
-            // Cambiar al slide correspondiente después de un pequeño delay
-            setTimeout(() => {
+            // En desktop: solo cambiar slide, NO hacer scroll
+            // En móvil: cambiar slide Y hacer scroll a instalaciones
+            if (window.innerWidth < 1024) {
+              // Móvil: Scroll suave a la sección de instalaciones
+              const instalacionesSection = document.getElementById('instalaciones');
+              if (instalacionesSection) {
+                instalacionesSection.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center' 
+                });
+              }
+              
+              // Cambiar al slide correspondiente después de un pequeño delay
+              setTimeout(() => {
+                showSlide(slideIndex);
+                startAutoPlay(); // Reiniciar el timer
+              }, 600); // Delay para permitir que el scroll termine
+            } else {
+              // Desktop: Solo cambiar el slide, sin scroll
               showSlide(slideIndex);
               startAutoPlay(); // Reiniciar el timer
-            }, 600); // Delay para permitir que el scroll termine
+            }
           }
         });
       });
