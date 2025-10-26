@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -21,6 +21,36 @@
   <link rel="prefetch" href="assets/images/IMG_7101.jpg" as="image" />
   
   <style>
+    /* Scroll suave en toda la página */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Ajustar scroll para compensar header sticky */
+    /* El header tiene altura de 80px (h-20) en mobile y 96px (h-24) en desktop */
+    section {
+      scroll-margin-top: 100px; /* Móvil: 80px header + 20px espacio extra */
+    }
+    
+    @media (min-width: 1024px) {
+      section {
+        scroll-margin-top: 120px; /* Desktop: 96px header + 24px espacio extra */
+      }
+    }
+    
+    /* Eliminar resaltado táctil en enlaces del header móvil */
+    .lg\:hidden nav a {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    /* Remover estado de foco visual en móvil después de click */
+    .lg\:hidden nav a:focus {
+      outline: none;
+    }
+    
     /* Ocultar scrollbar en el carousel pero mantener funcionalidad */
     .scrollbar-hide {
       -ms-overflow-style: none;  /* IE y Edge */
@@ -457,6 +487,16 @@
     .servicio-icon {
       cursor: pointer;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      /* Forzar tamaño cuadrado en desktop */
+      width: 64px;
+      height: 64px;
+    }
+    
+    @media (min-width: 1024px) {
+      .servicio-icon {
+        width: 96px;
+        height: 96px;
+      }
     }
     
     .servicio-icon.active {
@@ -468,6 +508,73 @@
     .servicio-icon:hover {
       transform: scale(1.1);
       cursor: pointer;
+    }
+    
+    /* Stack de cartas en móvil */
+    @media (max-width: 1023px) {
+      #servicios-stack {
+        position: relative;
+        height: 160px;
+        width: 100%;
+        max-width: 320px; /* Aumentado para mostrar cartas laterales */
+        margin: 0 auto;
+        perspective: 1000px;
+        overflow: visible; /* Permitir ver cartas que se salen */
+      }
+      
+      .servicio-card {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 160px;
+        opacity: 0;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1;
+        background: white;
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        pointer-events: auto; /* Permitir clics */
+        cursor: pointer; /* Indicar que es clickeable */
+      }
+      
+      .servicio-card.active {
+        opacity: 1;
+        z-index: 10;
+        transform: translateX(-50%) translateY(0) scale(1) rotateY(0deg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+      
+      /* Efecto hover solo en carta activa */
+      .servicio-card.active:hover {
+        transform: translateX(-50%) translateY(-5px) scale(1.02) rotateY(0deg);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      }
+      
+      .servicio-card.prev {
+        opacity: 0.5; /* Más visible */
+        z-index: 9;
+        transform: translateX(-140%) translateY(0) scale(0.85) rotateY(8deg); /* A la izquierda */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      
+      .servicio-card.next {
+        opacity: 0.5; /* Más visible */
+        z-index: 8;
+        transform: translateX(40%) translateY(0) scale(0.85) rotateY(-8deg); /* A la derecha */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      
+      #servicios-desktop {
+        display: none;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      #servicios-stack {
+        display: none;
+      }
     }
     
     /* Responsive: ocultar flechas en móvil */
@@ -937,41 +1044,134 @@
   </section>
 
   <!-- ¿QUÉ OFRECEMOS? -->
-  <section id="servicios" class="py-12 lg:py-20 bg-gray-50">
+  <section id="servicios" class="py-6 lg:py-20 bg-gray-50">
     <h2 class="text-3xl lg:text-6xl font-bold text-center mb-8 lg:mb-16">¿Qué Ofrecemos?</h2>
-    <div class="max-w-7xl mx-auto flex flex-wrap justify-center items-start gap-4 lg:gap-8 px-4 lg:px-8">
-      <div class="text-center group flex flex-col items-center" style="width: 100px;">
-        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="0">
+    
+    <!-- Stack de cartas para móvil -->
+    <div id="servicios-stack">
+      <!-- Card 0: ExploraKids -->
+      <div class="servicio-card active" data-card-index="0">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">🧗</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">ExploraKids</p>
+        </div>
+      </div>
+      
+      <!-- Card 1: Slam Zone -->
+      <div class="servicio-card" data-card-index="1">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">🏀</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">Slam Zone</p>
+        </div>
+      </div>
+      
+      <!-- Card 2: SpiderWall -->
+      <div class="servicio-card" data-card-index="2">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-red-100 to-red-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">🧗‍♂️</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">SpiderWall</p>
+        </div>
+      </div>
+      
+      <!-- Card 3: Tap Arena -->
+      <div class="servicio-card" data-card-index="3">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">⚡</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">Tap Arena</p>
+        </div>
+      </div>
+      
+      <!-- Card 4: Freestyle Area -->
+      <div class="servicio-card" data-card-index="4">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">🤸</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">Freestyle Area</p>
+        </div>
+      </div>
+      
+      <!-- Card 5: Slide Rush -->
+      <div class="servicio-card" data-card-index="5">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">🎢</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">Slide Rush</p>
+        </div>
+      </div>
+      
+      <!-- Card 6: Zona Ninja Warrior -->
+      <div class="servicio-card" data-card-index="6">
+        <div class="text-center flex flex-col items-center">
+          <div class="servicio-icon bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">🥷</span>
+          </div>
+          <p class="text-sm font-bold text-gray-800 mt-2">Zona Ninja Warrior</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Grid para desktop -->
+    <div id="servicios-desktop" class="container mx-auto flex flex-wrap justify-center items-start gap-6 lg:gap-12 px-6 lg:px-12">
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="0">
+          <span class="text-3xl lg:text-4xl">🧗</span>
+        </div>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">ExploraKids</p>
+      </div>
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="1">
           <span class="text-3xl lg:text-4xl">🏀</span>
         </div>
-        <p class="text-xs lg:text-sm font-semibold text-gray-800">Trampolines profesionales</p>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Slam Zone</p>
       </div>
-      <div class="text-center group flex flex-col items-center" style="width: 100px;">
-        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="4">
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-red-100 to-red-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="2">
+          <span class="text-3xl lg:text-4xl">🧗‍♂️</span>
+        </div>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">SpiderWall</p>
+      </div>
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="3">
+          <span class="text-3xl lg:text-4xl">⚡</span>
+        </div>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Tap Arena</p>
+      </div>
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="4">
+          <span class="text-3xl lg:text-4xl">🤸</span>
+        </div>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Freestyle Area</p>
+      </div>
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="5">
+          <span class="text-3xl lg:text-4xl">🎢</span>
+        </div>
+        <p class="text-xs lg:text-sm font-semibold text-gray-800">Slide Rush</p>
+      </div>
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="6">
           <span class="text-3xl lg:text-4xl">🥷</span>
         </div>
         <p class="text-xs lg:text-sm font-semibold text-gray-800">Zona Ninja Warrior</p>
       </div>
-      <div class="text-center group flex flex-col items-center" style="width: 100px;">
-        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="1">
-          <span class="text-3xl lg:text-4xl">🌊</span>
-        </div>
-        <p class="text-xs lg:text-sm font-semibold text-gray-800">Piscina de foam</p>
-      </div>
-      <div class="text-center group flex flex-col items-center" style="width: 100px;">
-        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="2">
-          <span class="text-3xl lg:text-4xl">👶</span>
-        </div>
-        <p class="text-xs lg:text-sm font-semibold text-gray-800">Área infantil segura</p>
-      </div>
-      <div class="text-center group flex flex-col items-center" style="width: 100px;">
-        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
           <span class="text-3xl lg:text-4xl">👨‍🏫</span>
         </div>
         <p class="text-xs lg:text-sm font-semibold text-gray-800">Monitores cualificados</p>
       </div>
-      <div class="text-center group flex flex-col items-center" style="width: 100px;">
-        <div class="servicio-icon w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
+      <div class="text-center group flex flex-col items-center" style="width: 110px;">
+        <div class="servicio-icon bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
           <span class="text-3xl lg:text-4xl">🎂</span>
         </div>
         <p class="text-xs lg:text-sm font-semibold text-gray-800">Salas de cumpleaños</p>
@@ -986,9 +1186,9 @@
       <div class="instalaciones-slide active">
         <img src="assets/images/IMG_7089.jpg" alt="Área de trampolines" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Área de Trampolines</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Más de 50 trampolines interconectados para saltos ilimitados</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">ExploraKids</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Descubre, escala y juega sin parar!</p>
         </div>
       </div>
 
@@ -996,9 +1196,9 @@
       <div class="instalaciones-slide">
         <img src="assets/images/IMG_7097.jpg" alt="Zona de juegos" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Zona de Juegos</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Espacios seguros y divertidos para todas las edades</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Slam Zone</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Salta, vuela... ¡y encensta sin límites!</p>
         </div>
       </div>
 
@@ -1006,9 +1206,9 @@
       <div class="instalaciones-slide">
         <img src="assets/images/IMG_7101.jpg" alt="Área infantil" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Área Infantil</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Diseñada especialmente para los más pequeños</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">SpiderWall</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Desafía la gravedad, pega tu mejor salto!</p>
         </div>
       </div>
 
@@ -1016,9 +1216,9 @@
       <div class="instalaciones-slide">
         <img src="assets/images/IMG_7102.jpg" alt="Zona de actividades" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Zona de Actividades</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Variedad de juegos y desafíos para toda la familia</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Tap Arena</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Salta, toca, ¡gana a la velocidad de la luz!</p>
         </div>
       </div>
 
@@ -1026,9 +1226,9 @@
       <div class="instalaciones-slide">
         <img src="assets/images/IMG_7103.jpg" alt="Pista de obstáculos" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Pista de Obstáculos</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Pon a prueba tu agilidad y equilibrio</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Freestyle Area</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Perfecciona tu salto, desata tu potencial!</p>
         </div>
       </div>
 
@@ -1036,31 +1236,31 @@
       <div class="instalaciones-slide">
         <img src="assets/images/IMG_7108.jpg" alt="Zona de saltos" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Zona de Saltos Libre</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Salta sin límites en nuestro espacio principal</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Slide Rush</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Desciende sin frenos a toda velocidad!</p>
         </div>
       </div>
 
       <!-- Slide 7 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7109.jpg" alt="Área de descanso" loading="lazy">
+        <img src="assets/images/IMG_7110.jpg" alt="Área de descanso" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Área de Descanso</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Zonas cómodas para recuperar energías</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Zona Ninja Warrior</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¿Tienes lo que se necesita para ser un guerrero?</p>
         </div>
       </div>
 
       <!-- Slide 8 -->
-      <div class="instalaciones-slide">
+      <!-- <div class="instalaciones-slide">
         <img src="assets/images/IMG_7110.jpg" alt="Vista general" loading="lazy">
         <div class="instalaciones-overlay"></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-12 text-white z-10">
-          <h3 class="text-2xl lg:text-4xl font-bold mb-2 lg:mb-3 drop-shadow-lg">Nuestras Instalaciones</h3>
-          <p class="text-base lg:text-xl text-gray-100 drop-shadow-md">Un parque completo para disfrutar al máximo</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+          <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Nuestras Instalaciones</h3>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Un parque completo para disfrutar al máximo</p>
         </div>
-      </div>
+      </div> -->
 
       <!-- Controles de navegación -->
       <button class="instalaciones-prev" aria-label="Anterior">❮</button>
@@ -1075,7 +1275,6 @@
         <span class="instalaciones-dot" data-slide="4"></span>
         <span class="instalaciones-dot" data-slide="5"></span>
         <span class="instalaciones-dot" data-slide="6"></span>
-        <span class="instalaciones-dot" data-slide="7"></span>
       </div>
     </div>
   </section>
@@ -1441,24 +1640,85 @@
     });
   </script>
 
+  <!-- FIX: Remover foco de enlaces móviles tras click -->
+  <script>
+    (function() {
+      // Seleccionar todos los enlaces del header móvil
+      const mobileNavLinks = document.querySelectorAll('.lg\\:hidden nav a[href^="#"]');
+      
+      mobileNavLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          // Remover el foco del enlace después de un pequeño delay
+          // para permitir que el smooth scroll funcione
+          setTimeout(() => {
+            this.blur();
+          }, 100);
+        });
+        
+        // También remover foco en touchend para dispositivos táctiles
+        link.addEventListener('touchend', function(e) {
+          setTimeout(() => {
+            this.blur();
+          }, 100);
+        });
+      });
+    })();
+  </script>
+
   <!-- SLIDESHOW DE INSTALACIONES -->
   <script>
     (function() {
       let currentSlide = 0;
-      let slideInterval;
+      let slideInterval = null;
+      let isTransitioning = false; // Evitar transiciones múltiples
       const slides = document.querySelectorAll('.instalaciones-slide');
       const dots = document.querySelectorAll('.instalaciones-dot');
       const prevBtn = document.querySelector('.instalaciones-prev');
       const nextBtn = document.querySelector('.instalaciones-next');
       const servicioIcons = document.querySelectorAll('.servicio-icon');
+      const cards = document.querySelectorAll('.servicio-card');
+      
+      // Función para actualizar cartas del stack móvil
+      function updateCardStack() {
+        if (window.innerWidth >= 1024 || !cards || cards.length === 0) return; // Solo en móvil y si hay cartas
+        
+        cards.forEach((card) => {
+          if (!card || !card.classList) return; // Verificar que la carta existe y tiene classList
+          
+          const cardIndex = parseInt(card.getAttribute('data-card-index'));
+          
+          // Verificar que cardIndex es un número válido
+          if (isNaN(cardIndex)) return;
+          
+          // Limpiar clases
+          card.classList.remove('active', 'prev', 'next');
+          
+          // Asignar clase según posición relativa al slide actual
+          if (cardIndex === currentSlide) {
+            card.classList.add('active');
+          } else if (cardIndex === (currentSlide - 1 + cards.length) % cards.length) {
+            card.classList.add('prev');
+          } else if (cardIndex === (currentSlide + 1) % cards.length) {
+            card.classList.add('next');
+          }
+        });
+      }
       
       // Función para actualizar iconos activos según el slide actual
       function updateActiveIcons() {
+        if (!servicioIcons || servicioIcons.length === 0) return; // Verificar que existen iconos
+        
         // Limpiar todos los iconos
-        servicioIcons.forEach(icon => icon.classList.remove('active'));
+        servicioIcons.forEach(icon => {
+          if (icon && icon.classList) {
+            icon.classList.remove('active');
+          }
+        });
         
         // Activar el icono correspondiente al slide actual
         servicioIcons.forEach(icon => {
+          if (!icon || !icon.classList) return; // Verificar que el icono existe
+          
           const linkedSlide = icon.getAttribute('data-slide');
           if (linkedSlide !== 'null' && parseInt(linkedSlide) === currentSlide) {
             icon.classList.add('active');
@@ -1468,6 +1728,12 @@
       
       // Función para mostrar slide específico
       function showSlide(index) {
+        // Prevenir transiciones múltiples
+        if (isTransitioning) return;
+        
+        // Verificar que hay slides
+        if (!slides || slides.length === 0) return;
+        
         // Asegurar que el índice esté en rango
         if (index >= slides.length) {
           currentSlide = 0;
@@ -1477,75 +1743,113 @@
           currentSlide = index;
         }
         
+        isTransitioning = true;
+        
         // Ocultar todos los slides
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
+        slides.forEach(slide => {
+          if (slide && slide.classList) {
+            slide.classList.remove('active');
+          }
+        });
+        
+        // Actualizar dots
+        dots.forEach(dot => {
+          if (dot && dot.classList) {
+            dot.classList.remove('active');
+          }
+        });
         
         // Mostrar slide actual
-        slides[currentSlide].classList.add('active');
-        dots[currentSlide].classList.add('active');
+        if (slides[currentSlide] && slides[currentSlide].classList) {
+          slides[currentSlide].classList.add('active');
+        }
+        
+        if (dots[currentSlide] && dots[currentSlide].classList) {
+          dots[currentSlide].classList.add('active');
+        }
         
         // Actualizar iconos activos
         updateActiveIcons();
         
+        // Actualizar stack de cartas en móvil
+        updateCardStack();
+        
         // Precargar imágenes cercanas
         preloadNearbyImages(currentSlide);
+        
+        // Permitir siguiente transición después de la animación
+        setTimeout(() => {
+          isTransitioning = false;
+        }, 800); // Duración de la animación slideIn
       }
       
       // Navegación siguiente
       function nextSlide() {
-        showSlide(currentSlide + 1);
+        if (!isTransitioning) {
+          showSlide(currentSlide + 1);
+        }
       }
       
       // Navegación anterior
       function prevSlide() {
-        showSlide(currentSlide - 1);
+        if (!isTransitioning) {
+          showSlide(currentSlide - 1);
+        }
       }
       
       // Auto-play cada 5 segundos
       function startAutoPlay() {
+        // Siempre limpiar cualquier intervalo previo
+        stopAutoPlay();
         slideInterval = setInterval(nextSlide, 5000);
       }
       
       // Detener auto-play
       function stopAutoPlay() {
-        clearInterval(slideInterval);
+        if (slideInterval) {
+          clearInterval(slideInterval);
+          slideInterval = null;
+        }
       }
       
       // Event listeners para botones
       if (prevBtn) {
         prevBtn.addEventListener('click', () => {
           prevSlide();
-          stopAutoPlay();
-          startAutoPlay(); // Reiniciar el timer
+          startAutoPlay(); // Reiniciar el timer (stopAutoPlay ya se llama dentro)
         });
       }
       
       if (nextBtn) {
         nextBtn.addEventListener('click', () => {
           nextSlide();
-          stopAutoPlay();
-          startAutoPlay(); // Reiniciar el timer
+          startAutoPlay(); // Reiniciar el timer (stopAutoPlay ya se llama dentro)
         });
       }
       
       // Event listeners para dots
       dots.forEach((dot, index) => {
+        if (!dot) return; // Verificar que el dot existe
+        
         dot.addEventListener('click', () => {
           showSlide(index);
-          stopAutoPlay();
           startAutoPlay(); // Reiniciar el timer
         });
       });
       
       // Event listeners para iconos de servicios
       servicioIcons.forEach(icon => {
+        if (!icon) return; // Verificar que el icono existe
+        
         icon.addEventListener('click', () => {
           const linkedSlide = icon.getAttribute('data-slide');
           
           // Solo navegar si el icono tiene un slide vinculado
-          if (linkedSlide !== 'null') {
+          if (linkedSlide !== 'null' && linkedSlide !== null) {
             const slideIndex = parseInt(linkedSlide);
+            
+            // Verificar que slideIndex es válido
+            if (isNaN(slideIndex)) return;
             
             // Scroll suave a la sección de instalaciones
             const instalacionesSection = document.getElementById('instalaciones');
@@ -1559,10 +1863,26 @@
             // Cambiar al slide correspondiente después de un pequeño delay
             setTimeout(() => {
               showSlide(slideIndex);
-              stopAutoPlay();
               startAutoPlay(); // Reiniciar el timer
             }, 600); // Delay para permitir que el scroll termine
           }
+        });
+      });
+      
+      // Event listeners para cartas del stack móvil - click para cambiar slide
+      cards.forEach(card => {
+        if (!card) return; // Verificar que la carta existe
+        
+        card.addEventListener('click', () => {
+          const cardIndex = parseInt(card.getAttribute('data-card-index'));
+          
+          // Verificar que cardIndex es válido
+          if (isNaN(cardIndex)) return;
+          
+          // Cambiar al slide correspondiente
+          showSlide(cardIndex);
+          stopAutoPlay(); // Pausar auto-play al interactuar
+          startAutoPlay(); // Reiniciar el timer
         });
       });
       
@@ -1588,6 +1908,20 @@
         }, { passive: true });
       }
       
+      // Soporte para swipe en el stack de cartas móvil
+      const cardStack = document.getElementById('servicios-stack');
+      if (cardStack) {
+        cardStack.addEventListener('touchstart', (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+          stopAutoPlay(); // Pausar auto-play al tocar
+        }, { passive: true });
+        
+        cardStack.addEventListener('touchend', (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+        }, { passive: true });
+      }
+      
       function handleSwipe() {
         const swipeThreshold = 50;
         const diff = touchStartX - touchEndX;
@@ -1600,8 +1934,7 @@
             // Swipe derecha - anterior
             prevSlide();
           }
-          stopAutoPlay();
-          startAutoPlay();
+          startAutoPlay(); // Reiniciar el timer
         }
       }
       
@@ -1643,10 +1976,13 @@
       // Activar icono inicial
       updateActiveIcons();
       
+      // Inicializar stack de cartas
+      updateCardStack();
+      
       // Iniciar auto-play al cargar
       startAutoPlay();
       
-      // Pausar cuando la ventana pierde foco
+      // Pausar cuando la ventana pierde foco o se oculta
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           stopAutoPlay();

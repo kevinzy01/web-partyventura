@@ -778,11 +778,310 @@ function showSlide(index) {
 - ✅ Performance: `updateActiveIcons()` solo actualiza cuando necesario
 - ✅ Accesibilidad: Cursor pointer y estados hover claros
 
-### **8. Notas de Implementación**
+**Notas de Implementación**:
 - Los iconos sin vinculación (`data-slide="null"`) no son clickeables para slideshow
 - El delay de 600ms en el click está calibrado para el scroll suave
 - La función `updateActiveIcons()` se llama en la inicialización para activar el primer icono
 - El sistema es totalmente independiente del auto-play del slideshow
+
+## Sistema de Cartas Apiladas Móvil Sincronizado
+
+**Implementado**: Stack de cartas interactivo en móvil que se sincroniza con el slideshow de instalaciones (octubre 2025).
+
+**Características Principales:**
+
+### **1. Layout Dual Responsive**
+- **Móvil (<1024px)**: Stack de cartas apiladas con efecto 3D
+- **Desktop (≥1024px)**: Grid tradicional de 9 iconos
+
+### **2. Arquitectura del Stack**
+
+**HTML**:
+```html
+<!-- Stack móvil (7 cartas) -->
+<div id="servicios-stack" class="lg:hidden">
+  <div class="servicio-card active" data-card-index="0">...</div>
+  <div class="servicio-card" data-card-index="1">...</div>
+  <!-- ... 7 cartas total -->
+</div>
+
+<!-- Grid desktop (9 iconos) -->
+<div id="servicios-desktop" class="hidden lg:flex">...</div>
+```
+
+**CSS** (`/frontend/public/index.html` líneas ~500-555):
+```css
+@media (max-width: 1023px) {
+  #servicios-stack {
+    position: relative;
+    height: 160px;
+    width: 100%;
+    max-width: 320px; /* Permite ver cartas laterales */
+    margin: 0 auto;
+    perspective: 1000px;
+    overflow: visible;
+  }
+  
+  .servicio-card {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    cursor: pointer;
+    pointer-events: auto; /* Todas las cartas clickeables */
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .servicio-card.active {
+    opacity: 1;
+    z-index: 10;
+    transform: translateX(-50%) translateY(0) scale(1) rotateY(0deg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Cartas laterales visibles con efecto 3D */
+  .servicio-card.prev {
+    opacity: 0.5;
+    z-index: 9;
+    transform: translateX(-140%) translateY(0) scale(0.85) rotateY(8deg);
+  }
+  
+  .servicio-card.next {
+    opacity: 0.5;
+    z-index: 8;
+    transform: translateX(40%) translateY(0) scale(0.85) rotateY(-8deg);
+  }
+  
+  /* Hover solo en carta activa */
+  .servicio-card.active:hover {
+    transform: translateX(-50%) translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  }
+}
+```
+
+**JavaScript** (`/frontend/public/index.html` líneas ~1645-1670):
+```javascript
+function updateCardStack() {
+  if (window.innerWidth >= 1024 || !cards || cards.length === 0) return;
+  
+  cards.forEach((card) => {
+    if (!card || !card.classList) return;
+    
+    const cardIndex = parseInt(card.getAttribute('data-card-index'));
+    if (isNaN(cardIndex)) return;
+    
+    card.classList.remove('active', 'prev', 'next');
+    
+    if (cardIndex === currentSlide) {
+      card.classList.add('active');
+    } else if (cardIndex === (currentSlide - 1 + cards.length) % cards.length) {
+      card.classList.add('prev');
+    } else if (cardIndex === (currentSlide + 1) % cards.length) {
+      card.classList.add('next');
+    }
+  });
+}
+```
+
+### **3. Sincronización con Slideshow**
+
+**Bidireccional**:
+- Cambio de slide → Actualiza carta activa
+- Click en carta → Cambia al slide correspondiente
+- Swipe en stack → Navega slideshow
+
+**Event Listeners** (líneas ~1840-1860):
+```javascript
+// Click en carta cambia slide
+cards.forEach(card => {
+  if (!card) return;
+  
+  card.addEventListener('click', () => {
+    const cardIndex = parseInt(card.getAttribute('data-card-index'));
+    if (isNaN(cardIndex)) return;
+    
+    showSlide(cardIndex);
+    stopAutoPlay();
+    startAutoPlay();
+  });
+});
+
+// Swipe en stack controla slideshow
+cardStack.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+  stopAutoPlay();
+}, { passive: true });
+
+cardStack.addEventListener('touchend', (e) => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe(); // Comparte lógica con slideshow
+}, { passive: true });
+```
+
+### **4. Mapeo de Cartas a Slides**
+```javascript
+// 7 cartas = 7 slides activos del slideshow
+0: ExploraKids (🧗)
+1: Slam Zone (🏀)
+2: SpiderWall (🧗‍♂️)
+3: Tap Arena (⚡)
+4: Freestyle Area (🤸)
+5: Slide Rush (🎢)
+6: Zona Ninja Warrior (🥷)
+
+// NO incluidos: Monitores (👨‍🏫) y Cumpleaños (🎂) - sin slide vinculado
+```
+
+### **5. Controles Disponibles en Móvil**
+
+**Stack de Cartas**:
+- ✅ **Swipe izquierda/derecha**: Navega slides (threshold 50px)
+- ✅ **Click en cualquier carta**: Salta a ese slide directamente
+- ✅ **Hover en activa**: Efecto de levitación (translateY -5px, scale 1.02)
+
+**Slideshow**:
+- ✅ **Swipe en imágenes**: Navega independientemente
+- ✅ **Botones prev/next**: Navegación manual
+- ✅ **Dots indicadores**: Salto directo
+- ✅ **Auto-play**: 5 segundos por slide
+
+### **6. Validaciones de Seguridad**
+
+**Implementadas para prevenir errores `classList undefined`**:
+```javascript
+// En updateCardStack()
+if (!card || !card.classList) return;
+if (isNaN(cardIndex)) return;
+
+// En updateActiveIcons()
+if (!servicioIcons || servicioIcons.length === 0) return;
+servicioIcons.forEach(icon => {
+  if (!icon || !icon.classList) return;
+});
+
+// En showSlide()
+if (!slides || slides.length === 0) return;
+slides.forEach(slide => {
+  if (slide && slide.classList) {
+    slide.classList.remove('active');
+  }
+});
+```
+
+### **7. Espaciado de Sección**
+
+**Reducido en móvil** (línea ~1005):
+```html
+<section id="servicios" class="py-6 lg:py-20 bg-gray-50">
+```
+- Móvil: `py-6` (24px) - Compacto para stack
+- Desktop: `lg:py-20` (80px) - Amplio para grid
+
+### **8. Notas de Implementación**
+
+**Importante**:
+- `pointer-events: auto` en TODAS las cartas (no solo activa) para permitir click
+- `overflow: visible` en contenedor para mostrar cartas laterales
+- `max-width: 320px` calibrado para ver 3 cartas simultáneamente
+- Transiciones de 0.6s sync con cambios de slide
+- `z-index`: activa (10), prev (9), next (8), resto (1)
+
+**Prevención de Bugs**:
+- Llamar `updateCardStack()` en cada `showSlide()`
+- Validar `card.classList` existe antes de modificar
+- Usar `isNaN()` para verificar `cardIndex`
+- Comprobar `window.innerWidth` para evitar ejecución en desktop
+
+**Performance**:
+- Transiciones CSS puras (no JavaScript animation)
+- Event listeners con `{ passive: true }` donde aplica
+- Validaciones tempranas con `return` para salir rápido
+
+## Sistema de Navegación Sticky Header
+
+**Implementado**: Scroll suave con compensación automática para header sticky (octubre 2025).
+
+**Problema Resuelto**: Al hacer click en enlaces del header, las secciones quedaban ocultas detrás del header sticky.
+
+### **1. Scroll Margin Top**
+
+**CSS** (líneas ~24-40):
+```css
+html {
+  scroll-behavior: smooth;
+}
+
+section {
+  scroll-margin-top: 100px; /* Móvil: 80px header + 20px espacio */
+}
+
+@media (min-width: 1024px) {
+  section {
+    scroll-margin-top: 120px; /* Desktop: 96px header + 24px espacio */
+  }
+}
+```
+
+**Funcionamiento**:
+- `scroll-margin-top` crea margen virtual por encima de cada `<section>`
+- Al navegar a `#seccion`, el navegador calcula posición final incluyendo este margen
+- Resultado: Título de sección visible debajo del header con espacio de respiro
+
+**Medidas**:
+- Header móvil: `h-20` (80px) → scroll-margin: 100px (20px extra)
+- Header desktop: `h-24` (96px) → scroll-margin: 120px (24px extra)
+
+### **2. Fix de Foco en Enlaces Móviles**
+
+**Problema**: En táctiles, los enlaces del header quedaban resaltados tras click hasta tocar otro elemento.
+
+**CSS** (líneas ~38-51):
+```css
+.lg\:hidden nav a {
+  -webkit-tap-highlight-color: transparent; /* iOS Safari */
+  -webkit-touch-callout: none; /* Prevenir menú contextual */
+  -webkit-user-select: none; /* Prevenir selección */
+  user-select: none;
+}
+
+.lg\:hidden nav a:focus {
+  outline: none;
+}
+```
+
+**JavaScript** (líneas ~1631-1655):
+```javascript
+const mobileNavLinks = document.querySelectorAll('.lg\\:hidden nav a[href^="#"]');
+
+mobileNavLinks.forEach(link => {
+  // Remover foco en click
+  link.addEventListener('click', function() {
+    setTimeout(() => {
+      this.blur(); // Quita el foco del enlace
+    }, 100);
+  });
+  
+  // Remover foco en touchend (dispositivos táctiles)
+  link.addEventListener('touchend', function() {
+    setTimeout(() => {
+      this.blur();
+    }, 100);
+  });
+});
+```
+
+**Delay de 100ms**: Permite que el navegador procese el evento de navegación antes de remover el foco.
+
+### **3. Beneficios**
+
+- ✅ **Automático**: Funciona con todos los `href="#seccion"` sin configuración extra
+- ✅ **CSS puro**: `scroll-margin-top` no requiere JavaScript
+- ✅ **Responsive**: Se adapta al tamaño del header automáticamente
+- ✅ **Smooth scroll**: Transiciones suaves incluidas
+- ✅ **Sin resaltado**: Enlaces móviles no quedan "pegados" tras click
+- ✅ **UX mejorado**: Títulos siempre visibles con espacio superior
 
 ## Información de Horarios del Local
 
@@ -794,16 +1093,19 @@ function showSlide(index) {
 **Implementación**: 
 - ✅ **Horarios 100% estáticos** en HTML (no se cargan desde BD)
 - ❌ Función `loadSchedules()` **eliminada completamente** de `main.js`
-- ✅ Tarifas siguen siendo dinámicas vía `loadTarifas()`
+- ✅ **Tarifas 100% estáticas** en HTML (no se cargan desde BD)
+- ❌ Función `loadTarifas()` **eliminada completamente** de `main.js`
 
 **Ubicaciones en el código**:
-1. Sección "Horarios" (tabla): `/frontend/public/index.html` líneas ~1091-1103
-2. Sección "¿Dónde Estamos?" (footer): `/frontend/public/index.html` línea ~1350
+1. **Horarios** - Sección "Horarios" (tabla): `/frontend/public/index.html` líneas ~1091-1103
+2. **Horarios** - Sección "¿Dónde Estamos?" (footer): `/frontend/public/index.html` línea ~1350
+3. **Tarifas** - Sección "Tarifas" (cards con carousel): `/frontend/public/index.html` líneas ~759-926
 
 **Importante**: 
 - Al actualizar horarios, verificar ambas ubicaciones para mantener consistencia
-- NO intentar cargar horarios desde la API - son estáticos por diseño
-- Si se necesita funcionalidad dinámica en el futuro, reimplementar `loadSchedules()`
+- NO intentar cargar horarios/tarifas desde la API - son estáticos por diseño
+- Las tarifas tienen diseño complejo (múltiples precios, características, imágenes) mejor mantenido en HTML
+- Si se necesita funcionalidad dinámica en el futuro, reimplementar funciones de carga
 
 ## Archivos Clave para Contexto
 

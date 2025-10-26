@@ -4,113 +4,6 @@
 // ===================================
 
 // ===================================
-// 0. CARGAR TARIFAS DESDE EL BACKEND
-// ===================================
-
-// API_URL ya está definido en config.js, no lo redeclaramos aquí
-
-// Cargar tarifas de la base de datos
-async function loadTarifas() {
-  // NOTA: Las tarifas tienen un diseño complejo con múltiples precios, 
-  // características específicas e imágenes personalizadas.
-  // Por ahora se mantienen estáticas en el HTML.
-  // Si deseas cargarlas dinámicamente, necesitarás crear un modelo de datos
-  // más complejo en la base de datos que incluya:
-  // - Múltiples precios (weekday/weekend)
-  // - Lista de características/features
-  // - Imágenes personalizadas
-  // - Texto adicional (pie de tarjeta)
-  
-  console.log('ℹ️ Tarifas estáticas (no se cargan desde BD)');
-  return;
-  
-  /* CÓDIGO ORIGINAL COMENTADO - Descomentar si decides usarlo
-  try {
-    const response = await fetch(`${API_URL}/schedules/public?type=tarifa`);
-    const data = await response.json();
-    
-    if (!data.success || !data.data || data.data.length === 0) {
-      console.log('No hay tarifas configuradas, usando datos por defecto');
-      return;
-    }
-    
-    // Obtener solo las tarifas activas
-    const tarifas = data.data.filter(t => t.isActive);
-    
-    if (tarifas.length === 0) {
-      console.log('No hay tarifas activas');
-      return;
-    }
-    
-    const cardContainer = document.getElementById('cardContainer');
-    
-    if (!cardContainer) {
-      console.warn('No se encontró el contenedor de tarjetas');
-      return;
-    }
-    
-    // Limpiar tarjetas actuales
-    cardContainer.innerHTML = '';
-    
-    // Definir colores para cada tarifa
-    const colors = [
-      { bg: 'from-pink-400 to-purple-500', text: 'pink-600', btn: 'pink-600 hover:bg-pink-700' },
-      { bg: 'from-blue-400 to-indigo-500', text: 'blue-600', btn: 'blue-600 hover:bg-blue-700' },
-      { bg: 'from-green-400 to-emerald-500', text: 'green-600', btn: 'green-600 hover:bg-green-700' },
-      { bg: 'from-red-400 to-rose-500', text: 'red-600', btn: 'red-600 hover:bg-red-700' },
-      { bg: 'from-fuchsia-400 to-purple-500', text: 'fuchsia-600', btn: 'fuchsia-600 hover:bg-fuchsia-700' },
-      { bg: 'from-orange-400 to-amber-500', text: 'orange-600', btn: 'orange-600 hover:bg-orange-700' },
-      { bg: 'from-yellow-400 to-orange-500', text: 'yellow-600', btn: 'yellow-600 hover:bg-yellow-700' }
-    ];
-    
-    // Renderizar cada tarifa
-    tarifas.forEach((tarifa, index) => {
-      const color = colors[index % colors.length];
-      const icon = tarifa.icon || '💰';
-      const precio = tarifa.price ? `${tarifa.price}${tarifa.currency || '€'}` : 'Consultar';
-      const unidad = tarifa.unit || '';
-      
-      const card = document.createElement('article');
-      card.className = 'snap-start flex-shrink-0 w-72 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl p-6 flex flex-col justify-between transform hover:scale-105 hover:-translate-y-2 transition-all duration-300';
-      
-      card.innerHTML = `
-        <div>
-          <div class="w-16 h-16 bg-gradient-to-br ${color.bg} rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
-            <span class="text-4xl">${icon}</span>
-          </div>
-          <h3 class="text-2xl font-bold text-center mb-1 text-${color.text}">${tarifa.title}</h3>
-          ${tarifa.description ? `<p class="text-sm text-gray-500 text-center mb-4 font-semibold">${tarifa.description}</p>` : ''}
-          <div class="flex justify-center mb-5">
-            <div class="text-center">
-              <p class="text-3xl font-extrabold text-${color.text}">${precio}</p>
-              ${unidad ? `<p class="text-xs text-gray-600 mt-1 font-medium">${unidad}</p>` : ''}
-            </div>
-          </div>
-        </div>
-        <div>
-          <a href="#contacto" class="block text-center text-white font-bold bg-${color.btn} rounded-xl py-3 transition-all shadow-md hover:shadow-lg mb-2">Reservar</a>
-        </div>
-      `;
-      
-      cardContainer.appendChild(card);
-    });
-    
-    console.log(`✅ ${tarifas.length} tarifas cargadas desde la base de datos`);
-    
-    // Reinicializar el carrusel después de cargar las nuevas tarjetas
-    setTimeout(() => {
-      initCarousel();
-      initPricingDrag();
-    }, 100);
-    
-  } catch (error) {
-    console.error('Error al cargar tarifas:', error);
-    console.log('Se mantendrán las tarifas por defecto del HTML');
-  }
-  */
-}
-
-// ===================================
 // 1. CAROUSEL DE PRECIOS
 // ===================================
 function initCarousel() {
@@ -1166,9 +1059,6 @@ function initCalendar() {
 // ===================================
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Partyventura website loaded');
-  
-  // Cargar tarifas desde el backend
-  loadTarifas();
   
   // Inicializar todos los módulos
   initCarousel();
