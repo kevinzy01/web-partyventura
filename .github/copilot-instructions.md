@@ -653,7 +653,7 @@ Si el slideshow o la página en general muestra errores CORS al acceder vía Ngr
 - Efecto visual:
   - Glow naranja suave: `box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3)`
   - Scale aumentado a 1.15x
-  - Gradiente de fondo semi-transparente naranja
+  - **Ya no cambia el color de fondo** (el fondo permanece transparente al estar activo)
 - Se actualiza en cada cambio de slide (manual, auto-play, swipe, dots)
 
 ### **3. Mapeo de Servicios a Slides**
@@ -679,7 +679,7 @@ Si el slideshow o la página en general muestra errores CORS al acceder vía Ngr
 .servicio-icon.active {
   box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3) !important;
   transform: scale(1.15) !important;
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(249, 115, 22, 0.4)) !important;
+  /* background eliminado para que no cambie el color de fondo al estar activo */
 }
 
 /* Hover sutil */

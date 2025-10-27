@@ -367,6 +367,20 @@
       display: block;
       animation: slideIn 0.8s ease-in-out;
     }
+
+      /* Gradientes personalizados para iconos de servicios */
+      .bg-gradient-to-br.from-red-100.to-red-200 {
+        background: linear-gradient(to bottom right, rgb(254, 226, 226), rgb(254, 202, 202)) !important;
+      }
+      .bg-gradient-to-br.from-yellow-100.to-yellow-200 {
+        background: linear-gradient(to bottom right, rgb(254, 249, 195), rgb(254, 240, 138)) !important;
+      }
+      .bg-gradient-to-br.from-gray-100.to-gray-300 {
+        background: linear-gradient(to bottom right, rgb(243, 244, 246), rgb(209, 213, 219)) !important;
+      }
+      .bg-gradient-to-br.from-purple-100.to-purple-200 {
+        background: linear-gradient(to bottom right, rgb(243, 232, 255), rgb(233, 213, 255)) !important;
+      }
     
     @keyframes slideIn {
       from {
@@ -500,9 +514,9 @@
     }
     
     .servicio-icon.active {
-      box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3) !important;
-      transform: scale(1.15) !important;
-      background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(249, 115, 22, 0.4)) !important;
+  box-shadow: 0 0 25px rgba(249, 115, 22, 0.6), 0 0 40px rgba(249, 115, 22, 0.3) !important;
+  transform: scale(1.15) !important;
+  /* background eliminado para que no cambie el color de fondo al estar activo */
     }
     
     .servicio-icon:hover {
@@ -523,21 +537,63 @@
       }
       
       .servicio-card {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 160px;
-        opacity: 0;
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1;
-        background: white;
-        border-radius: 1rem;
-        padding: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        pointer-events: auto; /* Permitir clics */
-        cursor: pointer; /* Indicar que es clickeable */
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 160px;
+          opacity: 0;
+          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 1;
+          border-radius: 1rem;
+          padding: 1rem;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          pointer-events: auto;
+          cursor: pointer;
+          background: var(--card-gradient, white);
+          /* Gradiente por tarjeta, se asigna por clase JS */
       }
+
+        /* Gradientes individuales por tarjeta */
+        .servicio-card.gradient-purple { --card-gradient: linear-gradient(135deg, rgb(243,232,255) 0%, rgb(233,213,255) 100%); }
+        .servicio-card.gradient-orange { --card-gradient: linear-gradient(135deg, rgb(255,237,213) 0%, rgb(251,146,60) 100%); }
+        .servicio-card.gradient-red { --card-gradient: linear-gradient(135deg, rgb(254,226,226) 0%, rgb(254,202,202) 100%); }
+        .servicio-card.gradient-blue { --card-gradient: linear-gradient(135deg, rgb(219,234,254) 0%, rgb(59,130,246) 100%); }
+        .servicio-card.gradient-cyan { --card-gradient: linear-gradient(135deg, rgb(224,255,255) 0%, rgb(6,182,212) 100%); }
+        .servicio-card.gradient-yellow { --card-gradient: linear-gradient(135deg, rgb(254,249,195) 0%, rgb(254,240,138) 100%); }
+        .servicio-card.gradient-green { --card-gradient: linear-gradient(135deg, rgb(220,252,231) 0%, rgb(34,197,94) 100%); }
+        .servicio-card.gradient-gray { --card-gradient: linear-gradient(135deg, rgb(243,244,246) 0%, rgb(209,213,219) 100%); }
+
+        /* Animación de deslizamiento vertical */
+        @keyframes cardJumpSide {
+          0% {
+            transform: translateX(-65%) translateY(40px) scale(0.96);
+            opacity: 0;
+          }
+          25% {
+            transform: translateX(-58%) translateY(-18px) scale(1.07);
+            opacity: 1;
+          }
+          50% {
+            transform: translateX(-54%) translateY(-8px) scale(1.03);
+            opacity: 1;
+          }
+          75% {
+            transform: translateX(-52%) translateY(0px) scale(1.01);
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(-50%) translateY(0px) scale(1);
+            opacity: 1;
+          }
+        }
+        .servicio-card.active {
+          opacity: 1;
+          z-index: 10;
+          transform: translateX(-50%) translateY(0) scale(1) rotateY(0deg);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+          animation: cardJumpSide 0.7s cubic-bezier(0.4, 0.0, 0.2, 1.0);
+        }
       
       .servicio-card.active {
         opacity: 1;
@@ -751,9 +807,10 @@
 
   <!-- HERO -->
   <section id="inicio" class="relative h-[550px] lg:h-[700px] bg-gradient-to-br from-orange-600 via-orange-500 to-red-500">
-    <!-- Imagen de fondo opcional: agregar cuando tengas una imagen hero -->
-    <!-- <img src="hero.jpg" alt="" class="absolute inset-0 object-cover w-full h-full opacity-80"> -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent"></div>
+  <!-- Video HERO responsive -->
+  <video class="absolute inset-0 w-full h-full object-cover hidden lg:block" src="assets/videos/video_hero_desktop.mp4" autoplay loop muted playsinline></video>
+  <video class="absolute inset-0 w-full h-full object-cover block lg:hidden" src="assets/videos/video_hero_movil.mp4" autoplay loop muted playsinline></video>
+  <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-black/10 to-transparent backdrop-blur-md lg:backdrop-blur-xl"></div>
     <div class="relative max-w-4xl mx-auto text-center text-white pt-48 lg:pt-64 px-4">
       <h1 class="text-4xl lg:text-6xl font-bold leading-tight mb-4 animate-fade-in">
         Diversión sin límites en <span class="text-orange-400">Partyventura</span>
@@ -1050,78 +1107,106 @@
     <!-- Stack de cartas para móvil -->
     <div id="servicios-stack">
       <!-- Card 0: ExploraKids -->
-      <div class="servicio-card active" data-card-index="0">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">🧗</span>
+        <div class="servicio-card active gradient-purple" data-card-index="0">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🧗</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">ExploraKids</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">ExploraKids</p>
         </div>
-      </div>
-      
-      <!-- Card 1: Slam Zone -->
-      <div class="servicio-card" data-card-index="1">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">🏀</span>
+        <div class="servicio-card gradient-orange" data-card-index="1">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🏀</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Slam Zone</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">Slam Zone</p>
         </div>
-      </div>
-      
-      <!-- Card 2: SpiderWall -->
-      <div class="servicio-card" data-card-index="2">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-red-100 to-red-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">🧗‍♂️</span>
+        <div class="servicio-card gradient-red" data-card-index="2">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🧗‍♂️</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">SpiderWall</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">SpiderWall</p>
         </div>
-      </div>
-      
-      <!-- Card 3: Tap Arena -->
-      <div class="servicio-card" data-card-index="3">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">⚡</span>
+        <div class="servicio-card gradient-blue" data-card-index="3">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">⚡</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Tap Arena</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">Tap Arena</p>
         </div>
-      </div>
-      
-      <!-- Card 4: Freestyle Area -->
-      <div class="servicio-card" data-card-index="4">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">🤸</span>
+        <div class="servicio-card gradient-cyan" data-card-index="4">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🤸</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Freestyle Area</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">Freestyle Area</p>
         </div>
-      </div>
-      
-      <!-- Card 5: Slide Rush -->
-      <div class="servicio-card" data-card-index="5">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">🎢</span>
+        <div class="servicio-card gradient-yellow" data-card-index="5">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🎢</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Slide Rush</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">Slide Rush</p>
         </div>
-      </div>
-      
-      <!-- Card 6: Zona Ninja Warrior -->
-      <div class="servicio-card" data-card-index="6">
-        <div class="text-center flex flex-col items-center">
-          <div class="servicio-icon bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto">
-            <span class="text-4xl">🥷</span>
+        <div class="servicio-card gradient-green" data-card-index="6">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🥷</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Zona Ninja Warrior</p>
           </div>
-          <p class="text-sm font-bold text-gray-800 mt-2">Zona Ninja Warrior</p>
         </div>
-      </div>
+        <div class="servicio-card gradient-red" data-card-index="7">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🥊</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Zona Boxeo</p>
+          </div>
+        </div>
+        <div class="servicio-card gradient-purple" data-card-index="8">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🗼</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Torres de Escalada</p>
+          </div>
+        </div>
+        <div class="servicio-card gradient-yellow" data-card-index="9">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🪂</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Tirolina</p>
+          </div>
+        </div>
+        <div class="servicio-card gradient-gray" data-card-index="10">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🔒</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Taquillas</p>
+          </div>
+        </div>
+        <div class="servicio-card gradient-green" data-card-index="11">
+          <div class="text-center flex flex-col items-center">
+            <div class="servicio-icon rounded-2xl mb-3 flex items-center justify-center shadow-lg mx-auto" style="background: transparent;">
+              <span class="text-4xl">🪑</span>
+            </div>
+            <p class="text-sm font-bold text-gray-800 mt-2">Mesas y Salas</p>
+          </div>
+        </div>
     </div>
     
     <!-- Grid para desktop -->
-    <div id="servicios-desktop" class="container mx-auto flex flex-wrap justify-center items-start gap-6 lg:gap-12 px-6 lg:px-12">
+  <div id="servicios-desktop" class="flex flex-wrap justify-center items-start gap-6 lg:gap-12 w-full px-0 lg:px-0">
       <div class="text-center group flex flex-col items-center" style="width: 110px;">
         <div class="servicio-icon bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="0">
           <span class="text-3xl lg:text-4xl">🧗</span>
@@ -1164,17 +1249,41 @@
         </div>
         <p class="text-xs lg:text-sm font-semibold text-gray-800">Zona Ninja Warrior</p>
       </div>
+        <div class="text-center group flex flex-col items-center" style="width: 110px;">
+          <div class="servicio-icon bg-gradient-to-br from-red-100 to-red-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="7">
+            <span class="text-3xl lg:text-4xl">🥊</span>
+          </div>
+          <p class="text-xs lg:text-sm font-semibold text-gray-800">Zona Boxeo</p>
+        </div>
+        <div class="text-center group flex flex-col items-center" style="width: 110px;">
+          <div class="servicio-icon bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="8">
+            <span class="text-3xl lg:text-4xl">🗼</span>
+          </div>
+          <p class="text-xs lg:text-sm font-semibold text-gray-800">Torres de Escalada</p>
+        </div>
+        <div class="text-center group flex flex-col items-center" style="width: 110px;">
+          <div class="servicio-icon bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="9">
+            <span class="text-3xl lg:text-4xl">🪂</span>
+          </div>
+          <p class="text-xs lg:text-sm font-semibold text-gray-800">Tirolina</p>
+        </div>
+        <div class="text-center group flex flex-col items-center" style="width: 110px;">
+          <div class="servicio-icon bg-gradient-to-br from-gray-100 to-gray-300 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="10">
+            <span class="text-3xl lg:text-4xl">🔒</span>
+          </div>
+          <p class="text-xs lg:text-sm font-semibold text-gray-800">Taquillas</p>
+        </div>
+        <div class="text-center group flex flex-col items-center" style="width: 110px;">
+          <div class="servicio-icon bg-gradient-to-br from-green-100 to-green-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="11">
+            <span class="text-3xl lg:text-4xl">🎂</span>
+          </div>
+          <p class="text-xs lg:text-sm font-semibold text-gray-800">Salas de cumpleaños</p>
+        </div>
       <div class="text-center group flex flex-col items-center" style="width: 110px;">
         <div class="servicio-icon bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
           <span class="text-3xl lg:text-4xl">👨‍🏫</span>
         </div>
         <p class="text-xs lg:text-sm font-semibold text-gray-800">Monitores cualificados</p>
-      </div>
-      <div class="text-center group flex flex-col items-center" style="width: 110px;">
-        <div class="servicio-icon bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl mb-3 lg:mb-4 flex items-center justify-center shadow-md group-hover:shadow-xl transition-all duration-300 flex-shrink-0" data-slide="null">
-          <span class="text-3xl lg:text-4xl">🎂</span>
-        </div>
-        <p class="text-xs lg:text-sm font-semibold text-gray-800">Salas de cumpleaños</p>
       </div>
     </div>
   </section>
@@ -1184,7 +1293,7 @@
     <div class="instalaciones-slideshow h-full">
       <!-- Slide 1 -->
       <div class="instalaciones-slide active">
-        <img src="assets/images/IMG_7089.jpg" alt="Área de trampolines" loading="lazy">
+        <img src="assets/images/IMG_7089.jpg" alt="ExploraKids" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">ExploraKids</h3>
@@ -1194,17 +1303,17 @@
 
       <!-- Slide 2 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7097.jpg" alt="Zona de juegos" loading="lazy">
+        <img src="assets/images/IMG_7097.jpg" alt="Slam Zone" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Slam Zone</h3>
-          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Salta, vuela... ¡y encensta sin límites!</p>
+          <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Salta, vuela... ¡y encesta sin límites!</p>
         </div>
       </div>
 
       <!-- Slide 3 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7101.jpg" alt="Área infantil" loading="lazy">
+        <img src="assets/images/IMG_7101.jpg" alt="SpiderWall" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">SpiderWall</h3>
@@ -1214,7 +1323,7 @@
 
       <!-- Slide 4 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7102.jpg" alt="Zona de actividades" loading="lazy">
+        <img src="assets/images/IMG_7102.jpg" alt="Tap Area" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Tap Arena</h3>
@@ -1224,7 +1333,7 @@
 
       <!-- Slide 5 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7103.jpg" alt="Pista de obstáculos" loading="lazy">
+        <img src="assets/images/IMG_7103.jpg" alt="Freestyle Ares" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Freestyle Area</h3>
@@ -1234,7 +1343,7 @@
 
       <!-- Slide 6 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7108.jpg" alt="Zona de saltos" loading="lazy">
+        <img src="assets/images/IMG_7108.jpg" alt="Slide Rush" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Slide Rush</h3>
@@ -1244,13 +1353,64 @@
 
       <!-- Slide 7 -->
       <div class="instalaciones-slide">
-        <img src="assets/images/IMG_7110.jpg" alt="Área de descanso" loading="lazy">
+        <img src="assets/images/zona_ninja.png" alt="Zona Ninja Warrior" loading="lazy">
         <div class="instalaciones-overlay"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
           <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Zona Ninja Warrior</h3>
           <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¿Tienes lo que se necesita para ser un guerrero?</p>
         </div>
       </div>
+
+        <!-- Slide 8 - Boxeo -->
+        <div class="instalaciones-slide">
+          <img src="assets/images/boxeo.jpg" alt="Zona Boxeo" loading="lazy">
+          <div class="instalaciones-overlay"></div>
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+            <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Battle Ring</h3>
+            <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¿Listo para el round de tu vida?</p>
+          </div>
+        </div>
+
+        <!-- Slide 9 - Torres de Escalada -->
+        <div class="instalaciones-slide">
+          <img src="assets/images/torres_escalada.png" alt="Torres de Escalada" class="hidden lg:block w-full h-full object-cover" loading="lazy">
+          <img src="assets/images/torres_escalada_movil.png" alt="Torres de Escalada móvil" class="block lg:hidden w-full h-full object-cover" loading="lazy">
+          <div class="instalaciones-overlay"></div>
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+            <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Summit Towers</h3>
+            <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Texto placeholder para torres de escalada.</p>
+          </div>
+        </div>
+
+        <!-- Slide 10 - Tirolina -->
+        <div class="instalaciones-slide">
+          <img src="assets/images/tirolina.jpg" alt="Tirolina" loading="lazy">
+          <div class="instalaciones-overlay"></div>
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+            <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Sky GLide</h3>
+            <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Vuela por los aires, siente la libertad!</p>
+          </div>
+        </div>
+
+        <!-- Slide 11 - Taquillas -->
+        <div class="instalaciones-slide">
+          <img src="assets/images/taquillas.jpg" alt="Taquillas" loading="lazy">
+          <div class="instalaciones-overlay"></div>
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+            <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Lockers</h3>
+            <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">Guarda tus cosas, libera tu diversión.</p>
+          </div>
+        </div>
+
+        <!-- Slide 12 - Mesas y Salas -->
+        <div class="instalaciones-slide">
+          <img src="assets/images/mesas_salas.png" alt="Mesas y Salas" loading="lazy">
+          <div class="instalaciones-overlay"></div>
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-6 lg:p-12 text-white z-10 text-center">
+            <h3 class="text-3xl lg:text-5xl font-bold mb-3 lg:mb-5 drop-shadow-lg">Party Zone</h3>
+            <p class="text-lg lg:text-2xl text-gray-100 drop-shadow-md max-w-3xl">¡Aquí empieza la fiesta perfecta!</p>
+          </div>
+        </div>
 
       <!-- Slide 8 -->
       <!-- <div class="instalaciones-slide">
@@ -1275,6 +1435,11 @@
         <span class="instalaciones-dot" data-slide="4"></span>
         <span class="instalaciones-dot" data-slide="5"></span>
         <span class="instalaciones-dot" data-slide="6"></span>
+        <span class="instalaciones-dot" data-slide="7"></span>
+        <span class="instalaciones-dot" data-slide="8"></span>
+        <span class="instalaciones-dot" data-slide="9"></span>
+        <span class="instalaciones-dot" data-slide="10"></span>
+        <span class="instalaciones-dot" data-slide="11"></span>
       </div>
     </div>
   </section>
@@ -1968,12 +2133,15 @@
           (index + 2) % slides.length,
           (index - 1 + slides.length) % slides.length
         ];
-        
+
         indicesToLoad.forEach(i => {
           const slide = slides[i];
-          const img = slide.querySelector('img');
-          if (img) {
-            loadImage(img, slide);
+          // Seleccionar todas las imágenes del slide (móvil y desktop)
+          const imgs = slide.querySelectorAll('img');
+          if (imgs && imgs.length > 0) {
+            imgs.forEach(img => {
+              loadImage(img, slide);
+            });
           }
         });
       }
