@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administración - Partyventura</title>
-  <link href="/index.css?v=28" rel="stylesheet">
-  <link href="/src/styles/styles.css?v=28" rel="stylesheet">
+  <link href="/index.css?v=29" rel="stylesheet">
+  <link href="/src/styles/styles.css?v=29" rel="stylesheet">
   <link rel="icon" type="image/png" href="/assets/icons/png/logo-partyventura.png">
   <style>
     :root {
@@ -1210,7 +1210,7 @@
         <!-- Encabezado -->
         <div class="flex justify-between items-center mb-6">
           <h2 id="empleadoModalTitle" class="text-2xl font-bold text-gray-800">
-            👔 Nuevo Empleado
+            Nuevo Empleado
           </h2>
           <button 
             id="btnCloseEmpleado"
@@ -1274,7 +1274,7 @@
           <!-- Rol de Empleado -->
           <div class="mb-4">
             <label for="empleadoRolEmpleado" class="block text-sm font-semibold text-gray-700 mb-2">
-              Rol del Empleado *
+              Puesto de Trabajo *
             </label>
             <select 
               id="empleadoRolEmpleado"
@@ -1282,13 +1282,13 @@
               required
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
-              <option value="">Seleccionar rol...</option>
-              <option value="monitor">🏃 Monitor</option>
-              <option value="cocina">👨‍🍳 Cocina</option>
-              <option value="barra">🍹 Barra</option>
+              <option value="">Seleccionar puesto...</option>
+              <option value="monitor">Monitor</option>
+              <option value="cocina">Cocina</option>
+              <option value="barra">Barra</option>
             </select>
             <p class="text-xs text-gray-500 mt-1">
-              Define el área de trabajo del empleado
+              Define el área de trabajo del empleado. El tipo de usuario (rol) se asigna automáticamente como "empleado" para acceso al portal.
             </p>
           </div>
 
@@ -2077,117 +2077,133 @@
   </div>
 
   <!-- Modal Asignar/Editar Horario -->
-  <div id="modalWorkSchedule" class="modal hidden">
-    <div class="modal-overlay"></div>
-    <div class="modal-content max-w-2xl">
-      <div class="modal-header bg-gradient-to-r from-orange-500 to-orange-600">
-        <h3 id="modalWorkScheduleTitle" class="modal-title">Asignar Horario Laboral</h3>
-        <button id="btnCloseWorkScheduleModal" class="modal-close-btn">&times;</button>
+  <div id="modalWorkSchedule" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <h3 id="modalWorkScheduleTitle" class="text-2xl font-bold text-gray-900">Asignar Horario Laboral</h3>
+        <button id="btnCloseWorkScheduleModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <div class="modal-body">
-        <form id="formWorkSchedule">
-          <input type="hidden" id="workScheduleId">
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label for="wsEmpleado" class="block text-sm font-semibold text-gray-700 mb-2">
-                Empleado <span class="text-red-500">*</span>
-              </label>
-              <select id="wsEmpleado" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                <option value="">Seleccione un empleado</option>
-              </select>
-            </div>
 
-            <div>
-              <label for="wsFecha" class="block text-sm font-semibold text-gray-700 mb-2">
-                Fecha <span class="text-red-500">*</span>
-              </label>
-              <input type="date" id="wsFecha" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-            </div>
+      <form id="formWorkSchedule" class="p-6 space-y-6">
+        <input type="hidden" id="workScheduleId">
 
-            <div>
-              <label for="wsTurno" class="block text-sm font-semibold text-gray-700 mb-2">
-                Turno <span class="text-red-500">*</span>
-              </label>
-              <select id="wsTurno" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                <option value="">Seleccione turno</option>
-                <option value="mañana">🌅 Mañana</option>
-                <option value="tarde">🌆 Tarde</option>
-                <option value="completo">📅 Completo</option>
-              </select>
-            </div>
+        <!-- Empleado -->
+        <div>
+          <label for="wsEmpleado" class="block text-sm font-semibold text-gray-700 mb-2">
+            Empleado *
+          </label>
+          <select id="wsEmpleado" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+            <option value="">Seleccione un empleado</option>
+          </select>
+        </div>
 
-            <div>
-              <label for="wsHoraInicio" class="block text-sm font-semibold text-gray-700 mb-2">
-                Hora de Inicio <span class="text-red-500">*</span>
-              </label>
-              <input type="time" id="wsHoraInicio" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-              <p class="text-xs text-gray-500 mt-1">
-                L-J: 17:00-22:00 | V-D: 10:00-22:00
-              </p>
-            </div>
-
-            <div>
-              <label for="wsHoraFin" class="block text-sm font-semibold text-gray-700 mb-2">
-                Hora de Fin <span class="text-red-500">*</span>
-              </label>
-              <input type="time" id="wsHoraFin" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-            </div>
-
-            <div class="md:col-span-2">
-              <label for="wsEstado" class="block text-sm font-semibold text-gray-700 mb-2">
-                Estado
-              </label>
-              <select id="wsEstado"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                <option value="programado">Programado</option>
-                <option value="confirmado">Confirmado</option>
-                <option value="completado">Completado</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
-            </div>
-
-            <div class="md:col-span-2">
-              <label for="wsNotas" class="block text-sm font-semibold text-gray-700 mb-2">
-                Notas (Opcional)
-              </label>
-              <textarea id="wsNotas" rows="3" maxlength="500"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                placeholder="Instrucciones especiales, tareas asignadas, etc."></textarea>
-              <p class="text-xs text-gray-500 mt-1">
-                Máximo 500 caracteres. <span id="wsNotasCount">0</span>/500
-              </p>
-            </div>
-
-            <div>
-              <label for="wsColor" class="block text-sm font-semibold text-gray-700 mb-2">
-                Color (Calendario)
-              </label>
-              <div class="flex gap-2">
-                <input type="color" id="wsColor" value="#f97316"
-                  class="w-16 h-12 border border-gray-300 rounded-lg cursor-pointer">
-                <input type="text" id="wsColorHex" value="#f97316" pattern="^#[0-9A-Fa-f]{6}$"
-                  class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="#RRGGBB">
-              </div>
-            </div>
+        <!-- Fecha y Turno -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="wsFecha" class="block text-sm font-semibold text-gray-700 mb-2">
+              Fecha *
+            </label>
+            <input type="date" id="wsFecha" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
           </div>
 
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-              💾 Guardar Horario
-            </button>
-            <button type="button" id="btnCancelWorkSchedule" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors">
-              Cancelar
-            </button>
+          <div>
+            <label for="wsTurno" class="block text-sm font-semibold text-gray-700 mb-2">
+              Turno *
+            </label>
+            <select id="wsTurno" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+              <option value="">Seleccione turno</option>
+              <option value="mañana">🌅 Mañana</option>
+              <option value="tarde">🌆 Tarde</option>
+              <option value="completo">📅 Completo</option>
+            </select>
           </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- Horas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="wsHoraInicio" class="block text-sm font-semibold text-gray-700 mb-2">
+              Hora de Inicio *
+            </label>
+            <input type="time" id="wsHoraInicio" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+            <p class="text-xs text-gray-500 mt-1">
+              L-J: 17:00-22:00 | V-D: 10:00-22:00
+            </p>
+          </div>
+
+          <div>
+            <label for="wsHoraFin" class="block text-sm font-semibold text-gray-700 mb-2">
+              Hora de Fin *
+            </label>
+            <input type="time" id="wsHoraFin" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+          </div>
+        </div>
+
+        <!-- Estado -->
+        <div>
+          <label for="wsEstado" class="block text-sm font-semibold text-gray-700 mb-2">
+            Estado
+          </label>
+          <select id="wsEstado"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+            <option value="programado">Programado</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="completado">Completado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <!-- Notas -->
+        <div>
+          <label for="wsNotas" class="block text-sm font-semibold text-gray-700 mb-2">
+            Notas (Opcional)
+          </label>
+          <textarea id="wsNotas" rows="3" maxlength="500"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Instrucciones especiales, tareas asignadas, etc."></textarea>
+          <p class="text-xs text-gray-500 mt-1">
+            Máximo 500 caracteres. <span id="wsNotasCount">0</span>/500
+          </p>
+        </div>
+
+        <!-- Color (Calendario) -->
+        <div>
+          <label for="wsColor" class="block text-sm font-semibold text-gray-700 mb-2">
+            Color (Calendario)
+          </label>
+          <div class="flex gap-3">
+            <input type="color" id="wsColor" value="#f97316"
+              class="w-16 h-12 border border-gray-300 rounded-lg cursor-pointer">
+            <input type="text" id="wsColorHex" value="#f97316" pattern="^#[0-9A-Fa-f]{6}$"
+              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="#RRGGBB">
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex space-x-3 pt-4 border-t border-gray-200">
+          <button
+            type="submit"
+            class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors">
+            💾 Guardar Horario
+          </button>
+          <button
+            type="button"
+            id="btnCancelWorkSchedule"
+            class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-lg transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -2573,6 +2589,6 @@
   <script src="/src/js/modules/config.js?v=29"></script>
   <script src="/src/js/modules/auth.js?v=29"></script>
   <script src="/src/js/modules/utils.js?v=29"></script>
-  <script src="/src/js/pages/admin.js?v=54"></script>
+  <script src="/src/js/pages/admin.js?v=65"></script>
 </body>
 </html>

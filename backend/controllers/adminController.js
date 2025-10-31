@@ -353,6 +353,8 @@ exports.unlockAdmin = async (req, res) => {
 // @desc    Obtener todos los empleados
 // @route   GET /api/admins/empleados
 // @access  Private (Admin y Superadmin)
+// NOTA: Filtra por rol='empleado' (usuarios que acceden al portal de empleados)
+//       NO confundir con rolEmpleado (puesto de trabajo)
 exports.getEmpleados = async (req, res) => {
   try {
     // Verificar que el usuario sea admin o superadmin
@@ -363,7 +365,7 @@ exports.getEmpleados = async (req, res) => {
       });
     }
 
-    // Solo obtener empleados
+    // Filtrar por rol='empleado' (tipo de acceso al sistema)
     const empleados = await Admin.find({ 
       rol: 'empleado' 
     })
@@ -387,6 +389,7 @@ exports.getEmpleados = async (req, res) => {
 // @desc    Obtener empleado por ID
 // @route   GET /api/admins/empleados/:id
 // @access  Private (Admin y Superadmin)
+// NOTA: Verifica que el usuario tenga rol='empleado'
 exports.getEmpleado = async (req, res) => {
   try {
     // Verificar que el usuario sea admin o superadmin
@@ -397,6 +400,7 @@ exports.getEmpleado = async (req, res) => {
       });
     }
 
+    // Buscar SOLO entre usuarios con rol='empleado'
     const empleado = await Admin.findOne({
       _id: req.params.id,
       rol: 'empleado'
@@ -425,6 +429,11 @@ exports.getEmpleado = async (req, res) => {
 // @desc    Crear nuevo empleado
 // @route   POST /api/admins/empleados
 // @access  Private (Admin y Superadmin)
+// @desc    Crear nuevo empleado
+// @route   POST /api/admins/empleados
+// @access  Private (admin, superadmin)
+// NOTA: Este endpoint crea usuarios con rol='empleado' (acceso al portal de empleados)
+//       El campo 'rolEmpleado' define su puesto de trabajo (monitor/cocina/barra)
 exports.createEmpleado = async (req, res) => {
   try {
     // Verificar que el usuario sea admin o superadmin
@@ -447,7 +456,7 @@ exports.createEmpleado = async (req, res) => {
       });
     }
     
-    // Validar que el rol sea válido
+    // Validar que el rolEmpleado (puesto de trabajo) sea válido
     if (!['monitor', 'cocina', 'barra'].includes(rolEmpleado)) {
       return res.status(400).json({
         success: false,
@@ -472,19 +481,21 @@ exports.createEmpleado = async (req, res) => {
     }
 
     // Crear el empleado
+    // IMPORTANTE: rol='empleado' es FIJO (tipo de usuario para login)
+    //             rolEmpleado es variable (puesto de trabajo: monitor/cocina/barra)
     const newEmpleadoData = {
       username: nombreUsuario,
       nombre: nombre,
       password,
-      rol: 'empleado',  // Siempre empleado
-      rolEmpleado: rolEmpleado
+      rol: 'empleado',  // FIJO: Acceso al portal de empleados
+      rolEmpleado: rolEmpleado  // VARIABLE: Puesto de trabajo
     };
     
     if (email && email.trim()) {
       newEmpleadoData.email = email;
     }
     
-    console.log('💾 Creando empleado con:', { ...newEmpleadoData, password: '(oculto)' });
+    console.log('💾 Creando empleado con rol=empleado y rolEmpleado=', rolEmpleado);
     
     const empleado = await Admin.create(newEmpleadoData);
 
@@ -492,7 +503,7 @@ exports.createEmpleado = async (req, res) => {
     const empleadoData = empleado.toObject();
     delete empleadoData.password;
 
-    console.log('✅ Empleado creado exitosamente:', empleadoData._id);
+    console.log('✅ Empleado creado:', empleadoData._id, '| rol:', empleadoData.rol, '| rolEmpleado:', empleadoData.rolEmpleado);
 
     res.status(201).json({
       success: true,
@@ -512,6 +523,9 @@ exports.createEmpleado = async (req, res) => {
 // @desc    Actualizar empleado
 // @route   PUT /api/admins/empleados/:id
 // @access  Private (Admin y Superadmin)
+// NOTA: Este endpoint solo actualiza campos editables de empleados
+//       El campo 'rol' NO puede ser cambiado (siempre debe ser 'empleado')
+//       Solo se puede actualizar 'rolEmpleado' (monitor/cocina/barra)
 exports.updateEmpleado = async (req, res) => {
   try {
     // Verificar que el usuario sea admin o superadmin
@@ -534,7 +548,8 @@ exports.updateEmpleado = async (req, res) => {
       });
     }
 
-    // Verificar que es un empleado
+    // VERIFICACIÓN CRÍTICA: Solo se pueden editar usuarios que YA sean empleados
+    // Esto previene cambiar un admin/superadmin a empleado o viceversa
     if (empleado.rol !== 'empleado') {
       return res.status(400).json({
         success: false,
@@ -542,7 +557,7 @@ exports.updateEmpleado = async (req, res) => {
       });
     }
     
-    // Validar rolEmpleado si se proporciona
+    // Validar rolEmpleado (puesto de trabajo) si se proporciona
     if (rolEmpleado && !['monitor', 'cocina', 'barra'].includes(rolEmpleado)) {
       return res.status(400).json({
         success: false,
@@ -550,7 +565,8 @@ exports.updateEmpleado = async (req, res) => {
       });
     }
 
-    // Actualizar campos
+    // Actualizar solo campos permitidos
+    // NOTA: 'rol' NO está incluido - un empleado siempre será empleado
     if (nombreUsuario) empleado.username = nombreUsuario;
     if (nombre) empleado.nombre = nombre;
     if (email !== undefined) empleado.email = email || null;

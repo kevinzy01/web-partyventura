@@ -48,32 +48,97 @@ Partyventura es una aplicación web full-stack para gestión de eventos y reserv
 - `admin` - Gestión completa de contenido (noticias, eventos, contactos, galería)
 - `superadmin` - Todos los permisos admin + gestión de usuarios + gestión de horarios/tarifas
 
-### 3.1 Sistema de Roles de Empleados
-Cada empleado tiene un rol específico que define su área de trabajo:
-- `monitor` - Supervisa actividades, atiende consultas (emoji: 🏃, color: azul)
-- `cocina` - Prepara alimentos y bebidas (emoji: 👨‍🍳, color: naranja)
-- `barra` - Atiende barra y bebidas (emoji: 🍹, color: morado)
+### 3.1 Sistema de Dos Roles para Empleados (CRÍTICO)
 
-**Implementación**:
-- Campo `rolEmpleado` en modelo Admin (requerido solo para `rol === 'empleado'`)
-- Selector en formulario de creación/edición de empleados
-- Visualización en tarjetas de empleados, control horario y horarios laborales
-- Validación backend: Solo `['monitor', 'cocina', 'barra']` son válidos
-- Colores automáticos según rol: azul, naranja, morado
+El sistema implementa una **arquitectura de DOS ROLES INDEPENDIENTES**:
 
-**Ubicaciones donde se muestra**:
-1. **Gestión de Empleados** - Badge colorido debajo del nombre
-2. **Control Horario** - Badge con rol en columna de empleado
-3. **Horarios Laborales** (3 vistas) - Badge con rol en información del empleado
+#### **ROL (Tipo de Usuario - Control de Acceso)**
+Define qué portal accede el usuario:
+- `empleado` - Acceso al portal de empleados (fichar entrada/salida, ver horarios)
+- `admin` - Acceso al panel de administración (gestión de contenido)
+- `superadmin` - Acceso panel admin + gestión de usuarios y configuración
 
+#### **ROL EMPLEADO (Puesto de Trabajo)**
+Define el área de trabajo (solo aplica cuando `rol === 'empleado'`):
+- `monitor` - Supervisa actividades, atiende consultas (color: azul)
+- `cocina` - Prepara alimentos y bebidas (color: naranja)
+- `barra` - Atiende barra y bebidas (color: morado)
+
+#### **Reglas Críticas**
+1. **TODOS los empleados DEBEN tener `rol='empleado'`** (para acceder al portal)
+2. **TODOS los empleados DEBEN tener `rolEmpleado` definido** (monitor/cocina/barra)
+3. **El campo `rol='empleado'` NO es editable** - Se asigna automáticamente en creación
+4. **Solo `rolEmpleado` es editable** - Se puede cambiar el puesto de un empleado
+
+#### **Implementación en Backend**
 **Modelo** (`/backend/models/Admin.js`):
 ```javascript
+rol: {
+  type: String,
+  enum: ['admin', 'superadmin', 'empleado'],
+  default: 'empleado'
+},
 rolEmpleado: {
   type: String,
   enum: ['monitor', 'cocina', 'barra'],
   required: function() { return this.rol === 'empleado'; }
 }
 ```
+
+**Controladores** (`/backend/controllers/adminController.js`):
+- `createEmpleado()` - SIEMPRE setea `rol: 'empleado'` (no acepta otro valor)
+- `updateEmpleado()` - NO permite cambiar `rol`, solo `rolEmpleado`
+- `getEmpleados()` - Filtra por `rol: 'empleado'` (acceso, NO puesto)
+
+**Endpoints** (`/backend/routes/admins.js`):
+- `POST /api/admins/empleados` - Crear empleado
+- `GET /api/admins/empleados` - Listar empleados
+- `GET /api/admins/empleados/:id` - Obtener empleado específico
+- `PUT /api/admins/empleados/:id` - Editar empleado
+- `DELETE /api/admins/empleados/:id` - Eliminar empleado
+
+#### **Implementación en Frontend**
+**Formulario** (`/frontend/public/admin.html`):
+- **NO mostrar selector de `rol`** (siempre empleado)
+- **Mostrar selector de `rolEmpleado`** (monitor/cocina/barra)
+- **Texto de ayuda explicar** que rol se asigna automáticamente
+
+**JavaScript** (`/frontend/src/js/pages/admin.js`):
+- `handleEmpleadoSubmit()` - Hardcodea `rol: 'empleado'` (línea ~1780)
+- `loadEmpleados()` - Carga desde `/api/admins/empleados`
+- `loadEmpleadosForSchedules()` - Llama a `/api/admins/empleados`
+- **Nunca filtrar por `rolEmpleado`** - Solo filtrar por `rol === 'empleado'`
+
+#### **Visualización**
+Se muestran badges de color sin emojis:
+- Monitor (azul)
+- Cocina (naranja)
+- Barra (morado)
+
+#### **Validación**
+✅ Condicional Mongoose: `rolEmpleado` requerido si `rol === 'empleado'`  
+✅ Backend: Valida enum ['monitor', 'cocina', 'barra']  
+✅ Frontend: Select requerido, solo permite valores válidos  
+✅ Protección: `updateEmpleado()` no permite cambiar `rol`
+
+### 3.2 Puestos de Trabajo de Empleados
+Cada empleado tiene un rol específico que define su área de trabajo:
+- `monitor` - Supervisa actividades, atiende consultas (color: azul)
+- `cocina` - Prepara alimentos y bebidas (color: naranja)
+- `barra` - Atiende barra y bebidas (color: morado)
+
+**Implementación**:
+- Campo `rolEmpleado` en modelo Admin (requerido solo para `rol === 'empleado'`)
+- Selector en formulario de creación/edición de empleados (sin emojis)
+- Visualización en tarjetas de empleados, control horario y horarios laborales (badges de color)
+- Validación backend: Solo `['monitor', 'cocina', 'barra']` son válidos
+- Colores automáticos según rol: azul, naranja, morado
+
+**Ubicaciones donde se muestra**:
+1. **Gestión de Empleados** - Badge colorido con nombre del puesto
+2. **Control Horario** - Badge con puesto en columna de empleado
+3. **Horarios Laborales** (3 vistas) - Badge con puesto en información del empleado
+4. **Dropdowns de Horarios** - Solo nombre del empleado, sin badges
 
 ### 4. Orden de Middleware de Seguridad (CRÍTICO)
 En `server.js`, los middleware DEBEN aplicarse en este orden:

@@ -30,11 +30,21 @@ const adminSchema = new mongoose.Schema({
     required: [true, 'El nombre es obligatorio'],
     trim: true
   },
+  // ROL DE USUARIO (PERMISOS DE ACCESO AL SISTEMA)
+  // - empleado: Acceso al portal de empleados (fichar entrada/salida)
+  // - admin: Gestión de contenido (noticias, eventos, contactos, galería)
+  // - superadmin: Todos los permisos + gestión de usuarios + horarios
   rol: {
     type: String,
     enum: ['admin', 'superadmin', 'empleado'],
     default: 'empleado'
   },
+  // ROL DE EMPLEADO (PUESTO DE TRABAJO EN EL PARQUE)
+  // Solo aplicable cuando rol === 'empleado'
+  // Define el área de trabajo para organización de horarios
+  // - monitor: Supervisa actividades
+  // - cocina: Prepara alimentos
+  // - barra: Atiende bebidas
   rolEmpleado: {
     type: String,
     enum: ['monitor', 'cocina', 'barra'],

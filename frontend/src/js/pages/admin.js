@@ -1611,14 +1611,14 @@ function displayEmpleados(empleados) {
   }
   
   const empleadosHTML = empleados.map(empleado => {
-    // Emoji y texto según rol de empleado
+    // Texto según puesto de trabajo del empleado
     const roleInfo = {
-      monitor: { emoji: '🏃', text: 'Monitor', color: 'blue' },
-      cocina: { emoji: '👨‍🍳', text: 'Cocina', color: 'orange' },
-      barra: { emoji: '🍹', text: 'Barra', color: 'purple' }
+      monitor: { text: 'Monitor', color: 'blue' },
+      cocina: { text: 'Cocina', color: 'orange' },
+      barra: { text: 'Barra', color: 'purple' }
     };
     
-    const role = roleInfo[empleado.rolEmpleado] || { emoji: '👔', text: 'Empleado', color: 'blue' };
+    const role = roleInfo[empleado.rolEmpleado] || { text: 'Empleado', color: 'blue' };
     
     return `
     <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-${role.color}-500" data-section="empleados">
@@ -1639,7 +1639,7 @@ function displayEmpleados(empleados) {
               <h3 class="text-xl font-bold text-gray-800 mb-1">${empleado.nombre || empleado.username}</h3>
               <p class="text-sm text-gray-600">
                 <span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-3 py-1 rounded-full text-xs font-semibold">
-                  ${role.emoji} ${role.text}
+                  ${role.text}
                 </span>
               </p>
             </div>
@@ -1697,7 +1697,7 @@ async function showEmpleadoModal(empleadoId = null) {
   // Configurar para crear o editar
   if (empleadoId) {
     // Modo edición
-    title.textContent = '👔 Editar Empleado';
+    title.textContent = 'Editar Empleado';
     passwordField.removeAttribute('required');
     passwordLabel.textContent = '';
     passwordHint.textContent = 'Dejar en blanco para mantener la contraseña actual';
@@ -1722,7 +1722,7 @@ async function showEmpleadoModal(empleadoId = null) {
     
   } else {
     // Modo creación
-    title.textContent = '👔 Nuevo Empleado';
+    title.textContent = 'Nuevo Empleado';
     passwordField.setAttribute('required', 'required');
     passwordLabel.textContent = '*';
     passwordHint.textContent = 'Mínimo 6 caracteres';
@@ -3022,9 +3022,9 @@ async function loadTimeRecords() {
       
       // Rol del empleado
       const roleInfo = {
-        monitor: { emoji: '🏃', text: 'Monitor', color: 'blue' },
-        cocina: { emoji: '👨‍🍳', text: 'Cocina', color: 'orange' },
-        barra: { emoji: '🍹', text: 'Barra', color: 'purple' }
+        monitor: { text: 'Monitor', color: 'blue' },
+        cocina: { text: 'Cocina', color: 'orange' },
+        barra: { text: 'Barra', color: 'purple' }
       };
       const empleadoRol = record.empleado?.rolEmpleado;
       const role = roleInfo[empleadoRol] || null;
@@ -3044,7 +3044,7 @@ async function loadTimeRecords() {
               ${empleadoNombre}
               ${empleadoEliminado ? '<span class="ml-2 text-xs text-red-600">⚠️ Eliminado</span>' : ''}
             </div>
-            ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.emoji} ${role.text}</span>` : ''}
+            ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.text}</span>` : ''}
             <div class="text-xs text-gray-500 mt-1">${empleadoEmail}</div>
           </td>
           <td class="px-6 py-4">
@@ -3383,15 +3383,24 @@ async function initWorkSchedules() {
 }
 
 // Cargar lista de empleados para filtros y formulario
+// NOTA: Filtra por rol='empleado' (usuarios con acceso al portal de empleados)
+//       Muestra badges según rolEmpleado (monitor=🏃, cocina=👨‍🍳, barra=🍹)
 async function loadEmpleadosForSchedules() {
   try {
-    const response = await fetch(`${API_URL}/admins`, {
+    // ENDPOINT CORRECTO: /api/admins/empleados (filtra solo empleados en backend)
+    const response = await fetch(`${API_URL}/admins/empleados`, {
       headers: Auth.getAuthHeaders()
     });
     
     const data = await response.json();
-    if (data.success) {
-      empleadosListForSchedules = data.data.filter(u => u.rol === 'empleado');
+    
+    if (data.success && data.data) {
+      // Ya están filtrados por rol='empleado' desde el backend
+      empleadosListForSchedules = data.data;
+      
+      if (empleadosListForSchedules.length === 0) {
+        console.warn('⚠️ No hay empleados con rol="empleado" en la base de datos.');
+      }
       
       // Poblar select de filtro
       const filterSelect = document.getElementById('filterEmployee');
@@ -3405,10 +3414,15 @@ async function loadEmpleadosForSchedules() {
       // Poblar select del formulario
       const formSelect = document.getElementById('wsEmpleado');
       if (formSelect) {
-        formSelect.innerHTML = '<option value="">Seleccione un empleado</option>';
-        empleadosListForSchedules.forEach(emp => {
-          formSelect.innerHTML += `<option value="${emp._id}">${emp.nombre}</option>`;
-        });
+        if (empleadosListForSchedules.length === 0) {
+          formSelect.innerHTML = '<option value="" disabled>⚠️ Sin empleados - Crear en "Gestión de Empleados"</option>';
+          showNotification('⚠️ No hay empleados. Créalos en la sección "Gestión de Empleados" primero.', 'warning');
+        } else {
+          formSelect.innerHTML = '<option value="">Seleccione un empleado</option>';
+          empleadosListForSchedules.forEach(emp => {
+            formSelect.innerHTML += `<option value="${emp._id}">${emp.nombre}</option>`;
+          });
+        }
       }
     }
   } catch (error) {
@@ -3519,9 +3533,9 @@ function renderWorkSchedulesListView() {
     
     // Rol del empleado
     const roleInfo = {
-      monitor: { emoji: '🏃', text: 'Monitor', color: 'blue' },
-      cocina: { emoji: '👨‍🍳', text: 'Cocina', color: 'orange' },
-      barra: { emoji: '🍹', text: 'Barra', color: 'purple' }
+      monitor: { text: 'Monitor', color: 'blue' },
+      cocina: { text: 'Cocina', color: 'orange' },
+      barra: { text: 'Barra', color: 'purple' }
     };
     const empleadoRol = ws.empleado?.rolEmpleado;
     const role = roleInfo[empleadoRol] || null;
@@ -3530,7 +3544,7 @@ function renderWorkSchedulesListView() {
       <tr class="hover:bg-gray-50 transition-colors">
         <td class="px-6 py-4">
           <div class="text-sm font-medium text-gray-900">${ws.empleado?.nombre || 'N/A'}</div>
-          ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.emoji} ${role.text}</span>` : ''}
+          ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.text}</span>` : ''}
           <div class="text-xs text-gray-500 mt-1">${ws.empleado?.username || ''}</div>
         </td>
         <td class="px-6 py-4 text-sm text-gray-600">${fechaStr}</td>
@@ -3803,7 +3817,6 @@ async function editWorkSchedule(id) {
   // Mostrar modal
   const modal = document.getElementById('modalWorkSchedule');
   modal.classList.remove('hidden');
-  modal.classList.add('flex');
 }
 
 // Actualizar horario
@@ -3913,7 +3926,6 @@ function closeWorkScheduleModal() {
   const modal = document.getElementById('modalWorkSchedule');
   if (modal) {
     modal.classList.add('hidden');
-    modal.classList.remove('flex');
   }
   
   const form = document.getElementById('formWorkSchedule');
@@ -3933,7 +3945,7 @@ function setupWorkSchedulesEventListeners() {
   // Botón nuevo horario
   const btnNew = document.getElementById('btnNewWorkSchedule');
   if (btnNew) {
-    btnNew.addEventListener('click', () => {
+    btnNew.addEventListener('click', async () => {
       const form = document.getElementById('formWorkSchedule');
       if (form) form.reset();
       
@@ -3947,9 +3959,11 @@ function setupWorkSchedulesEventListeners() {
       
       document.getElementById('modalWorkScheduleTitle').textContent = 'Asignar Horario Laboral';
       
+      // Cargar empleados antes de abrir modal
+      await loadEmpleadosForSchedules();
+      
       const modal = document.getElementById('modalWorkSchedule');
       modal.classList.remove('hidden');
-      modal.classList.add('flex');
     });
   }
   
