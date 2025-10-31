@@ -11,7 +11,15 @@ if (-not (Test-Path $backupFolder)) {
 }
 
 # Obtener imágenes del slideshow
-$images = Get-ChildItem "$sourceFolder\IMG_*.jpg"
+
+# Incluir también imágenes específicas adicionales
+$imgPattern = @("IMG_*.jpg", "tirolina.jpg", "taquillas.jpg", "boxeo.jpg")
+$images = @()
+foreach ($pattern in $imgPattern) {
+    $images += Get-ChildItem -Path $sourceFolder -Filter $pattern
+}
+Write-Host "`n[ANALISIS] Imagenes encontradas:" -ForegroundColor Cyan
+Write-Host "Total de imagenes: $($images.Count)" -ForegroundColor Yellow
 
 Write-Host "`n[ANALISIS] Imagenes encontradas:" -ForegroundColor Cyan
 Write-Host "Total de imagenes: $($images.Count)" -ForegroundColor Yellow

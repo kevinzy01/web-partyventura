@@ -157,6 +157,9 @@ app.use('/api/gallery', require('./routes/gallery'));
 // Control horario (empleados, admin y superadmin)
 app.use('/api/time-records', require('./routes/timeRecords'));
 
+// Gestión de horarios laborales (empleados pueden ver, solo superadmin gestiona)
+app.use('/api/work-schedules', require('./routes/workSchedules'));
+
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
   res.json({

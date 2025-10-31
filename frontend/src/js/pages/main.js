@@ -1020,7 +1020,30 @@ function initCalendar() {
       // Número del día
       const dayNumber = document.createElement('span');
       dayNumber.textContent = day;
+      dayNumber.className = 'font-bold';
       dayElement.appendChild(dayNumber);
+
+      // Horario según el tipo de día
+      const dayOfWeekNum = dayDate.getDay();
+      // 0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves, 5=viernes, 6=sábado
+      const isWeekendDay = dayOfWeekNum === 0 || dayOfWeekNum === 6; // domingo o sábado
+      const isFridayOrAfter = dayOfWeekNum >= 5; // viernes (5) o sábado (6) o domingo (0)
+      const schedule = document.createElement('span');
+      schedule.className = 'text-xs mt-1 opacity-75 font-medium';
+      
+      if (isFestive) {
+        schedule.textContent = '10:00-22:00';
+      } else if (isFridayOrAfter && dayOfWeekNum !== 0) {
+        // Viernes y sábado: 10:00-22:00
+        schedule.textContent = '10:00-22:00';
+      } else if (dayOfWeekNum === 0) {
+        // Domingo: 10:00-22:00
+        schedule.textContent = '10:00-22:00';
+      } else {
+        // Lunes a jueves: 17:00-22:00
+        schedule.textContent = '17:00-22:00';
+      }
+      dayElement.appendChild(schedule);
 
       // Indicador de evento (punto)
       if (hasEvent && !isToday) {

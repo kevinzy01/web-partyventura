@@ -435,15 +435,23 @@ exports.createEmpleado = async (req, res) => {
       });
     }
 
-    const { nombreUsuario, email, password, nombre } = req.body;
+    const { nombreUsuario, email, password, nombre, rolEmpleado } = req.body;
 
-    console.log('📥 Datos recibidos para empleado:', { nombreUsuario, email: email || '(vacío)', nombre });
+    console.log('📥 Datos recibidos para empleado:', { nombreUsuario, email: email || '(vacío)', nombre, rolEmpleado });
 
     // Validar campos requeridos
-    if (!nombreUsuario || !password || !nombre) {
+    if (!nombreUsuario || !password || !nombre || !rolEmpleado) {
       return res.status(400).json({
         success: false,
-        message: 'Por favor completa todos los campos requeridos (nombreUsuario, password y nombre)'
+        message: 'Por favor completa todos los campos requeridos (nombreUsuario, password, nombre y rolEmpleado)'
+      });
+    }
+    
+    // Validar que el rol sea válido
+    if (!['monitor', 'cocina', 'barra'].includes(rolEmpleado)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El rol de empleado debe ser: monitor, cocina o barra'
       });
     }
 
@@ -468,7 +476,8 @@ exports.createEmpleado = async (req, res) => {
       username: nombreUsuario,
       nombre: nombre,
       password,
-      rol: 'empleado'  // Siempre empleado
+      rol: 'empleado',  // Siempre empleado
+      rolEmpleado: rolEmpleado
     };
     
     if (email && email.trim()) {
@@ -514,7 +523,7 @@ exports.updateEmpleado = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { nombreUsuario, email, nombre, password } = req.body;
+    const { nombreUsuario, email, nombre, password, rolEmpleado } = req.body;
 
     const empleado = await Admin.findById(id);
 
@@ -532,12 +541,21 @@ exports.updateEmpleado = async (req, res) => {
         message: 'Este usuario no es un empleado'
       });
     }
+    
+    // Validar rolEmpleado si se proporciona
+    if (rolEmpleado && !['monitor', 'cocina', 'barra'].includes(rolEmpleado)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El rol de empleado debe ser: monitor, cocina o barra'
+      });
+    }
 
     // Actualizar campos
     if (nombreUsuario) empleado.username = nombreUsuario;
     if (nombre) empleado.nombre = nombre;
     if (email !== undefined) empleado.email = email || null;
     if (password) empleado.password = password;
+    if (rolEmpleado) empleado.rolEmpleado = rolEmpleado;
 
     await empleado.save();
 

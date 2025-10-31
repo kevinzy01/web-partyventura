@@ -400,7 +400,427 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## 🚀 Endpoints Existentes (Fase 1)
+## � API de Horarios Laborales (Work Schedules)
+
+**Base URL:** `/api/work-schedules`
+
+**Descripción:** Sistema de gestión de horarios laborales para empleados del parque.
+
+### 🔐 Permisos por Rol
+
+- **Empleado:** Solo puede ver sus propios horarios
+- **Admin:** No tiene permisos especiales (mismo que empleado)
+- **Superadmin:** Gestión completa (CRUD) de todos los horarios
+
+---
+
+### Endpoints Protegidos - SUPERADMIN
+
+#### POST `/api/work-schedules`
+Crear nuevo horario laboral para un empleado.
+
+**Headers:** `Authorization: Bearer <token>` (Superadmin)
+
+**Body:**
+```json
+{
+  "empleadoId": "507f1f77bcf86cd799439011",
+  "fecha": "2025-11-15",
+  "turno": "mañana",
+  "horaInicio": "10:00",
+  "horaFin": "14:00",
+  "notas": "Turno de apertura",
+  "color": "#f97316"
+}
+```
+
+**Validaciones:**
+- `empleadoId`: Debe existir en BD y tener rol 'empleado'
+- `fecha`: No puede ser fecha pasada
+- `turno`: `mañana` | `tarde` | `completo`
+- `horaInicio/horaFin`: Formato HH:MM (00:00 - 23:59)
+- **Horarios del parque:**
+  - Lunes a Jueves: 17:00 - 22:00
+  - Viernes a Domingo: 10:00 - 22:00
+- **Solapamientos:** Rechaza si empleado ya tiene turno en mismo horario
+
+**Respuesta exitosa (201):**
+```json
+{
+  "success": true,
+  "message": "Horario laboral creado exitosamente",
+  "data": {
+    "id": "...",
+    "empleado": {
+      "id": "...",
+      "nombre": "Juan Pérez"
+    },
+    "fecha": "2025-11-15T00:00:00.000Z",
+    "fechaFormateada": "viernes, 15 de noviembre de 2025",
+    "diaSemana": "viernes",
+    "turno": "mañana",
+    "horaInicio": "10:00",
+    "horaFin": "14:00",
+    "horasTotales": 4,
+    "estado": "programado",
+    "notas": "Turno de apertura",
+    "color": "#f97316",
+    "creadoPor": "...",
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+}
+```
+
+**Error de solapamiento (409):**
+```json
+{
+  "success": false,
+  "message": "El horario se solapa con un turno existente",
+  "conflicto": {
+    "id": "...",
+    "horaInicio": "12:00",
+    "horaFin": "18:00",
+    "turno": "tarde"
+  }
+}
+```
+
+---
+
+#### GET `/api/work-schedules/all`
+Obtener todos los horarios laborales con filtros opcionales.
+
+**Headers:** `Authorization: Bearer <token>` (Superadmin)
+
+**Query Parameters:**
+- `empleadoId` (opcional): Filtrar por empleado específico
+- `fechaInicio` (opcional): Fecha de inicio (formato ISO8601)
+- `fechaFin` (opcional): Fecha de fin (formato ISO8601)
+- `mes` (opcional): Número de mes (1-12)
+- `anio` (opcional): Año (2024+)
+- `estado` (opcional): `programado` | `confirmado` | `cancelado` | `completado`
+
+**Ejemplo:** `GET /api/work-schedules/all?mes=11&anio=2025&estado=programado`
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "count": 15,
+  "data": [
+    {
+      "id": "...",
+      "empleado": {
+        "id": "...",
+        "nombre": "Juan Pérez"
+      },
+      "fecha": "2025-11-15T00:00:00.000Z",
+      "fechaFormateada": "viernes, 15 de noviembre de 2025",
+      "diaSemana": "viernes",
+      "turno": "mañana",
+      "horaInicio": "10:00",
+      "horaFin": "14:00",
+      "horasTotales": 4,
+      "estado": "programado",
+      "notas": "",
+      "color": "#f97316"
+    }
+  ]
+}
+```
+
+---
+
+#### PUT `/api/work-schedules/:id`
+Actualizar horario laboral existente.
+
+**Headers:** `Authorization: Bearer <token>` (Superadmin)
+
+**Body (todos los campos son opcionales):**
+```json
+{
+  "fecha": "2025-11-16",
+  "horaInicio": "11:00",
+  "horaFin": "15:00",
+  "estado": "confirmado",
+  "notas": "Cambio de horario por solicitud"
+}
+```
+
+**Validaciones:**
+- Si cambian horas o fecha, verifica nuevamente solapamientos
+- Si cambia empleado, verifica que nuevo empleado existe y tiene rol 'empleado'
+
+---
+
+#### DELETE `/api/work-schedules/:id`
+Eliminar horario laboral.
+
+**Headers:** `Authorization: Bearer <token>` (Superadmin)
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "message": "Horario eliminado exitosamente"
+}
+```
+
+---
+
+#### POST `/api/work-schedules/delete-multiple`
+Eliminar múltiples horarios en lote.
+
+**Headers:** `Authorization: Bearer <token>` (Superadmin)
+
+**Body:**
+```json
+{
+  "ids": [
+    "507f1f77bcf86cd799439011",
+    "507f1f77bcf86cd799439012",
+    "507f1f77bcf86cd799439013"
+  ]
+}
+```
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "message": "3 horario(s) eliminado(s) exitosamente",
+  "deletedCount": 3
+}
+```
+
+---
+
+### Endpoints Protegidos - EMPLEADO/ADMIN/SUPERADMIN
+
+#### GET `/api/work-schedules/my-schedules`
+Obtener horarios propios del usuario autenticado.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `fechaInicio` (opcional): Fecha de inicio
+- `fechaFin` (opcional): Fecha de fin
+- `mes` (opcional): Número de mes (1-12)
+- `anio` (opcional): Año (2024+)
+
+**Respuesta (vista simplificada para empleados):**
+```json
+{
+  "success": true,
+  "count": 8,
+  "data": [
+    {
+      "id": "...",
+      "fecha": "2025-11-15T00:00:00.000Z",
+      "fechaFormateada": "viernes, 15 de noviembre de 2025",
+      "diaSemana": "viernes",
+      "turno": "mañana",
+      "horaInicio": "10:00",
+      "horaFin": "14:00",
+      "horasTotales": 4,
+      "estado": "programado",
+      "notas": "Turno de apertura",
+      "color": "#f97316"
+    }
+  ]
+}
+```
+
+---
+
+#### GET `/api/work-schedules/weekly`
+Obtener vista semanal de horarios.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters (obligatorios):**
+- `fecha`: Cualquier fecha de la semana (formato ISO8601)
+- `empleadoId` (opcional, solo superadmin): Ver horarios de otro empleado
+
+**Ejemplo:** `GET /api/work-schedules/weekly?fecha=2025-11-15`
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "data": {
+    "inicioSemana": "2025-11-11",
+    "finSemana": "2025-11-17",
+    "dias": [
+      {
+        "fecha": "2025-11-11",
+        "diaSemana": "lunes",
+        "horarios": []
+      },
+      {
+        "fecha": "2025-11-15",
+        "diaSemana": "viernes",
+        "horarios": [
+          {
+            "id": "...",
+            "turno": "mañana",
+            "horaInicio": "10:00",
+            "horaFin": "14:00",
+            "horasTotales": 4,
+            "estado": "programado"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### GET `/api/work-schedules/monthly`
+Obtener vista mensual de horarios con resumen.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters (obligatorios):**
+- `mes`: Número de mes (1-12)
+- `anio`: Año (2024+)
+- `empleadoId` (opcional, solo superadmin): Ver horarios de otro empleado
+
+**Ejemplo:** `GET /api/work-schedules/monthly?mes=11&anio=2025`
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "count": 12,
+  "data": {
+    "mes": 11,
+    "anio": 2025,
+    "horarios": [
+      {
+        "id": "...",
+        "fecha": "2025-11-15T00:00:00.000Z",
+        "turno": "mañana",
+        "horaInicio": "10:00",
+        "horaFin": "14:00",
+        "horasTotales": 4,
+        "estado": "programado"
+      }
+    ],
+    "resumen": {
+      "mes": 11,
+      "anio": 2025,
+      "totalHoras": 48.5,
+      "diasTrabajo": 12,
+      "turnosProgramados": 15,
+      "estadisticas": {
+        "programados": 10,
+        "confirmados": 5,
+        "completados": 0
+      }
+    }
+  }
+}
+```
+
+---
+
+#### GET `/api/work-schedules/resume/:empleadoId?`
+Obtener resumen de horas del mes.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Path Parameters:**
+- `empleadoId` (opcional): Solo superadmin puede especificar. Empleados solo ven el suyo.
+
+**Query Parameters (obligatorios):**
+- `mes`: Número de mes (1-12)
+- `anio`: Año (2024+)
+
+**Ejemplo:** `GET /api/work-schedules/resume?mes=11&anio=2025`
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "data": {
+    "mes": 11,
+    "anio": 2025,
+    "totalHoras": 48.5,
+    "diasTrabajo": 12,
+    "turnosProgramados": 15,
+    "estadisticas": {
+      "programados": 10,
+      "confirmados": 5,
+      "completados": 0
+    }
+  }
+}
+```
+
+---
+
+#### GET `/api/work-schedules/:id`
+Obtener horario específico por ID.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Permisos:**
+- Empleado: Solo puede ver sus propios horarios (403 si intenta ver de otro)
+- Superadmin: Puede ver cualquier horario
+
+---
+
+### 📝 Notas de Implementación
+
+#### Validaciones Automáticas en Modelo
+
+1. **Rango de Horarios del Parque:**
+   - Lunes a Jueves: 17:00 - 22:00
+   - Viernes a Domingo: 10:00 - 22:00
+   - Rechaza automáticamente horarios fuera de estos rangos
+
+2. **Cálculo Automático:**
+   - `horasTotales` se calcula automáticamente en `pre-save` hook
+
+3. **Detección de Solapamientos:**
+   - Método estático `verificarSolapamiento()` valida antes de guardar
+   - Compara minutos totales para detectar conflictos
+
+4. **Estados del Horario:**
+   - `programado`: Recién creado
+   - `confirmado`: Empleado confirmó asistencia
+   - `cancelado`: Turno cancelado (no se muestra a empleados)
+   - `completado`: Turno finalizado
+
+#### Rate Limiting
+
+Los endpoints de work-schedules usan el rate limiting general:
+- 100 requests / 15 minutos por IP (heredado de `generalLimiter`)
+
+#### Casos de Uso
+
+1. **Admin asigna horarios semanales:**
+   ```
+   POST /api/work-schedules (x15 llamadas para semana completa)
+   ```
+
+2. **Empleado ve su semana:**
+   ```
+   GET /api/work-schedules/weekly?fecha=2025-11-15
+   ```
+
+3. **Admin ve resumen mensual de empleado:**
+   ```
+   GET /api/work-schedules/resume/507f...?mes=11&anio=2025
+   ```
+
+---
+
+## �🚀 Endpoints Existentes (Fase 1)
 
 - `/api/auth/*` - Autenticación y gestión de sesión
 - `/api/admins/*` - Gestión de administradores (solo superadmin)
@@ -410,5 +830,6 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-**Última actualización:** 19 de octubre de 2025
-**Versión del API:** 2.0
+**Última actualización:** 30 de octubre de 2025
+**Versión del API:** 2.1
+

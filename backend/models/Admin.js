@@ -35,6 +35,14 @@ const adminSchema = new mongoose.Schema({
     enum: ['admin', 'superadmin', 'empleado'],
     default: 'empleado'
   },
+  rolEmpleado: {
+    type: String,
+    enum: ['monitor', 'cocina', 'barra'],
+    required: function() {
+      return this.rol === 'empleado';
+    },
+    default: null
+  },
   activo: {
     type: Boolean,
     default: true

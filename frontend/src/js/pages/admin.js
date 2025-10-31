@@ -328,6 +328,7 @@ function initTabs() {
   const tabEvents = document.getElementById('tabEvents');
   const tabGallery = document.getElementById('tabGallery');
   const tabTimeRecords = document.getElementById('tabTimeRecords');
+  const tabWorkSchedules = document.getElementById('tabWorkSchedules');
   
   const newsSection = document.getElementById('newsSection');
   const contactsSection = document.getElementById('contactsSection');
@@ -336,9 +337,10 @@ function initTabs() {
   const eventsSection = document.getElementById('eventsSection');
   const gallerySection = document.getElementById('gallerySection');
   const timeRecordsSection = document.getElementById('timeRecordsSection');
+  const workSchedulesSection = document.getElementById('workSchedulesSection');
   
-  const allTabs = [tabNews, tabContacts, tabAdmins, tabEmpleados, tabEvents, tabGallery, tabTimeRecords].filter(Boolean);
-  const allSections = [newsSection, contactsSection, adminsSection, empleadosSection, eventsSection, gallerySection, timeRecordsSection].filter(Boolean);
+  const allTabs = [tabNews, tabContacts, tabAdmins, tabEmpleados, tabEvents, tabGallery, tabTimeRecords, tabWorkSchedules].filter(Boolean);
+  const allSections = [newsSection, contactsSection, adminsSection, empleadosSection, eventsSection, gallerySection, timeRecordsSection, workSchedulesSection].filter(Boolean);
   
   function activateTab(activeTab, activeSection, onActivate) {
     // Desactivar todos los tabs
@@ -390,6 +392,10 @@ function initTabs() {
       loadTimeRecords();
       loadTimeRecordsSummary();
     });
+  });
+  
+  tabWorkSchedules?.addEventListener('click', () => {
+    activateTab(tabWorkSchedules, workSchedulesSection, () => initWorkSchedules());
   });
 }
 
@@ -1066,22 +1072,26 @@ function checkAdminTabVisibility() {
   const tabAdmins = document.getElementById('tabAdmins');
   const tabEmpleados = document.getElementById('tabEmpleados');
   const tabTimeRecords = document.getElementById('tabTimeRecords');
+  const tabWorkSchedules = document.getElementById('tabWorkSchedules');
   
   if (user && user.rol === 'superadmin') {
     // Superadmin ve todo
     tabAdmins?.classList.remove('hidden');
     tabEmpleados?.classList.remove('hidden');
     tabTimeRecords?.classList.remove('hidden');
+    tabWorkSchedules?.classList.remove('hidden');
   } else if (user && user.rol === 'admin') {
     // Admin solo ve empleados
     tabAdmins?.classList.add('hidden');
     tabEmpleados?.classList.remove('hidden');
     tabTimeRecords?.classList.add('hidden');
+    tabWorkSchedules?.classList.add('hidden');
   } else {
     // Empleados no ven nada de administración
     tabAdmins?.classList.add('hidden');
     tabEmpleados?.classList.add('hidden');
     tabTimeRecords?.classList.add('hidden');
+    tabWorkSchedules?.classList.add('hidden');
   }
 }
 
@@ -1600,8 +1610,18 @@ function displayEmpleados(empleados) {
     return;
   }
   
-  const empleadosHTML = empleados.map(empleado => `
-    <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-500" data-section="empleados">
+  const empleadosHTML = empleados.map(empleado => {
+    // Emoji y texto según rol de empleado
+    const roleInfo = {
+      monitor: { emoji: '🏃', text: 'Monitor', color: 'blue' },
+      cocina: { emoji: '👨‍🍳', text: 'Cocina', color: 'orange' },
+      barra: { emoji: '🍹', text: 'Barra', color: 'purple' }
+    };
+    
+    const role = roleInfo[empleado.rolEmpleado] || { emoji: '👔', text: 'Empleado', color: 'blue' };
+    
+    return `
+    <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-${role.color}-500" data-section="empleados">
       <div class="flex items-start gap-4 mb-4">
         <!-- Checkbox de selección -->
         <div class="pt-1">
@@ -1618,8 +1638,8 @@ function displayEmpleados(empleados) {
             <div>
               <h3 class="text-xl font-bold text-gray-800 mb-1">${empleado.nombre || empleado.username}</h3>
               <p class="text-sm text-gray-600">
-                <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                  👔 Empleado
+                <span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-3 py-1 rounded-full text-xs font-semibold">
+                  ${role.emoji} ${role.text}
                 </span>
               </p>
             </div>
@@ -1651,7 +1671,8 @@ function displayEmpleados(empleados) {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
   
   container.innerHTML = `
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1692,6 +1713,7 @@ async function showEmpleadoModal(empleadoId = null) {
         document.getElementById('empleadoUsername').value = empleado.username;
         document.getElementById('empleadoNombre').value = empleado.nombre || '';
         document.getElementById('empleadoEmail').value = empleado.email || '';
+        document.getElementById('empleadoRolEmpleado').value = empleado.rolEmpleado || '';
       }
     } catch (error) {
       console.error('Error al cargar empleado:', error);
@@ -1729,9 +1751,10 @@ async function handleEmpleadoSubmit(event) {
   const nombre = document.getElementById('empleadoNombre').value.trim();
   const email = document.getElementById('empleadoEmail').value.trim();
   const password = document.getElementById('empleadoPassword').value;
+  const rolEmpleado = document.getElementById('empleadoRolEmpleado').value;
   
   // Validación básica
-  if (!username || !nombre) {
+  if (!username || !nombre || !rolEmpleado) {
     showNotification('Por favor completa los campos obligatorios', 'error');
     return;
   }
@@ -1755,7 +1778,8 @@ async function handleEmpleadoSubmit(event) {
   const empleadoData = {
     nombreUsuario: username,
     nombre: nombre,
-    rol: 'empleado'  // Siempre empleado
+    rol: 'empleado',  // Siempre empleado
+    rolEmpleado: rolEmpleado
   };
   
   // Agregar email solo si se proporciona
@@ -2996,6 +3020,15 @@ async function loadTimeRecords() {
         : '(usuario eliminado)';
       const empleadoEliminado = !record.empleado;
       
+      // Rol del empleado
+      const roleInfo = {
+        monitor: { emoji: '🏃', text: 'Monitor', color: 'blue' },
+        cocina: { emoji: '👨‍🍳', text: 'Cocina', color: 'orange' },
+        barra: { emoji: '🍹', text: 'Barra', color: 'purple' }
+      };
+      const empleadoRol = record.empleado?.rolEmpleado;
+      const role = roleInfo[empleadoRol] || null;
+      
       return `
         <tr class="hover:bg-gray-50 transition-colors ${empleadoEliminado ? 'bg-gray-50' : ''}" data-section="timeRecords">
           <td class="px-6 py-4 text-center">
@@ -3011,7 +3044,8 @@ async function loadTimeRecords() {
               ${empleadoNombre}
               ${empleadoEliminado ? '<span class="ml-2 text-xs text-red-600">⚠️ Eliminado</span>' : ''}
             </div>
-            <div class="text-xs text-gray-500">${empleadoEmail}</div>
+            ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.emoji} ${role.text}</span>` : ''}
+            <div class="text-xs text-gray-500 mt-1">${empleadoEmail}</div>
           </td>
           <td class="px-6 py-4">
             <span class="${tipoColor} font-semibold text-sm">
@@ -3326,6 +3360,735 @@ function exportTimeRecords(selectedOnly = false) {
   showNotification(message, 'success');
 }
 
+// ===================================
+// 14. GESTIÓN DE HORARIOS LABORALES (WORK SCHEDULES)
+// ===================================
+
+// Variables globales para work schedules
+let currentWorkSchedulesView = 'list'; // list, week, month
+let currentWeekDate = new Date();
+let currentMonthDate = new Date();
+let empleadosListForSchedules = [];
+let workSchedules = [];
+
+// Inicialización completa de Work Schedules
+async function initWorkSchedules() {
+  console.log('🔧 Inicializando Work Schedules...');
+  await loadEmpleadosForSchedules();
+  populateYearFilterSchedules();
+  setCurrentMonthYearSchedules();
+  await loadWorkSchedules();
+  setupWorkSchedulesEventListeners();
+  console.log('✅ Work Schedules inicializado');
+}
+
+// Cargar lista de empleados para filtros y formulario
+async function loadEmpleadosForSchedules() {
+  try {
+    const response = await fetch(`${API_URL}/admins`, {
+      headers: Auth.getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      empleadosListForSchedules = data.data.filter(u => u.rol === 'empleado');
+      
+      // Poblar select de filtro
+      const filterSelect = document.getElementById('filterEmployee');
+      if (filterSelect) {
+        filterSelect.innerHTML = '<option value="">Todos los empleados</option>';
+        empleadosListForSchedules.forEach(emp => {
+          filterSelect.innerHTML += `<option value="${emp._id}">${emp.nombre}</option>`;
+        });
+      }
+      
+      // Poblar select del formulario
+      const formSelect = document.getElementById('wsEmpleado');
+      if (formSelect) {
+        formSelect.innerHTML = '<option value="">Seleccione un empleado</option>';
+        empleadosListForSchedules.forEach(emp => {
+          formSelect.innerHTML += `<option value="${emp._id}">${emp.nombre}</option>`;
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error al cargar empleados:', error);
+    showNotification('Error al cargar empleados', 'error');
+  }
+}
+
+// Poblar años en filtro (desde 2024 hasta año actual + 1)
+function populateYearFilterSchedules() {
+  const currentYear = new Date().getFullYear();
+  const yearSelect = document.getElementById('filterYear');
+  if (!yearSelect) return;
+  
+  yearSelect.innerHTML = '<option value="">Seleccione año</option>';
+  
+  for (let year = 2024; year <= currentYear + 1; year++) {
+    yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+  }
+}
+
+// Establecer mes y año actuales en filtros
+function setCurrentMonthYearSchedules() {
+  const now = new Date();
+  const monthSelect = document.getElementById('filterMonth');
+  const yearSelect = document.getElementById('filterYear');
+  
+  if (monthSelect) monthSelect.value = now.getMonth() + 1;
+  if (yearSelect) yearSelect.value = now.getFullYear();
+}
+
+// Cargar horarios con filtros
+async function loadWorkSchedules() {
+  try {
+    const empleadoId = document.getElementById('filterEmployee')?.value || '';
+    const mes = document.getElementById('filterMonth')?.value || '';
+    const anio = document.getElementById('filterYear')?.value || '';
+    const estado = document.getElementById('filterStatus')?.value || '';
+    
+    let url = `${API_URL}/work-schedules/all?`;
+    if (empleadoId) url += `empleadoId=${empleadoId}&`;
+    if (mes) url += `mes=${mes}&`;
+    if (anio) url += `anio=${anio}&`;
+    if (estado) url += `estado=${estado}&`;
+    
+    const response = await fetch(url, {
+      headers: Auth.getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      workSchedules = data.data;
+      renderCurrentWorkSchedulesView();
+    } else {
+      showNotification(data.message || 'Error al cargar horarios', 'error');
+    }
+  } catch (error) {
+    console.error('Error al cargar horarios:', error);
+    showNotification('Error al cargar horarios', 'error');
+  }
+}
+
+// Renderizar vista actual
+function renderCurrentWorkSchedulesView() {
+  if (currentWorkSchedulesView === 'list') {
+    renderWorkSchedulesListView();
+  } else if (currentWorkSchedulesView === 'week') {
+    renderWorkSchedulesWeekView();
+  } else if (currentWorkSchedulesView === 'month') {
+    renderWorkSchedulesMonthView();
+  }
+}
+
+// Renderizar vista lista
+function renderWorkSchedulesListView() {
+  const tbody = document.getElementById('workSchedulesTableBody');
+  if (!tbody) return;
+  
+  if (workSchedules.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+          <div class="text-6xl mb-4">📭</div>
+          <p class="text-lg">No hay horarios asignados</p>
+          <p class="text-sm mt-2">Use los filtros o asigne nuevos horarios</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  tbody.innerHTML = workSchedules.map(ws => {
+    const fecha = new Date(ws.fecha);
+    const fechaStr = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    const estadoBadge = {
+      'programado': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">📅 Programado</span>',
+      'confirmado': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">✅ Confirmado</span>',
+      'completado': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">🎯 Completado</span>',
+      'cancelado': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">❌ Cancelado</span>'
+    };
+    
+    const turnoIcon = {
+      'mañana': '🌅',
+      'tarde': '🌆',
+      'completo': '📅'
+    };
+    
+    // Rol del empleado
+    const roleInfo = {
+      monitor: { emoji: '🏃', text: 'Monitor', color: 'blue' },
+      cocina: { emoji: '👨‍🍳', text: 'Cocina', color: 'orange' },
+      barra: { emoji: '🍹', text: 'Barra', color: 'purple' }
+    };
+    const empleadoRol = ws.empleado?.rolEmpleado;
+    const role = roleInfo[empleadoRol] || null;
+    
+    return `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-6 py-4">
+          <div class="text-sm font-medium text-gray-900">${ws.empleado?.nombre || 'N/A'}</div>
+          ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.emoji} ${role.text}</span>` : ''}
+          <div class="text-xs text-gray-500 mt-1">${ws.empleado?.username || ''}</div>
+        </td>
+        <td class="px-6 py-4 text-sm text-gray-600">${fechaStr}</td>
+        <td class="px-6 py-4">
+          <span class="text-sm text-gray-600 capitalize">${ws.diaSemana}</span>
+        </td>
+        <td class="px-6 py-4">
+          <span class="text-sm text-gray-900">${turnoIcon[ws.turno] || ''} ${ws.turno}</span>
+        </td>
+        <td class="px-6 py-4">
+          <div class="text-sm text-gray-900 font-medium">${ws.horaInicio} - ${ws.horaFin}</div>
+        </td>
+        <td class="px-6 py-4">
+          <span class="text-sm text-gray-900 font-semibold">${ws.horasTotales}h</span>
+        </td>
+        <td class="px-6 py-4">${estadoBadge[ws.estado]}</td>
+        <td class="px-6 py-4 text-center">
+          <div class="flex items-center justify-center gap-2">
+            <button onclick="editWorkSchedule('${ws.id}')" class="text-blue-600 hover:text-blue-800 transition-colors" title="Editar">
+              ✏️
+            </button>
+            <button onclick="deleteWorkSchedule('${ws.id}')" class="text-red-600 hover:text-red-800 transition-colors" title="Eliminar">
+              🗑️
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Renderizar vista semanal
+async function renderWorkSchedulesWeekView() {
+  try {
+    // Calcular inicio y fin de semana
+    const diaSemana = currentWeekDate.getDay();
+    const inicioSemana = new Date(currentWeekDate);
+    inicioSemana.setDate(currentWeekDate.getDate() - (diaSemana === 0 ? 6 : diaSemana - 1));
+    inicioSemana.setHours(0, 0, 0, 0);
+    
+    const finSemana = new Date(inicioSemana);
+    finSemana.setDate(inicioSemana.getDate() + 6);
+    finSemana.setHours(23, 59, 59, 999);
+    
+    // Obtener datos de la semana
+    const empleadoId = document.getElementById('filterEmployee')?.value || '';
+    let url = `${API_URL}/work-schedules/weekly?fecha=${inicioSemana.toISOString()}`;
+    if (empleadoId) url += `&empleadoId=${empleadoId}`;
+    
+    const response = await fetch(url, { headers: Auth.getAuthHeaders() });
+    const data = await response.json();
+    
+    if (!data.success) {
+      showNotification('Error al cargar vista semanal', 'error');
+      return;
+    }
+    
+    // Actualizar título
+    const weekTitle = document.getElementById('weekTitle');
+    if (weekTitle) {
+      const inicioStr = inicioSemana.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+      const finStr = finSemana.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      weekTitle.textContent = `Semana del ${inicioStr} al ${finStr}`;
+    }
+    
+    // Renderizar calendario
+    const calendar = document.getElementById('weekCalendar');
+    if (!calendar) return;
+    
+    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    
+    calendar.innerHTML = data.data.dias.map((dia, index) => {
+      const horariosDia = dia.horarios || [];
+      
+      return `
+        <div class="border rounded-lg p-3 ${horariosDia.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
+          <div class="font-semibold text-sm mb-2 text-gray-700">${diasSemana[index]}</div>
+          <div class="text-xs text-gray-500 mb-3">${new Date(dia.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
+          
+          ${horariosDia.length === 0 ? 
+            '<div class="text-xs text-gray-400 italic">Sin horarios</div>' :
+            horariosDia.map(h => `
+              <div class="bg-white rounded p-2 mb-2 border-l-4" style="border-color: ${h.color || '#f97316'}">
+                ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
+                <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
+                <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
+                ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
+              </div>
+            `).join('')
+          }
+        </div>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('Error al renderizar vista semanal:', error);
+    showNotification('Error al cargar vista semanal', 'error');
+  }
+}
+
+// Renderizar vista mensual
+async function renderWorkSchedulesMonthView() {
+  try {
+    const mes = currentMonthDate.getMonth() + 1;
+    const anio = currentMonthDate.getFullYear();
+    const empleadoId = document.getElementById('filterEmployee')?.value || '';
+    
+    let url = `${API_URL}/work-schedules/monthly?mes=${mes}&anio=${anio}`;
+    if (empleadoId) url += `&empleadoId=${empleadoId}`;
+    
+    const response = await fetch(url, { headers: Auth.getAuthHeaders() });
+    const data = await response.json();
+    
+    if (!data.success) {
+      showNotification('Error al cargar vista mensual', 'error');
+      return;
+    }
+    
+    // Actualizar título
+    const monthTitle = document.getElementById('monthTitle');
+    if (monthTitle) {
+      const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      monthTitle.textContent = `${meses[mes - 1]} ${anio}`;
+    }
+    
+    // Renderizar resumen
+    const summaryContainer = document.getElementById('monthSummary');
+    if (summaryContainer && data.data.resumen) {
+      const r = data.data.resumen;
+      summaryContainer.innerHTML = `
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-blue-600">${r.totalHoras || 0}h</div>
+          <div class="text-sm text-gray-600">Horas Totales</div>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-green-600">${r.diasTrabajo || 0}</div>
+          <div class="text-sm text-gray-600">Días de Trabajo</div>
+        </div>
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-orange-600">${r.turnosProgramados || 0}</div>
+          <div class="text-sm text-gray-600">Turnos Asignados</div>
+        </div>
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-purple-600">${r.estadisticas?.confirmados || 0}</div>
+          <div class="text-sm text-gray-600">Confirmados</div>
+        </div>
+      `;
+    }
+    
+    // Renderizar calendario (tabla simple)
+    const calendarContainer = document.getElementById('monthCalendar');
+    if (calendarContainer) {
+      const horarios = data.data.horarios || [];
+      
+      if (horarios.length === 0) {
+        calendarContainer.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <div class="text-6xl mb-4">📅</div>
+            <p class="text-lg">No hay horarios asignados este mes</p>
+          </div>
+        `;
+      } else {
+        calendarContainer.innerHTML = `
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Empleado</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Turno</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Horario</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              ${horarios.map(h => {
+                const fecha = new Date(h.fecha);
+                const fechaStr = fecha.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' });
+                const estadoBadge = {
+                  'programado': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Programado</span>',
+                  'confirmado': '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Confirmado</span>',
+                  'completado': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Completado</span>'
+                };
+                
+                return `
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900 capitalize">${fechaStr}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${h.empleado?.nombre || 'N/A'}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${h.turno} (${h.horasTotales}h)</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${h.horaInicio} - ${h.horaFin}</td>
+                    <td class="px-4 py-3">${estadoBadge[h.estado]}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error al renderizar vista mensual:', error);
+    showNotification('Error al cargar vista mensual', 'error');
+  }
+}
+
+// Crear nuevo horario
+async function createWorkSchedule(formData) {
+  try {
+    const response = await fetch(`${API_URL}/work-schedules`, {
+      method: 'POST',
+      headers: {
+        ...Auth.getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification('✅ Horario asignado exitosamente', 'success');
+      closeWorkScheduleModal();
+      await loadWorkSchedules();
+    } else if (response.status === 409) {
+      // Conflicto de solapamiento
+      const conflicto = data.conflicto;
+      showNotification(
+        `⚠️ Solapamiento detectado: El empleado ya tiene un turno de ${conflicto.horaInicio} a ${conflicto.horaFin}`,
+        'warning'
+      );
+    } else {
+      const errorMsg = data.errors ? data.errors.join(', ') : data.message;
+      showNotification(errorMsg || 'Error al asignar horario', 'error');
+    }
+  } catch (error) {
+    console.error('Error al crear horario:', error);
+    showNotification('Error al asignar horario', 'error');
+  }
+}
+
+// Editar horario existente
+async function editWorkSchedule(id) {
+  const ws = workSchedules.find(w => w.id === id);
+  if (!ws) {
+    showNotification('Horario no encontrado', 'error');
+    return;
+  }
+  
+  // Llenar formulario
+  document.getElementById('workScheduleId').value = id;
+  document.getElementById('wsEmpleado').value = ws.empleado?.id || '';
+  document.getElementById('wsFecha').value = ws.fecha.split('T')[0];
+  document.getElementById('wsTurno').value = ws.turno;
+  document.getElementById('wsHoraInicio').value = ws.horaInicio;
+  document.getElementById('wsHoraFin').value = ws.horaFin;
+  document.getElementById('wsEstado').value = ws.estado;
+  document.getElementById('wsNotas').value = ws.notas || '';
+  document.getElementById('wsColor').value = ws.color;
+  document.getElementById('wsColorHex').value = ws.color;
+  
+  // Actualizar contador de caracteres
+  const notasLength = (ws.notas || '').length;
+  const notasCount = document.getElementById('wsNotasCount');
+  if (notasCount) notasCount.textContent = notasLength;
+  
+  // Cambiar título del modal
+  document.getElementById('modalWorkScheduleTitle').textContent = 'Editar Horario Laboral';
+  
+  // Mostrar modal
+  const modal = document.getElementById('modalWorkSchedule');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+// Actualizar horario
+async function updateWorkSchedule(id, formData) {
+  try {
+    const response = await fetch(`${API_URL}/work-schedules/${id}`, {
+      method: 'PUT',
+      headers: {
+        ...Auth.getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification('✅ Horario actualizado exitosamente', 'success');
+      closeWorkScheduleModal();
+      await loadWorkSchedules();
+    } else if (response.status === 409) {
+      showNotification('⚠️ Solapamiento detectado: El empleado ya tiene un turno en ese horario', 'warning');
+    } else {
+      const errorMsg = data.errors ? data.errors.join(', ') : data.message;
+      showNotification(errorMsg || 'Error al actualizar horario', 'error');
+    }
+  } catch (error) {
+    console.error('Error al actualizar horario:', error);
+    showNotification('Error al actualizar horario', 'error');
+  }
+}
+
+// Eliminar horario
+async function deleteWorkSchedule(id) {
+  const result = await Swal.fire({
+    title: '¿Eliminar horario?',
+    text: 'Esta acción no se puede deshacer',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/work-schedules/${id}`, {
+      method: 'DELETE',
+      headers: Auth.getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification('🗑️ Horario eliminado exitosamente', 'success');
+      await loadWorkSchedules();
+    } else {
+      showNotification(data.message || 'Error al eliminar horario', 'error');
+    }
+  } catch (error) {
+    console.error('Error al eliminar horario:', error);
+    showNotification('Error al eliminar horario', 'error');
+  }
+}
+
+// Cambiar vista
+function switchWorkSchedulesView(view) {
+  currentWorkSchedulesView = view;
+  
+  // Actualizar botones
+  const btnList = document.getElementById('btnViewList');
+  const btnWeek = document.getElementById('btnViewWeek');
+  const btnMonth = document.getElementById('btnViewMonth');
+  
+  // Resetear todos
+  [btnList, btnWeek, btnMonth].forEach(btn => {
+    if (btn) {
+      btn.classList.remove('bg-blue-500', 'text-white');
+      btn.classList.add('bg-gray-200', 'text-gray-800');
+    }
+  });
+  
+  // Activar el seleccionado
+  const activeBtn = view === 'list' ? btnList : (view === 'week' ? btnWeek : btnMonth);
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-800');
+    activeBtn.classList.add('bg-blue-500', 'text-white');
+  }
+  
+  // Mostrar/ocultar vistas
+  const viewList = document.getElementById('viewList');
+  const viewWeek = document.getElementById('viewWeek');
+  const viewMonth = document.getElementById('viewMonth');
+  
+  if (viewList) viewList.classList.toggle('hidden', view !== 'list');
+  if (viewWeek) viewWeek.classList.toggle('hidden', view !== 'week');
+  if (viewMonth) viewMonth.classList.toggle('hidden', view !== 'month');
+  
+  // Renderizar vista actual
+  renderCurrentWorkSchedulesView();
+}
+
+// Cerrar modal
+function closeWorkScheduleModal() {
+  const modal = document.getElementById('modalWorkSchedule');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+  
+  const form = document.getElementById('formWorkSchedule');
+  if (form) form.reset();
+  
+  document.getElementById('workScheduleId').value = '';
+  document.getElementById('wsEstado').value = 'programado';
+  document.getElementById('wsColor').value = '#f97316';
+  document.getElementById('wsColorHex').value = '#f97316';
+  
+  const notasCount = document.getElementById('wsNotasCount');
+  if (notasCount) notasCount.textContent = '0';
+}
+
+// Event Listeners para Work Schedules
+function setupWorkSchedulesEventListeners() {
+  // Botón nuevo horario
+  const btnNew = document.getElementById('btnNewWorkSchedule');
+  if (btnNew) {
+    btnNew.addEventListener('click', () => {
+      const form = document.getElementById('formWorkSchedule');
+      if (form) form.reset();
+      
+      document.getElementById('workScheduleId').value = '';
+      document.getElementById('wsEstado').value = 'programado';
+      document.getElementById('wsColor').value = '#f97316';
+      document.getElementById('wsColorHex').value = '#f97316';
+      
+      const notasCount = document.getElementById('wsNotasCount');
+      if (notasCount) notasCount.textContent = '0';
+      
+      document.getElementById('modalWorkScheduleTitle').textContent = 'Asignar Horario Laboral';
+      
+      const modal = document.getElementById('modalWorkSchedule');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    });
+  }
+  
+  // Cerrar modal
+  const btnClose = document.getElementById('btnCloseWorkScheduleModal');
+  if (btnClose) {
+    btnClose.addEventListener('click', closeWorkScheduleModal);
+  }
+  
+  const btnCancel = document.getElementById('btnCancelWorkSchedule');
+  if (btnCancel) {
+    btnCancel.addEventListener('click', closeWorkScheduleModal);
+  }
+  
+  // Sincronizar color picker con input hex
+  const colorPicker = document.getElementById('wsColor');
+  const colorHex = document.getElementById('wsColorHex');
+  
+  if (colorPicker && colorHex) {
+    colorPicker.addEventListener('input', (e) => {
+      colorHex.value = e.target.value;
+    });
+    
+    colorHex.addEventListener('input', (e) => {
+      if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+        colorPicker.value = e.target.value;
+      }
+    });
+  }
+  
+  // Contador de caracteres para notas
+  const notasTextarea = document.getElementById('wsNotas');
+  const notasCount = document.getElementById('wsNotasCount');
+  
+  if (notasTextarea && notasCount) {
+    notasTextarea.addEventListener('input', (e) => {
+      notasCount.textContent = e.target.value.length;
+    });
+  }
+  
+  // Submit formulario
+  const form = document.getElementById('formWorkSchedule');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        empleadoId: document.getElementById('wsEmpleado').value,
+        fecha: document.getElementById('wsFecha').value,
+        turno: document.getElementById('wsTurno').value,
+        horaInicio: document.getElementById('wsHoraInicio').value,
+        horaFin: document.getElementById('wsHoraFin').value,
+        estado: document.getElementById('wsEstado').value,
+        notas: document.getElementById('wsNotas').value,
+        color: document.getElementById('wsColor').value
+      };
+      
+      const id = document.getElementById('workScheduleId').value;
+      
+      if (id) {
+        await updateWorkSchedule(id, formData);
+      } else {
+        await createWorkSchedule(formData);
+      }
+    });
+  }
+  
+  // Filtros
+  const btnApplyFilters = document.getElementById('btnApplyFilters');
+  if (btnApplyFilters) {
+    btnApplyFilters.addEventListener('click', loadWorkSchedules);
+  }
+  
+  const btnClearFilters = document.getElementById('btnClearFilters');
+  if (btnClearFilters) {
+    btnClearFilters.addEventListener('click', () => {
+      document.getElementById('filterEmployee').value = '';
+      document.getElementById('filterMonth').value = '';
+      document.getElementById('filterYear').value = '';
+      document.getElementById('filterStatus').value = '';
+      loadWorkSchedules();
+    });
+  }
+  
+  // Cambio de vista
+  const btnViewList = document.getElementById('btnViewList');
+  if (btnViewList) {
+    btnViewList.addEventListener('click', () => switchWorkSchedulesView('list'));
+  }
+  
+  const btnViewWeek = document.getElementById('btnViewWeek');
+  if (btnViewWeek) {
+    btnViewWeek.addEventListener('click', () => switchWorkSchedulesView('week'));
+  }
+  
+  const btnViewMonth = document.getElementById('btnViewMonth');
+  if (btnViewMonth) {
+    btnViewMonth.addEventListener('click', () => switchWorkSchedulesView('month'));
+  }
+  
+  // Navegación semanal
+  const btnPrevWeek = document.getElementById('btnPrevWeek');
+  if (btnPrevWeek) {
+    btnPrevWeek.addEventListener('click', () => {
+      currentWeekDate.setDate(currentWeekDate.getDate() - 7);
+      renderWorkSchedulesWeekView();
+    });
+  }
+  
+  const btnNextWeek = document.getElementById('btnNextWeek');
+  if (btnNextWeek) {
+    btnNextWeek.addEventListener('click', () => {
+      currentWeekDate.setDate(currentWeekDate.getDate() + 7);
+      renderWorkSchedulesWeekView();
+    });
+  }
+  
+  // Navegación mensual
+  const btnPrevMonth = document.getElementById('btnPrevMonth');
+  if (btnPrevMonth) {
+    btnPrevMonth.addEventListener('click', () => {
+      currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
+      renderWorkSchedulesMonthView();
+    });
+  }
+  
+  const btnNextMonth = document.getElementById('btnNextMonth');
+  if (btnNextMonth) {
+    btnNextMonth.addEventListener('click', () => {
+      currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
+      renderWorkSchedulesMonthView();
+    });
+  }
+}
+
+// ===================================
+// FIN GESTIÓN DE HORARIOS LABORALES
+// ===================================
+
 
 // Hacer funciones accesibles globalmente para onclick
 window.editTimeRecord = editTimeRecord;
@@ -3343,6 +4106,8 @@ window.openNotificationDetail = openNotificationDetail;
 window.openGalleryModal = openGalleryModal;
 window.editImage = editImage;
 window.toggleImageFeatured = toggleImageFeatured;
+window.editWorkSchedule = editWorkSchedule;
+window.deleteWorkSchedule = deleteWorkSchedule;
 window.toggleImageStatus = toggleImageStatus;
 window.deleteImage = deleteImage;
 window.viewContact = viewContact;

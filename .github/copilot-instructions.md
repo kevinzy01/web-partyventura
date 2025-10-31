@@ -43,10 +43,37 @@ Partyventura es una aplicación web full-stack para gestión de eventos y reserv
   - Objeto usuario almacenado como `adminUser` (string JSON)
   - **Siempre usar `Auth.getAuthHeaders()` para peticiones autenticadas**
 
-### 3. Sistema de Roles (3 Roles)
+### 3. Sistema de Roles (3 Roles Principales)
 - `empleado` - Puede fichar entrada/salida vía API de registros horarios
 - `admin` - Gestión completa de contenido (noticias, eventos, contactos, galería)
 - `superadmin` - Todos los permisos admin + gestión de usuarios + gestión de horarios/tarifas
+
+### 3.1 Sistema de Roles de Empleados
+Cada empleado tiene un rol específico que define su área de trabajo:
+- `monitor` - Supervisa actividades, atiende consultas (emoji: 🏃, color: azul)
+- `cocina` - Prepara alimentos y bebidas (emoji: 👨‍🍳, color: naranja)
+- `barra` - Atiende barra y bebidas (emoji: 🍹, color: morado)
+
+**Implementación**:
+- Campo `rolEmpleado` en modelo Admin (requerido solo para `rol === 'empleado'`)
+- Selector en formulario de creación/edición de empleados
+- Visualización en tarjetas de empleados, control horario y horarios laborales
+- Validación backend: Solo `['monitor', 'cocina', 'barra']` son válidos
+- Colores automáticos según rol: azul, naranja, morado
+
+**Ubicaciones donde se muestra**:
+1. **Gestión de Empleados** - Badge colorido debajo del nombre
+2. **Control Horario** - Badge con rol en columna de empleado
+3. **Horarios Laborales** (3 vistas) - Badge con rol en información del empleado
+
+**Modelo** (`/backend/models/Admin.js`):
+```javascript
+rolEmpleado: {
+  type: String,
+  enum: ['monitor', 'cocina', 'barra'],
+  required: function() { return this.rol === 'empleado'; }
+}
+```
 
 ### 4. Orden de Middleware de Seguridad (CRÍTICO)
 En `server.js`, los middleware DEBEN aplicarse en este orden:
