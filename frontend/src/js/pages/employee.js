@@ -354,3 +354,424 @@ function handleLogout() {
     Auth.logout();
   }
 }
+
+// ===================================
+// SISTEMA DE HORARIOS ASIGNADOS
+// ===================================
+
+// Variables globales para horarios
+let currentEmployeeScheduleView = 'week'; // week, month
+let employeeSchedules = [];
+
+// ===================================
+// CALENDAR UTILS - POWERED BY DateUtils
+// ===================================
+const CalendarUtilsEmployee = {
+  getMonday(date) {
+    return DateUtils.startOfWeek(date);
+  },
+
+  getWeekDates(startDate) {
+    const endDate = DateUtils.addDays(startDate, 6);
+    return DateUtils.eachDayOfInterval({ start: startDate, end: endDate });
+  },
+
+  addWeeks(date, weeks) {
+    return DateUtils.addWeeks(date, weeks);
+  },
+
+  toISODate(date) {
+    return DateUtils.format(date, 'yyyy-MM-dd');
+  },
+
+  isSameDay(date1, date2) {
+    return DateUtils.isSameDay(date1, date2);
+  },
+
+  getDayName(date) {
+    return DateUtils.format(date, 'dddd');
+  }
+};
+
+// ===================================
+// CALENDAR STATE - EMPLOYEE
+// ===================================
+class CalendarStateEmployee {
+  constructor() {
+    const today = new Date();
+    this._currentWeekMonday = CalendarUtilsEmployee.getMonday(today);
+    this._currentMonth = today.getMonth(); // 0-11
+    this._currentYear = today.getFullYear(); // YYYY
+  }
+
+  getCurrentWeekMonday() {
+    return new Date(this._currentWeekMonday);
+  }
+
+  getCurrentMonth() {
+    return this._currentMonth;
+  }
+
+  getCurrentYear() {
+    return this._currentYear;
+  }
+
+  goToPreviousWeek() {
+    this._currentWeekMonday = CalendarUtilsEmployee.addWeeks(this._currentWeekMonday, -1);
+  }
+
+  goToNextWeek() {
+    this._currentWeekMonday = CalendarUtilsEmployee.addWeeks(this._currentWeekMonday, 1);
+  }
+
+  goToPreviousMonth() {
+    this._currentMonth--;
+    if (this._currentMonth < 0) {
+      this._currentMonth = 11;
+      this._currentYear--;
+    }
+  }
+
+  goToNextMonth() {
+    this._currentMonth++;
+    if (this._currentMonth > 11) {
+      this._currentMonth = 0;
+      this._currentYear++;
+    }
+  }
+
+  goToToday() {
+    const today = new Date();
+    this._currentWeekMonday = CalendarUtilsEmployee.getMonday(today);
+    this._currentMonth = today.getMonth();
+    this._currentYear = today.getFullYear();
+  }
+}
+
+const calendarStateEmployee = new CalendarStateEmployee();
+
+// ===================================
+// FUNCIÓN DE COLORES POR ROL
+// ===================================
+function getRolColorEmployee(rolEmpleado) {
+  const roleColors = {
+    'monitor': { bg: 'bg-blue-100', border: 'border-blue-400', hex: '#dbeafe' },
+    'cocina': { bg: 'bg-orange-100', border: 'border-orange-400', hex: '#fed7aa' },
+    'barra': { bg: 'bg-purple-100', border: 'border-purple-400', hex: '#e9d5ff' }
+  };
+  return roleColors[rolEmpleado] || { bg: 'bg-gray-100', border: 'border-gray-400', hex: '#f3f4f6' };
+}
+
+// ===================================
+// VISTA SEMANAL - EMPLOYEE
+// ===================================
+async function renderEmployeeWeekView() {
+  try {
+    const monday = calendarStateEmployee.getCurrentWeekMonday();
+    const weekDates = CalendarUtilsEmployee.getWeekDates(monday);
+    const sunday = weekDates[6];
+    
+    const mondayISO = CalendarUtilsEmployee.toISODate(monday);
+    
+    // 1. OBTENER DATOS DEL BACKEND (solo del empleado actual)
+    const user = Auth.getUser();
+    const url = `${API_URL}/work-schedules/weekly?fecha=${mondayISO}&empleadoId=${user.id}`;
+    
+    const response = await Auth.authFetch(url);
+    const data = await response.json();
+    
+    if (!data.success) {
+      showToast('Error', 'No se pudieron cargar los horarios', 'error');
+      return;
+    }
+
+    // 2. ACTUALIZAR TÍTULO
+    const weekTitle = document.getElementById('weekTitleEmployee');
+    if (weekTitle) {
+      const startStr = monday.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+      const endStr = sunday.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      weekTitle.textContent = `${startStr} al ${endStr}`;
+    }
+
+    // 3. TRANSFORMAR DATOS
+    const horariosMap = new Map();
+    if (data.data.dias) {
+      data.data.dias.forEach(dia => {
+        horariosMap.set(dia.fecha.split('T')[0], dia.horarios || []);
+      });
+    }
+
+    // 4. RENDERIZAR CALENDARIO
+    const calendar = document.getElementById('weekCalendarEmployee');
+    if (!calendar) return;
+
+    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    calendar.innerHTML = weekDates.map((date, index) => {
+      const dateISO = CalendarUtilsEmployee.toISODate(date);
+      const dayName = dayNames[index];
+      const horarios = horariosMap.get(dateISO) || [];
+      const hasSchedules = horarios.length > 0;
+      const isToday = CalendarUtilsEmployee.isSameDay(date, new Date());
+
+      return `
+        <div class="border rounded-lg p-3 ${hasSchedules ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'} ${isToday ? 'ring-2 ring-orange-500' : ''}">
+          <div class="font-semibold text-sm mb-2 ${isToday ? 'text-orange-600' : 'text-gray-700'}">${dayName}</div>
+          <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
+          
+          ${hasSchedules ? 
+            horarios.map(h => `
+              <div class="bg-white rounded p-2 mb-2 border-l-4" style="border-color: ${h.color || '#f97316'}">
+                <div class="text-xs font-semibold text-gray-600">${h.turno}</div>
+                <div class="text-sm font-bold text-gray-800">${h.horaInicio} - ${h.horaFin}</div>
+                <div class="text-xs text-gray-500">${h.horasTotales}h</div>
+                ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
+              </div>
+            `).join('') :
+            '<div class="text-xs text-gray-400 italic">Sin horarios</div>'
+          }
+        </div>
+      `;
+    }).join('');
+
+  } catch (error) {
+    console.error('Error al renderizar vista semanal:', error);
+    showToast('Error', 'No se pudo cargar la vista semanal', 'error');
+  }
+}
+
+// ===================================
+// VISTA MENSUAL - EMPLOYEE
+// ===================================
+async function renderEmployeeMonthView() {
+  try {
+    const mes = calendarStateEmployee.getCurrentMonth() + 1; // 0-11 → 1-12
+    const anio = calendarStateEmployee.getCurrentYear();
+
+    // 1. OBTENER DATOS DEL BACKEND (solo del empleado actual)
+    const user = Auth.getUser();
+    const url = `${API_URL}/work-schedules/monthly?mes=${mes}&anio=${anio}&empleadoId=${user.id}`;
+
+    const response = await Auth.authFetch(url);
+    const data = await response.json();
+
+    if (!data.success) {
+      showToast('Error', 'No se pudieron cargar los horarios', 'error');
+      return;
+    }
+
+    // 2. ACTUALIZAR TÍTULO
+    const monthTitle = document.getElementById('monthTitleEmployee');
+    if (monthTitle) {
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      monthTitle.textContent = `${monthNames[mes - 1]} ${anio}`;
+    }
+
+    // 3. CALCULAR ESTRUCTURA DEL CALENDARIO
+    const firstDayOfMonth = DateUtils.startOfMonth(new Date(anio, mes - 1, 1));
+    const lastDayOfMonth = new Date(anio, mes, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+    
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    const startOffset = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
+
+    // 4. TRANSFORMAR DATOS
+    const horariosMap = new Map();
+    if (data.data.horarios) {
+      data.data.horarios.forEach(h => {
+        const dateKey = DateUtils.format(new Date(h.fecha), 'yyyy-MM-dd');
+        if (!horariosMap.has(dateKey)) {
+          horariosMap.set(dateKey, []);
+        }
+        horariosMap.get(dateKey).push(h);
+      });
+    }
+
+    // 5. RENDERIZAR CALENDARIO
+    const calendar = document.getElementById('monthCalendarEmployee');
+    if (!calendar) return;
+
+    let html = '<div class="grid grid-cols-7 gap-2">';
+    
+    // Headers de días de la semana
+    const dayHeaders = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    dayHeaders.forEach(day => {
+      html += `<div class="text-center text-xs font-semibold text-gray-600 p-2">${day}</div>`;
+    });
+
+    // Celdas vacías antes del primer día
+    for (let i = 0; i < startOffset; i++) {
+      html += '<div class="border border-gray-200 rounded bg-gray-100 min-h-[80px]"></div>';
+    }
+
+    // Días del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(anio, mes - 1, day);
+      const dateISO = DateUtils.format(date, 'yyyy-MM-dd');
+      const horarios = horariosMap.get(dateISO) || [];
+      const hasSchedules = horarios.length > 0;
+      const isToday = DateUtils.isSameDay(date, new Date());
+
+      html += `
+        <div class="border rounded p-2 min-h-[80px] ${hasSchedules ? 'bg-orange-50 border-orange-300' : 'bg-white border-gray-200'}
+                    ${isToday ? 'ring-2 ring-orange-500' : ''}">
+          <div class="text-xs font-semibold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
+          
+          ${hasSchedules ? 
+            horarios.slice(0, 2).map(h => `
+              <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 bg-white text-gray-800" 
+                   style="border-color: ${h.color || '#f97316'}">
+                <div class="font-semibold">${h.turno}</div>
+                <div class="text-[10px]">${h.horaInicio}-${h.horaFin}</div>
+              </div>
+            `).join('') + (horarios.length > 2 ? `<div class="text-xs text-gray-500">+${horarios.length - 2}</div>` : '') :
+            ''
+          }
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    calendar.innerHTML = html;
+
+    // 6. MOSTRAR ESTADÍSTICAS
+    const statsDiv = document.getElementById('monthStatsEmployee');
+    if (statsDiv && data.data.resumen) {
+      const r = data.data.resumen;
+      statsDiv.innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-200">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-orange-600">${r.totalHorarios || 0}</div>
+            <div class="text-xs text-gray-600">Turnos Asignados</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600">${r.totalHoras ? r.totalHoras.toFixed(1) : '0.0'}h</div>
+            <div class="text-xs text-gray-600">Horas Totales</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-green-600">${r.diasConHorarios || 0}</div>
+            <div class="text-xs text-gray-600">Días Trabajados</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-purple-600">${r.totalHoras && r.diasConHorarios ? (r.totalHoras / r.diasConHorarios).toFixed(1) : '0.0'}h</div>
+            <div class="text-xs text-gray-600">Promedio/Día</div>
+          </div>
+        </div>
+      `;
+    }
+
+  } catch (error) {
+    console.error('Error al renderizar vista mensual:', error);
+    showToast('Error', 'No se pudo cargar la vista mensual', 'error');
+  }
+}
+
+// ===================================
+// CAMBIO DE VISTA
+// ===================================
+function switchEmployeeScheduleView(view) {
+  currentEmployeeScheduleView = view;
+  
+  const btnWeek = document.getElementById('btnViewWeekEmployee');
+  const btnMonth = document.getElementById('btnViewMonthEmployee');
+  
+  // Resetear botones
+  [btnWeek, btnMonth].forEach(btn => {
+    if (btn) {
+      btn.classList.remove('bg-orange-500', 'text-white');
+      btn.classList.add('bg-gray-200', 'text-gray-800');
+    }
+  });
+  
+  // Activar botón seleccionado
+  const activeBtn = view === 'week' ? btnWeek : btnMonth;
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-800');
+    activeBtn.classList.add('bg-orange-500', 'text-white');
+  }
+  
+  // Mostrar/ocultar vistas
+  const viewWeek = document.getElementById('viewWeekEmployee');
+  const viewMonth = document.getElementById('viewMonthEmployee');
+  
+  if (viewWeek) viewWeek.classList.toggle('hidden', view !== 'week');
+  if (viewMonth) viewMonth.classList.toggle('hidden', view !== 'month');
+  
+  // Renderizar vista actual
+  renderCurrentEmployeeScheduleView();
+}
+
+function renderCurrentEmployeeScheduleView() {
+  if (currentEmployeeScheduleView === 'week') {
+    renderEmployeeWeekView();
+  } else {
+    renderEmployeeMonthView();
+  }
+}
+
+// ===================================
+// INICIALIZACIÓN DE HORARIOS
+// ===================================
+function initEmployeeSchedules() {
+  console.log('🔧 Inicializando sistema de horarios...');
+  
+  // Event Listeners de vistas
+  const btnWeek = document.getElementById('btnViewWeekEmployee');
+  if (btnWeek) {
+    btnWeek.addEventListener('click', () => switchEmployeeScheduleView('week'));
+  }
+  
+  const btnMonth = document.getElementById('btnViewMonthEmployee');
+  if (btnMonth) {
+    btnMonth.addEventListener('click', () => switchEmployeeScheduleView('month'));
+  }
+  
+  // Event Listeners de navegación semanal
+  const btnPrevWeek = document.getElementById('btnPrevWeekEmployee');
+  if (btnPrevWeek) {
+    btnPrevWeek.addEventListener('click', () => {
+      calendarStateEmployee.goToPreviousWeek();
+      renderEmployeeWeekView();
+    });
+  }
+  
+  const btnNextWeek = document.getElementById('btnNextWeekEmployee');
+  if (btnNextWeek) {
+    btnNextWeek.addEventListener('click', () => {
+      calendarStateEmployee.goToNextWeek();
+      renderEmployeeWeekView();
+    });
+  }
+  
+  // Event Listeners de navegación mensual
+  const btnPrevMonth = document.getElementById('btnPrevMonthEmployee');
+  if (btnPrevMonth) {
+    btnPrevMonth.addEventListener('click', () => {
+      calendarStateEmployee.goToPreviousMonth();
+      renderEmployeeMonthView();
+    });
+  }
+  
+  const btnNextMonth = document.getElementById('btnNextMonthEmployee');
+  if (btnNextMonth) {
+    btnNextMonth.addEventListener('click', () => {
+      calendarStateEmployee.goToNextMonth();
+      renderEmployeeMonthView();
+    });
+  }
+  
+  // Cargar vista inicial (semanal)
+  renderCurrentEmployeeScheduleView();
+  
+  console.log('✅ Sistema de horarios inicializado');
+}
+
+// Agregar inicialización de horarios al DOMContentLoaded existente
+// NOTA: Esto se debe llamar después de que el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  // Esperar un poco para que todo se inicialice
+  setTimeout(() => {
+    initEmployeeSchedules();
+  }, 500);
+});
