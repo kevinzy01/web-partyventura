@@ -301,15 +301,28 @@ async function ficharSalida() {
         mensaje = `Hora: ${new Date(data.data.fecha).toLocaleTimeString('es-ES')}`;
       }
       
-      // ✨ NUEVO: Verificar si el horario se completó automáticamente
-      if (data.horarioVerificado) {
-        if (data.horarioVerificado.completado) {
+      // ✨ NUEVO: Verificar gestión de horario (retrocompatible)
+      const gestion = data.horarioGestionado || data.horarioVerificado;
+      
+      if (gestion) {
+        // CASO 1: Horario creado automáticamente
+        if (gestion.creado) {
+          titulo = '📝 ¡Horario Creado!';
+          mensaje = `${gestion.mensaje}\n✅ Se ha creado automáticamente tu horario en el sistema`;
+        } 
+        // CASO 2: Horario completado automáticamente
+        else if (gestion.completado) {
           titulo = '🎯 ¡Turno Completado!';
-          mensaje = `${data.horarioVerificado.mensaje}\n✅ Tu horario ha sido marcado como completado automáticamente`;
-        } else if (data.horarioVerificado.razon === 'diferencia_horas') {
-          // Informar si no se completó por diferencia de horas
-          const diferenciaMins = (data.horarioVerificado.diferencia * 60).toFixed(0);
-          mensaje += `\n⚠️ ${data.horarioVerificado.mensaje}`;
+          mensaje = `${gestion.mensaje}\n✅ Tu horario ha sido marcado como completado automáticamente`;
+        } 
+        // CASO 3: No se completó por diferencia de horas
+        else if (gestion.razon === 'diferencia_horas') {
+          const diferenciaMins = (gestion.diferencia * 60).toFixed(0);
+          mensaje += `\n⚠️ ${gestion.mensaje}`;
+        }
+        // CASO 4: Ya estaba procesado
+        else if (gestion.razon === 'ya_procesado') {
+          mensaje += `\nℹ️ ${gestion.mensaje}`;
         }
       }
       

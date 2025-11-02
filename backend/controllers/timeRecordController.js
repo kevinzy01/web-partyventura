@@ -3,13 +3,39 @@ const Admin = require('../models/Admin');
 const WorkSchedule = require('../models/WorkSchedule');
 
 /**
- * Verificar y completar horario automáticamente si corresponde
+ * Determinar turno basado en horas trabajadas
+ * @param {string} horaInicio - Hora de inicio en formato HH:MM
+ * @param {string} horaFin - Hora de fin en formato HH:MM
+ * @returns {string} - 'mañana', 'tarde', o 'completo'
+ */
+function determinarTurno(horaInicio, horaFin) {
+  const [horaInicioNum] = horaInicio.split(':').map(Number);
+  const [horaFinNum] = horaFin.split(':').map(Number);
+  
+  // Mañana: antes de las 14:00
+  if (horaInicioNum < 14 && horaFinNum <= 17) {
+    return 'mañana';
+  }
+  
+  // Tarde: después de las 14:00
+  if (horaInicioNum >= 14) {
+    return 'tarde';
+  }
+  
+  // Completo: cruza el mediodía o más de 7 horas
+  return 'completo';
+}
+
+/**
+ * Verificar, completar o crear horario automáticamente
  * @param {ObjectId} empleadoId - ID del empleado
+ * @param {Object} empleado - Objeto empleado completo
  * @param {Date} fechaEntrada - Fecha de entrada
  * @param {Date} fechaSalida - Fecha de salida
  * @param {Number} horasTrabajadas - Horas trabajadas calculadas
+ * @returns {Object|null} - Resultado de la operación
  */
-async function verificarYCompletarHorario(empleadoId, fechaEntrada, fechaSalida, horasTrabajadas) {
+async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fechaSalida, horasTrabajadas) {
   try {
     // Obtener la fecha del turno (usar fecha de entrada)
     const fechaTurno = new Date(fechaEntrada);
@@ -18,19 +44,83 @@ async function verificarYCompletarHorario(empleadoId, fechaEntrada, fechaSalida,
     const siguienteDia = new Date(fechaTurno);
     siguienteDia.setDate(siguienteDia.getDate() + 1);
     
-    // Buscar horario asignado para ese día que NO esté completado o cancelado
+    // Buscar horario asignado para ese día
     const horario = await WorkSchedule.findOne({
       empleado: empleadoId,
       fecha: {
         $gte: fechaTurno,
         $lt: siguienteDia
-      },
-      estado: { $in: ['programado', 'confirmado'] } // Solo si está pendiente
-    });
+      }
+    }).sort({ createdAt: -1 }); // El más reciente primero
     
+    // ========================================
+    // CASO 1: NO HAY HORARIO ASIGNADO
+    // ========================================
     if (!horario) {
-      console.log(`ℹ️ No hay horario pendiente para el empleado en la fecha ${fechaTurno.toISOString().split('T')[0]}`);
-      return null;
+      console.log(`📝 No hay horario asignado - Creando horario automático...`);
+      
+      // Extraer horas de las fechas
+      const horaInicio = fechaEntrada.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      
+      const horaFin = fechaSalida.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      
+      // Determinar tipo de turno
+      const turno = determinarTurno(horaInicio, horaFin);
+      
+      // Crear nuevo horario automático
+      const nuevoHorario = new WorkSchedule({
+        empleado: empleadoId,
+        empleadoNombre: empleado.nombre || empleado.username,
+        fecha: fechaTurno,
+        turno: turno,
+        horaInicio: horaInicio,
+        horaFin: horaFin,
+        estado: 'completado', // Ya está completado porque ya se trabajó
+        notas: `🤖 Horario creado automáticamente tras fichaje sin asignación previa.\n` +
+               `Entrada: ${fechaEntrada.toLocaleString('es-ES')}\n` +
+               `Salida: ${fechaSalida.toLocaleString('es-ES')}\n` +
+               `Horas trabajadas: ${horasTrabajadas}h`,
+        color: '#10b981', // Verde para horarios auto-creados
+        creadoPor: empleadoId, // El propio empleado lo "crea" al fichar
+        horasTotales: horasTrabajadas
+      });
+      
+      await nuevoHorario.save();
+      
+      console.log(`✅ Horario automático creado: ${nuevoHorario._id}`);
+      console.log(`   - Turno: ${turno}`);
+      console.log(`   - Horario: ${horaInicio} - ${horaFin}`);
+      console.log(`   - Horas: ${horasTrabajadas}h`);
+      
+      return {
+        creado: true,
+        completado: true,
+        horario: nuevoHorario.toAdminJSON(),
+        mensaje: `Horario creado automáticamente: ${turno} (${horasTrabajadas}h)`
+      };
+    }
+    
+    // ========================================
+    // CASO 2: HAY HORARIO ASIGNADO
+    // ========================================
+    
+    // Si ya está completado o cancelado, no hacer nada
+    if (horario.estado === 'completado' || horario.estado === 'cancelado') {
+      console.log(`ℹ️ Horario ${horario._id} ya está en estado: ${horario.estado}`);
+      return {
+        creado: false,
+        completado: false,
+        razon: 'ya_procesado',
+        mensaje: `Ya existe un horario ${horario.estado} para este día`
+      };
     }
     
     // Calcular diferencia entre horas trabajadas y horas programadas
@@ -56,6 +146,7 @@ async function verificarYCompletarHorario(empleadoId, fechaEntrada, fechaSalida,
       console.log(`✅ Horario ${horario._id} marcado como COMPLETADO automáticamente`);
       
       return {
+        creado: false,
         completado: true,
         horario: horario.toAdminJSON(),
         mensaje: `Turno completado automáticamente (${horasTrabajadas}h/${horario.horasTotales}h)`
@@ -64,6 +155,7 @@ async function verificarYCompletarHorario(empleadoId, fechaEntrada, fechaSalida,
       console.log(`⚠️ Horario NO completado: diferencia de ${(diferencia * 60).toFixed(1)} minutos excede el margen`);
       
       return {
+        creado: false,
         completado: false,
         razon: 'diferencia_horas',
         diferencia: diferencia,
@@ -72,7 +164,7 @@ async function verificarYCompletarHorario(empleadoId, fechaEntrada, fechaSalida,
     }
     
   } catch (error) {
-    console.error('❌ Error al verificar horario:', error);
+    console.error('❌ Error al gestionar horario:', error);
     return null;
   }
 }
@@ -129,7 +221,7 @@ exports.registrarTiempo = async (req, res) => {
 
     let verificacionHorario = null;
 
-    // Si es salida, calcular horas trabajadas y verificar horario
+    // Si es salida, calcular horas trabajadas y gestionar horario
     if (tipo === 'salida' && ultimoRegistro) {
       nuevoRegistro.entradaAsociada = ultimoRegistro._id;
       nuevoRegistro.horasTrabajadas = TimeRecord.calcularHorasTrabajadas(
@@ -137,10 +229,11 @@ exports.registrarTiempo = async (req, res) => {
         nuevoRegistro.fecha
       );
       
-      // ✨ VERIFICAR Y COMPLETAR HORARIO AUTOMÁTICAMENTE
+      // ✨ GESTIONAR HORARIO: VERIFICAR/COMPLETAR O CREAR AUTOMÁTICAMENTE
       if (nuevoRegistro.horasTrabajadas) {
-        verificacionHorario = await verificarYCompletarHorario(
+        verificacionHorario = await verificarYGestionarHorario(
           empleadoId,
+          empleado,
           ultimoRegistro.fecha,
           nuevoRegistro.fecha,
           nuevoRegistro.horasTrabajadas
@@ -157,11 +250,13 @@ exports.registrarTiempo = async (req, res) => {
       data: nuevoRegistro.toPublicJSON()
     };
     
-    // Agregar información de verificación de horario si existe
+    // Agregar información de gestión de horario si existe
     if (verificacionHorario) {
-      respuesta.horarioVerificado = verificacionHorario;
+      respuesta.horarioGestionado = verificacionHorario;
       
-      if (verificacionHorario.completado) {
+      if (verificacionHorario.creado) {
+        respuesta.message += ` - ${verificacionHorario.mensaje}`;
+      } else if (verificacionHorario.completado) {
         respuesta.message += ` - ${verificacionHorario.mensaje}`;
       }
     }
