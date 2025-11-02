@@ -3851,18 +3851,10 @@ async function updateWorkSchedule(id, formData) {
 
 // Eliminar horario
 async function deleteWorkSchedule(id) {
-  const result = await Swal.fire({
-    title: '¿Eliminar horario?',
-    text: 'Esta acción no se puede deshacer',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280'
-  });
-  
-  if (!result.isConfirmed) return;
+  // Usar confirm() nativo en lugar de Swal (que no está cargado)
+  if (!confirm('¿Estás seguro de que deseas eliminar este horario?\n\nEsta acción no se puede deshacer.')) {
+    return;
+  }
   
   try {
     const response = await fetch(`${API_URL}/work-schedules/${id}`, {
@@ -3873,14 +3865,14 @@ async function deleteWorkSchedule(id) {
     const data = await response.json();
     
     if (data.success) {
-      showNotification('🗑️ Horario eliminado exitosamente', 'success');
+      showNotification('✅ Horario eliminado exitosamente', 'success');
       await loadWorkSchedules();
     } else {
-      showNotification(data.message || 'Error al eliminar horario', 'error');
+      showNotification(data.message || '❌ Error al eliminar horario', 'error');
     }
   } catch (error) {
     console.error('Error al eliminar horario:', error);
-    showNotification('Error al eliminar horario', 'error');
+    showNotification('❌ Error al eliminar horario', 'error');
   }
 }
 
