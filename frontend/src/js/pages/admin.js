@@ -3715,41 +3715,10 @@ const CalendarUtils = {
   },
 
   /**
-   * Suma/resta meses a una fecha
-   * @param {Date} date - Fecha base
-   * @param {number} months - Número de meses (+ adelante, - atrás)
-   * @returns {Date} Nueva fecha (siempre día 1)
+   * NOTA: addMonths() ELIMINADO
+   * La navegación mensual ahora usa aritmética simple (patrón index.html)
+   * Ver CalendarState.goToPreviousMonth() y goToNextMonth()
    */
-  addMonths(date, months) {
-    try {
-      const inputIso = this.toISODate(date);
-      
-      // DateUtils: addMonths + startOfMonth para día 1
-      const withMonthsAdded = DateUtils.addMonths(date, months);
-      const result = DateUtils.startOfMonth(withMonthsAdded);
-      
-      const outputIso = this.toISODate(result);
-      const outputMonth = result.getMonth() + 1;
-      const outputYear = result.getFullYear();
-      const outputDay = result.getDate();
-      
-      logCalendar('addMonths (DateUtils)', {
-        input: inputIso,
-        months: months,
-        output: outputIso,
-        outputMonth: outputMonth,
-        outputYear: outputYear,
-        outputDay: outputDay,
-        validation: outputDay === 1 ? '✅ DAY 1' : '❌ NOT DAY 1',
-        library: 'DateUtils.addMonths() + startOfMonth()'
-      });
-      
-      return result;
-    } catch (e) {
-      logCalendarError('addMonths', e);
-      throw e;
-    }
-  },
 
   /**
    * Formatea fecha a ISO string sin timezone (YYYY-MM-DD)
