@@ -13,7 +13,7 @@ if (typeof dateFns === 'undefined') {
   console.error('Please ensure date-fns CDN scripts are included in HTML before admin.js');
   alert('Error crítico: No se pudo cargar la librería de fechas. Por favor, recargue la página.');
 } else {
-  console.log('%c[CALENDAR] ✅ date-fns v3.0 loaded successfully', 'color: #06D6A0; font-weight: bold;');
+  console.log('%c[CALENDAR] ✅ date-fns v2.30 loaded successfully', 'color: #06D6A0; font-weight: bold;');
   console.log('%c[CALENDAR] Available functions:', 'color: #118AB2;', Object.keys(dateFns).slice(0, 10).join(', ') + '...');
 }
 
@@ -3617,8 +3617,8 @@ function logCalendarError(label, error) {
 // ===================================
 // CALENDAR UTILS - POWERED BY date-fns
 // ===================================
-// Usando date-fns para manejo robusto de fechas
-// CDN: https://cdn.jsdelivr.net/npm/date-fns@3.0.0/
+// Usando date-fns v2.30 para manejo robusto de fechas
+// CDN: https://cdn.jsdelivr.net/npm/date-fns@2.30.0/
 
 const CalendarUtils = {
   /**
@@ -3642,7 +3642,7 @@ const CalendarUtils = {
         output: resultIso,
         outputDayOfWeek: monday.getDay(),
         validation: monday.getDay() === 1 ? '✅ IS MONDAY' : '❌ NOT MONDAY',
-        library: 'date-fns v3.0'
+        library: 'date-fns v2.30'
       });
       
       return monday;
@@ -3777,8 +3777,9 @@ const CalendarUtils = {
    * @returns {string} Nombre del día (Lunes, Martes, etc.)
    */
   getDayName(date) {
-    // date-fns: format con patrón EEEE y locale español
-    return dateFns.format(date, 'EEEE', { locale: dateFns.locale.es });
+    // date-fns v2: format con patrón EEEE y locale español
+    // En v2.x el locale se importa como dateFns.locale.es desde el CDN
+    return dateFns.format(date, 'EEEE', { locale: window.dateFns && window.dateFns.locale && window.dateFns.locale.es });
   }
 };
 
