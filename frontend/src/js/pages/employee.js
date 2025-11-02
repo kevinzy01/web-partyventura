@@ -255,20 +255,35 @@ async function cargarResumenMensual() {
 async function cargarHorasAsignadas() {
   try {
     const hoy = new Date();
-    const fechaISO = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    hoy.setHours(0, 0, 0, 0);
     
-    const user = Auth.getUser();
+    const mañana = new Date(hoy);
+    mañana.setDate(mañana.getDate() + 1);
+    
+    // Formato ISO para fechaInicio y fechaFin
+    const fechaInicio = hoy.toISOString();
+    const fechaFin = mañana.toISOString();
+    
+    console.log('🔍 Cargando horas asignadas para hoy:', {
+      fechaInicio,
+      fechaFin
+    });
+    
     const response = await Auth.authFetch(
-      `${API_URL}/work-schedules?fecha=${fechaISO}&empleadoId=${user.id}`
+      `${API_URL}/work-schedules/my-schedules?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`
     );
     
     const data = await response.json();
+    
+    console.log('📊 Respuesta de horas asignadas:', data);
     
     if (data.success && data.data) {
       // Sumar horas de todos los horarios asignados hoy
       const horasAsignadas = data.data.reduce((total, horario) => {
         return total + (horario.horasTotales || 0);
       }, 0);
+      
+      console.log('✅ Total horas asignadas hoy:', horasAsignadas);
       
       const elemento = document.getElementById('horasAsignadasHoy');
       if (elemento) {
@@ -278,13 +293,14 @@ async function cargarHorasAsignadas() {
       }
     } else {
       // Si no hay horarios asignados, mostrar --
+      console.log('⚠️ No hay horarios asignados para hoy');
       const elemento = document.getElementById('horasAsignadasHoy');
       if (elemento) {
         elemento.textContent = '--';
       }
     }
   } catch (error) {
-    console.error('Error al cargar horas asignadas:', error);
+    console.error('❌ Error al cargar horas asignadas:', error);
     // Mostrar -- si hay error
     const elemento = document.getElementById('horasAsignadasHoy');
     if (elemento) {
