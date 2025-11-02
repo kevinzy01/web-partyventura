@@ -15,7 +15,8 @@ const bulkSelection = {
   empleados: new Set(),
   events: new Set(),
   gallery: new Set(),
-  timeRecords: new Set()
+  timeRecords: new Set(),
+  workSchedules: new Set()
 };
 
 // ===================================
@@ -3494,6 +3495,10 @@ async function loadWorkSchedules() {
     const data = await response.json();
     if (data.success) {
       workSchedules = data.data;
+      
+      // Limpiar selección al recargar datos
+      clearSelection('workSchedules');
+      
       renderCurrentWorkSchedulesView();
     } else {
       showNotification(data.message || 'Error al cargar horarios', 'error');
@@ -3523,7 +3528,7 @@ function renderWorkSchedulesListView() {
   if (workSchedules.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
           <div class="text-6xl mb-4">📭</div>
           <p class="text-lg">No hay horarios asignados</p>
           <p class="text-sm mt-2">Use los filtros o asigne nuevos horarios</p>
@@ -3559,8 +3564,19 @@ function renderWorkSchedulesListView() {
     const empleadoRol = ws.empleado?.rolEmpleado;
     const role = roleInfo[empleadoRol] || null;
     
+    const isChecked = bulkSelection.workSchedules.has(ws.id) ? 'checked' : '';
+    
     return `
       <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-6 py-4">
+          <input 
+            type="checkbox" 
+            class="item-checkbox w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            data-item-id="${ws.id}"
+            ${isChecked}
+            onchange="toggleItemSelection('workSchedules', '${ws.id}', this.checked)"
+          />
+        </td>
         <td class="px-6 py-4">
           <div class="text-sm font-medium text-gray-900">${ws.empleado?.nombre || 'N/A'}</div>
           ${role ? `<span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-0.5 rounded-full text-xs font-semibold mt-1">${role.text}</span>` : ''}
@@ -3593,6 +3609,10 @@ function renderWorkSchedulesListView() {
       </tr>
     `;
   }).join('');
+  
+  // Actualizar estados de selección
+  updateSelectAllCheckbox('workSchedules');
+  updateBulkActionBar('workSchedules');
 }
 
 // Renderizar vista semanal
@@ -4286,10 +4306,12 @@ async function updateWorkSchedule(id, formData) {
 }
 
 // Eliminar horario
-async function deleteWorkSchedule(id) {
-  // Usar confirm() nativo en lugar de Swal (que no está cargado)
-  if (!confirm('¿Estás seguro de que deseas eliminar este horario?\n\nEsta acción no se puede deshacer.')) {
-    return;
+async function deleteWorkSchedule(id, silent = false) {
+  // En modo silencioso (bulk delete), no pedir confirmación
+  if (!silent) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este horario?\n\nEsta acción no se puede deshacer.')) {
+      return;
+    }
   }
   
   try {
@@ -4301,22 +4323,32 @@ async function deleteWorkSchedule(id) {
     const data = await response.json();
     
     if (data.success) {
-      showNotification('✅ Horario eliminado exitosamente', 'success');
-      
-      // Actualizar vista actual
-      if (currentWorkSchedulesView === 'week') {
-        await renderWorkSchedulesWeekView();
-      } else if (currentWorkSchedulesView === 'month') {
-        await renderWorkSchedulesMonthView();
-      } else {
-        await loadWorkSchedules();
+      // En modo silencioso, no mostrar notificación ni recargar
+      if (!silent) {
+        showNotification('✅ Horario eliminado exitosamente', 'success');
+        
+        // Actualizar vista actual
+        if (currentWorkSchedulesView === 'week') {
+          await renderWorkSchedulesWeekView();
+        } else if (currentWorkSchedulesView === 'month') {
+          await renderWorkSchedulesMonthView();
+        } else {
+          await loadWorkSchedules();
+        }
       }
+      return { success: true };
     } else {
-      showNotification(data.message || '❌ Error al eliminar horario', 'error');
+      if (!silent) {
+        showNotification(data.message || '❌ Error al eliminar horario', 'error');
+      }
+      return { success: false, message: data.message };
     }
   } catch (error) {
     console.error('Error al eliminar horario:', error);
-    showNotification('❌ Error al eliminar horario', 'error');
+    if (!silent) {
+      showNotification('❌ Error al eliminar horario', 'error');
+    }
+    return { success: false, message: error.message };
   }
 }
 
@@ -4479,14 +4511,14 @@ function setupWorkSchedulesEventListeners() {
   }
   
   // Filtros
-  const btnApplyFilters = document.getElementById('btnApplyFilters');
-  if (btnApplyFilters) {
-    btnApplyFilters.addEventListener('click', loadWorkSchedules);
+  const btnApplyFiltersSchedules = document.getElementById('btnApplyFiltersSchedules');
+  if (btnApplyFiltersSchedules) {
+    btnApplyFiltersSchedules.addEventListener('click', loadWorkSchedules);
   }
   
-  const btnClearFilters = document.getElementById('btnClearFilters');
-  if (btnClearFilters) {
-    btnClearFilters.addEventListener('click', () => {
+  const btnClearFiltersSchedules = document.getElementById('btnClearFiltersSchedules');
+  if (btnClearFiltersSchedules) {
+    btnClearFiltersSchedules.addEventListener('click', () => {
       document.getElementById('filterEmployeeSchedules').value = '';
       document.getElementById('filterMonth').value = '';
       document.getElementById('filterYear').value = '';
