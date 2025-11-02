@@ -3893,15 +3893,18 @@ async function renderWorkSchedulesWeekView() {
     const weekDates = CalendarUtils.getWeekDates(monday);
     const sunday = weekDates[6];
     
+    const mondayISO = CalendarUtils.toISODate(monday);
+    const sundayISO = CalendarUtils.toISODate(sunday);
+    
     logCalendar('Week Dates', {
-      monday: CalendarUtils.toISODate(monday),
-      sunday: CalendarUtils.toISODate(sunday),
+      monday: mondayISO,
+      sunday: sundayISO,
       allDates: weekDates.map(d => CalendarUtils.toISODate(d))
     });
 
     // 1. OBTENER DATOS DEL BACKEND
     const empleadoId = document.getElementById('filterEmployee')?.value || '';
-    let url = `${API_URL}/work-schedules/weekly?fecha=${monday.toISOString()}`;
+    let url = `${API_URL}/work-schedules/weekly?fecha=${mondayISO}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
 
     logCalendar('Fetching from', url);
