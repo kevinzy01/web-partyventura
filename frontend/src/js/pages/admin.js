@@ -3389,27 +3389,39 @@ async function initWorkSchedules() {
 async function loadEmpleadosForSchedules() {
   try {
     // ENDPOINT CORRECTO: /api/admins/empleados (filtra solo empleados en backend)
-    const response = await fetch(`${API_URL}/admins/empleados`, {
+    const url = `${API_URL}/admins/empleados`;
+    console.log('🔵 [EMPLEADOS] Fetching:', url);
+    
+    const response = await fetch(url, {
       headers: Auth.getAuthHeaders()
     });
     
+    console.log('🔵 [EMPLEADOS] Response status:', response.status);
+    
     const data = await response.json();
+    
+    console.log('🔵 [EMPLEADOS] Response data:', data);
     
     if (data.success && data.data) {
       // Ya están filtrados por rol='empleado' desde el backend
       empleadosListForSchedules = data.data;
       
+      console.log('🟢 [EMPLEADOS] Cargados:', empleadosListForSchedules.length, 'empleados');
+      
       if (empleadosListForSchedules.length === 0) {
         console.warn('⚠️ No hay empleados con rol="empleado" en la base de datos.');
       }
       
-      // Poblar select de filtro
-      const filterSelect = document.getElementById('filterEmployee');
+      // Poblar select de filtro (Horarios Laborales)
+      const filterSelect = document.getElementById('filterEmployeeSchedules');
       if (filterSelect) {
         filterSelect.innerHTML = '<option value="">Todos los empleados</option>';
         empleadosListForSchedules.forEach(emp => {
           filterSelect.innerHTML += `<option value="${emp._id}">${emp.nombre}</option>`;
         });
+        console.log('🟢 [EMPLEADOS] Select de filtro poblado con', empleadosListForSchedules.length, 'empleados');
+      } else {
+        console.warn('⚠️ [EMPLEADOS] No se encontró elemento #filterEmployeeSchedules');
       }
       
       // Poblar select del formulario
@@ -3424,10 +3436,16 @@ async function loadEmpleadosForSchedules() {
             formSelect.innerHTML += `<option value="${emp._id}">${emp.nombre}</option>`;
           });
         }
+        console.log('🟢 [EMPLEADOS] Select del formulario poblado');
+      } else {
+        console.warn('⚠️ [EMPLEADOS] No se encontró elemento #wsEmpleado');
       }
+    } else {
+      console.error('❌ [EMPLEADOS] Response no exitoso:', data.message);
+      showNotification('Error al cargar empleados: ' + (data.message || 'Sin detalles'), 'error');
     }
   } catch (error) {
-    console.error('Error al cargar empleados:', error);
+    console.error('❌ [EMPLEADOS] Error al cargar empleados:', error);
     showNotification('Error al cargar empleados', 'error');
   }
 }
@@ -3458,7 +3476,7 @@ function setCurrentMonthYearSchedules() {
 // Cargar horarios con filtros
 async function loadWorkSchedules() {
   try {
-    const empleadoId = document.getElementById('filterEmployee')?.value || '';
+    const empleadoId = document.getElementById('filterEmployeeSchedules')?.value || '';
     const mes = document.getElementById('filterMonth')?.value || '';
     const anio = document.getElementById('filterYear')?.value || '';
     const estado = document.getElementById('filterStatus')?.value || '';
@@ -3903,7 +3921,7 @@ async function renderWorkSchedulesWeekView() {
     });
 
     // 1. OBTENER DATOS DEL BACKEND
-    const empleadoId = document.getElementById('filterEmployee')?.value || '';
+    const empleadoId = document.getElementById('filterEmployeeSchedules')?.value || '';
     let url = `${API_URL}/work-schedules/weekly?fecha=${mondayISO}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
 
@@ -4018,7 +4036,7 @@ async function renderWorkSchedulesMonthView() {
     });
 
     // 1. OBTENER DATOS DEL BACKEND
-    const empleadoId = document.getElementById('filterEmployee')?.value || '';
+    const empleadoId = document.getElementById('filterEmployeeSchedules')?.value || '';
     let url = `${API_URL}/work-schedules/monthly?mes=${mes}&anio=${anio}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
 
@@ -4469,7 +4487,7 @@ function setupWorkSchedulesEventListeners() {
   const btnClearFilters = document.getElementById('btnClearFilters');
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
-      document.getElementById('filterEmployee').value = '';
+      document.getElementById('filterEmployeeSchedules').value = '';
       document.getElementById('filterMonth').value = '';
       document.getElementById('filterYear').value = '';
       document.getElementById('filterStatus').value = '';
