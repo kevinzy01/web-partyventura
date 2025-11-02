@@ -3579,10 +3579,15 @@ function renderWorkSchedulesListView() {
 // Renderizar vista semanal
 async function renderWorkSchedulesWeekView() {
   try {
-    // Calcular inicio y fin de semana
-    const diaSemana = currentWeekDate.getDay();
-    const inicioSemana = new Date(currentWeekDate);
-    inicioSemana.setDate(currentWeekDate.getDate() - (diaSemana === 0 ? 6 : diaSemana - 1));
+    // Obtener el lunes de la semana actual de forma inmutable
+    const getMondayOfWeek = (date) => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - (day === 0 ? 6 : day - 1); // Ajustar cuando es domingo
+      return new Date(d.getFullYear(), d.getMonth(), diff);
+    };
+    
+    const inicioSemana = getMondayOfWeek(currentWeekDate);
     inicioSemana.setHours(0, 0, 0, 0);
     
     const finSemana = new Date(inicioSemana);
@@ -3619,10 +3624,17 @@ async function renderWorkSchedulesWeekView() {
     calendar.innerHTML = data.data.dias.map((dia, index) => {
       const horariosDia = dia.horarios || [];
       
+      // Obtener el día real de la fecha del backend
+      const fechaDia = new Date(dia.fecha);
+      const diaSemanaNum = fechaDia.getDay();
+      // Convertir de domingo=0 a lunes=0
+      const diaIndex = diaSemanaNum === 0 ? 6 : diaSemanaNum - 1;
+      const nombreDia = diasSemana[diaIndex];
+      
       return `
         <div class="border rounded-lg p-3 ${horariosDia.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
-          <div class="font-semibold text-sm mb-2 text-gray-700">${diasSemana[index]}</div>
-          <div class="text-xs text-gray-500 mb-3">${new Date(dia.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
+          <div class="font-semibold text-sm mb-2 text-gray-700">${nombreDia}</div>
+          <div class="text-xs text-gray-500 mb-3">${fechaDia.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
           ${horariosDia.length === 0 ? 
             '<div class="text-xs text-gray-400 italic">Sin horarios</div>' :
@@ -4060,13 +4072,15 @@ function setupWorkSchedulesEventListeners() {
   const btnPrevWeek = document.getElementById('btnPrevWeek');
   if (btnPrevWeek) {
     btnPrevWeek.addEventListener('click', () => {
-      // Primero, encontrar el lunes de la semana actual
-      const diaSemana = currentWeekDate.getDay();
-      const diasAlMon = diaSemana === 0 ? 6 : diaSemana - 1;
-      currentWeekDate.setDate(currentWeekDate.getDate() - diasAlMon);
+      // Crear nueva fecha basada en la actual, sin mutar el original
+      const nuevaFecha = new Date(currentWeekDate.getFullYear(), currentWeekDate.getMonth(), currentWeekDate.getDate());
       
-      // Luego restar 7 días para ir a la semana anterior
-      currentWeekDate.setDate(currentWeekDate.getDate() - 7);
+      // Restar 7 días
+      nuevaFecha.setDate(nuevaFecha.getDate() - 7);
+      
+      // Actualizar la referencia global
+      currentWeekDate = nuevaFecha;
+      
       renderWorkSchedulesWeekView();
     });
   }
@@ -4074,13 +4088,15 @@ function setupWorkSchedulesEventListeners() {
   const btnNextWeek = document.getElementById('btnNextWeek');
   if (btnNextWeek) {
     btnNextWeek.addEventListener('click', () => {
-      // Primero, encontrar el lunes de la semana actual
-      const diaSemana = currentWeekDate.getDay();
-      const diasAlMon = diaSemana === 0 ? 6 : diaSemana - 1;
-      currentWeekDate.setDate(currentWeekDate.getDate() - diasAlMon);
+      // Crear nueva fecha basada en la actual, sin mutar el original
+      const nuevaFecha = new Date(currentWeekDate.getFullYear(), currentWeekDate.getMonth(), currentWeekDate.getDate());
       
-      // Luego sumar 14 días para ir al lunes de la próxima semana
-      currentWeekDate.setDate(currentWeekDate.getDate() + 14);
+      // Sumar 7 días
+      nuevaFecha.setDate(nuevaFecha.getDate() + 7);
+      
+      // Actualizar la referencia global
+      currentWeekDate = nuevaFecha;
+      
       renderWorkSchedulesWeekView();
     });
   }
@@ -4089,9 +4105,15 @@ function setupWorkSchedulesEventListeners() {
   const btnPrevMonth = document.getElementById('btnPrevMonth');
   if (btnPrevMonth) {
     btnPrevMonth.addEventListener('click', () => {
-      // Establecer al primer día del mes actual y luego restar 1 mes
-      currentMonthDate.setDate(1);
-      currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
+      // Crear nueva fecha sin mutar el original
+      const nuevaFecha = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+      
+      // Restar 1 mes
+      nuevaFecha.setMonth(nuevaFecha.getMonth() - 1);
+      
+      // Actualizar la referencia global
+      currentMonthDate = nuevaFecha;
+      
       renderWorkSchedulesMonthView();
     });
   }
@@ -4099,9 +4121,15 @@ function setupWorkSchedulesEventListeners() {
   const btnNextMonth = document.getElementById('btnNextMonth');
   if (btnNextMonth) {
     btnNextMonth.addEventListener('click', () => {
-      // Establecer al primer día del mes actual y luego sumar 1 mes
-      currentMonthDate.setDate(1);
-      currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
+      // Crear nueva fecha sin mutar el original
+      const nuevaFecha = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+      
+      // Sumar 1 mes
+      nuevaFecha.setMonth(nuevaFecha.getMonth() + 1);
+      
+      // Actualizar la referencia global
+      currentMonthDate = nuevaFecha;
+      
       renderWorkSchedulesMonthView();
     });
   }
