@@ -291,12 +291,35 @@ async function ficharSalida() {
     const data = await response.json();
     
     if (data.success) {
-      const mensaje = data.data.horasTrabajadas 
-        ? `Horas trabajadas: ${data.data.horasTrabajadas}h`
-        : `Hora: ${new Date(data.data.fecha).toLocaleTimeString('es-ES')}`;
+      let mensaje = '';
+      let titulo = '¡Salida registrada!';
       
-      showToast('¡Salida registrada!', mensaje, 'success');
+      // Mostrar horas trabajadas
+      if (data.data.horasTrabajadas) {
+        mensaje = `Horas trabajadas: ${data.data.horasTrabajadas}h`;
+      } else {
+        mensaje = `Hora: ${new Date(data.data.fecha).toLocaleTimeString('es-ES')}`;
+      }
+      
+      // ✨ NUEVO: Verificar si el horario se completó automáticamente
+      if (data.horarioVerificado) {
+        if (data.horarioVerificado.completado) {
+          titulo = '🎯 ¡Turno Completado!';
+          mensaje = `${data.horarioVerificado.mensaje}\n✅ Tu horario ha sido marcado como completado automáticamente`;
+        } else if (data.horarioVerificado.razon === 'diferencia_horas') {
+          // Informar si no se completó por diferencia de horas
+          const diferenciaMins = (data.horarioVerificado.diferencia * 60).toFixed(0);
+          mensaje += `\n⚠️ ${data.horarioVerificado.mensaje}`;
+        }
+      }
+      
+      showToast(titulo, mensaje, 'success');
       await cargarDatos();
+      
+      // Recargar horarios si existe la función (para actualizar el calendario)
+      if (typeof renderCurrentEmployeeScheduleView === 'function') {
+        await renderCurrentEmployeeScheduleView();
+      }
     } else {
       showToast('Error', data.message, 'error');
     }

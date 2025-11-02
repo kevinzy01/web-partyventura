@@ -1,5 +1,81 @@
 const TimeRecord = require('../models/TimeRecord');
 const Admin = require('../models/Admin');
+const WorkSchedule = require('../models/WorkSchedule');
+
+/**
+ * Verificar y completar horario automáticamente si corresponde
+ * @param {ObjectId} empleadoId - ID del empleado
+ * @param {Date} fechaEntrada - Fecha de entrada
+ * @param {Date} fechaSalida - Fecha de salida
+ * @param {Number} horasTrabajadas - Horas trabajadas calculadas
+ */
+async function verificarYCompletarHorario(empleadoId, fechaEntrada, fechaSalida, horasTrabajadas) {
+  try {
+    // Obtener la fecha del turno (usar fecha de entrada)
+    const fechaTurno = new Date(fechaEntrada);
+    fechaTurno.setHours(0, 0, 0, 0);
+    
+    const siguienteDia = new Date(fechaTurno);
+    siguienteDia.setDate(siguienteDia.getDate() + 1);
+    
+    // Buscar horario asignado para ese día que NO esté completado o cancelado
+    const horario = await WorkSchedule.findOne({
+      empleado: empleadoId,
+      fecha: {
+        $gte: fechaTurno,
+        $lt: siguienteDia
+      },
+      estado: { $in: ['programado', 'confirmado'] } // Solo si está pendiente
+    });
+    
+    if (!horario) {
+      console.log(`ℹ️ No hay horario pendiente para el empleado en la fecha ${fechaTurno.toISOString().split('T')[0]}`);
+      return null;
+    }
+    
+    // Calcular diferencia entre horas trabajadas y horas programadas
+    const diferencia = Math.abs(horasTrabajadas - horario.horasTotales);
+    const margenMinutos = 5;
+    const margenHoras = margenMinutos / 60; // 0.083 horas
+    
+    console.log(`🔍 Verificación automática de horario:
+      - Horario ID: ${horario._id}
+      - Horas programadas: ${horario.horasTotales}h
+      - Horas trabajadas: ${horasTrabajadas}h
+      - Diferencia: ${diferencia.toFixed(3)}h
+      - Margen permitido: ${margenHoras.toFixed(3)}h (${margenMinutos} min)`);
+    
+    // Si la diferencia está dentro del margen de 5 minutos
+    if (diferencia <= margenHoras) {
+      horario.estado = 'completado';
+      horario.notas = (horario.notas || '') + 
+        `\n✅ Auto-completado: Turno realizado correctamente (${horasTrabajadas}h trabajadas)`;
+      
+      await horario.save();
+      
+      console.log(`✅ Horario ${horario._id} marcado como COMPLETADO automáticamente`);
+      
+      return {
+        completado: true,
+        horario: horario.toAdminJSON(),
+        mensaje: `Turno completado automáticamente (${horasTrabajadas}h/${horario.horasTotales}h)`
+      };
+    } else {
+      console.log(`⚠️ Horario NO completado: diferencia de ${(diferencia * 60).toFixed(1)} minutos excede el margen`);
+      
+      return {
+        completado: false,
+        razon: 'diferencia_horas',
+        diferencia: diferencia,
+        mensaje: `Turno registrado pero no completado automáticamente (diferencia: ${(diferencia * 60).toFixed(1)} min)`
+      };
+    }
+    
+  } catch (error) {
+    console.error('❌ Error al verificar horario:', error);
+    return null;
+  }
+}
 
 /**
  * Registrar entrada/salida (para empleados)
@@ -51,22 +127,46 @@ exports.registrarTiempo = async (req, res) => {
       ubicacion: ubicacion || 'Manual'
     });
 
-    // Si es salida, calcular horas trabajadas
+    let verificacionHorario = null;
+
+    // Si es salida, calcular horas trabajadas y verificar horario
     if (tipo === 'salida' && ultimoRegistro) {
       nuevoRegistro.entradaAsociada = ultimoRegistro._id;
       nuevoRegistro.horasTrabajadas = TimeRecord.calcularHorasTrabajadas(
         ultimoRegistro.fecha,
         nuevoRegistro.fecha
       );
+      
+      // ✨ VERIFICAR Y COMPLETAR HORARIO AUTOMÁTICAMENTE
+      if (nuevoRegistro.horasTrabajadas) {
+        verificacionHorario = await verificarYCompletarHorario(
+          empleadoId,
+          ultimoRegistro.fecha,
+          nuevoRegistro.fecha,
+          nuevoRegistro.horasTrabajadas
+        );
+      }
     }
 
     await nuevoRegistro.save();
 
-    res.status(201).json({
+    // Preparar respuesta con información adicional
+    const respuesta = {
       success: true,
       message: `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada correctamente`,
       data: nuevoRegistro.toPublicJSON()
-    });
+    };
+    
+    // Agregar información de verificación de horario si existe
+    if (verificacionHorario) {
+      respuesta.horarioVerificado = verificacionHorario;
+      
+      if (verificacionHorario.completado) {
+        respuesta.message += ` - ${verificacionHorario.mensaje}`;
+      }
+    }
+
+    res.status(201).json(respuesta);
 
   } catch (error) {
     console.error('Error al registrar tiempo:', error);
