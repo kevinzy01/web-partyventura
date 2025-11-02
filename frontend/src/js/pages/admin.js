@@ -4,6 +4,19 @@
 // CON SISTEMA DE AUTENTICACIÓN JWT
 // ===================================
 
+// ===================================
+// VALIDACIÓN DE DEPENDENCIAS
+// ===================================
+// Validar que date-fns esté cargado (requerido para calendario)
+if (typeof dateFns === 'undefined') {
+  console.error('%c[CALENDAR ERROR] date-fns library not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
+  console.error('Please ensure date-fns CDN scripts are included in HTML before admin.js');
+  alert('Error crítico: No se pudo cargar la librería de fechas. Por favor, recargue la página.');
+} else {
+  console.log('%c[CALENDAR] ✅ date-fns v3.0 loaded successfully', 'color: #06D6A0; font-weight: bold;');
+  console.log('%c[CALENDAR] Available functions:', 'color: #118AB2;', Object.keys(dateFns).slice(0, 10).join(', ') + '...');
+}
+
 // Estado global
 let currentContactId = null;
 let currentFilter = 'all';
@@ -3601,6 +3614,12 @@ function logCalendarError(label, error) {
   console.error(`%c[CALENDAR ERROR] ${label}`, 'color: #E63946; font-weight: bold;', error);
 }
 
+// ===================================
+// CALENDAR UTILS - POWERED BY date-fns
+// ===================================
+// Usando date-fns para manejo robusto de fechas
+// CDN: https://cdn.jsdelivr.net/npm/date-fns@3.0.0/
+
 const CalendarUtils = {
   /**
    * Obtiene el lunes de la semana para una fecha dada
@@ -3610,31 +3629,20 @@ const CalendarUtils = {
   getMonday(date) {
     try {
       const inputIso = this.toISODate(date);
-      const d = new Date(date);
-      const day = d.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
       
-      // Cálculo del diff (cuántos días atrás está el lunes)
-      // Si es domingo (0), restar 6 días; si es lunes (1), restar 0; si es martes (2), restar 1, etc.
-      const diff = day === 0 ? -6 : 1 - day;
-      
-      logCalendar('getMonday', {
-        input: inputIso,
-        dayOfWeek: day,
-        dayName: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][day],
-        diffDays: diff,
-        calculation: `date.getDate() + diff = ${d.getDate()} + ${diff}`
-      });
-      
-      // FIX: Usar setDate() en vez del constructor (más seguro)
-      const monday = new Date(d);
-      monday.setDate(d.getDate() + diff);
-      monday.setHours(0, 0, 0, 0);
+      // date-fns: startOfWeek con weekStartsOn: 1 (Monday)
+      const monday = dateFns.startOfWeek(date, { weekStartsOn: 1 });
       
       const resultIso = this.toISODate(monday);
       
-      logCalendar('  → monday result', {
-        result: resultIso,
-        validation: `Monday.getDay() = ${monday.getDay()} (should be 1)`
+      logCalendar('getMonday (date-fns)', {
+        input: inputIso,
+        inputDayOfWeek: date.getDay(),
+        inputDayName: this.getDayName(date),
+        output: resultIso,
+        outputDayOfWeek: monday.getDay(),
+        validation: monday.getDay() === 1 ? '✅ IS MONDAY' : '❌ NOT MONDAY',
+        library: 'date-fns v3.0'
       });
       
       return monday;
@@ -3651,16 +3659,18 @@ const CalendarUtils = {
    */
   getWeekDates(startDate) {
     try {
-      const result = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
-        return date;
-      });
+      // date-fns: eachDayOfInterval para generar array de fechas
+      const endDate = dateFns.addDays(startDate, 6);
+      const result = dateFns.eachDayOfInterval({ start: startDate, end: endDate });
       
       const dateStrings = result.map(d => this.toISODate(d));
-      logCalendar('getWeekDates', {
+      
+      logCalendar('getWeekDates (date-fns)', {
         startDate: this.toISODate(startDate),
-        dates: dateStrings
+        endDate: this.toISODate(endDate),
+        count: result.length,
+        dates: dateStrings,
+        validation: result.length === 7 ? '✅ 7 DAYS' : '❌ WRONG COUNT'
       });
       
       return result;
@@ -3678,20 +3688,23 @@ const CalendarUtils = {
    */
   addWeeks(date, weeks) {
     try {
-      const result = new Date(date);
-      result.setDate(date.getDate() + (weeks * 7));
-      
       const inputIso = this.toISODate(date);
-      const outputIso = this.toISODate(result);
-      const actualDiff = (result - date) / (1000 * 60 * 60 * 24);
       
-      logCalendar('addWeeks', {
+      // date-fns: addWeeks (inmutable, garantizado)
+      const result = dateFns.addWeeks(date, weeks);
+      
+      const outputIso = this.toISODate(result);
+      const actualDiff = Math.round((result - date) / (1000 * 60 * 60 * 24));
+      const expectedDiff = weeks * 7;
+      
+      logCalendar('addWeeks (date-fns)', {
         input: inputIso,
         weeks: weeks,
-        expectedDaysToAdd: weeks * 7,
-        actualDaysAdded: actualDiff,
+        expectedDays: expectedDiff,
+        actualDays: actualDiff,
         output: outputIso,
-        validation: actualDiff === (weeks * 7) ? '✅ OK' : '❌ MISMATCH'
+        validation: actualDiff === expectedDiff ? '✅ EXACT' : '❌ MISMATCH',
+        library: 'date-fns.addWeeks()'
       });
       
       return result;
@@ -3709,25 +3722,25 @@ const CalendarUtils = {
    */
   addMonths(date, months) {
     try {
-      const result = new Date(date);
+      const inputIso = this.toISODate(date);
       
-      // Usar setMonth() que maneja automáticamente el año
-      result.setMonth(date.getMonth() + months, 1); // Día 1
-      result.setHours(0, 0, 0, 0);
+      // date-fns: addMonths + startOfMonth para obtener día 1
+      const result = dateFns.startOfMonth(dateFns.addMonths(date, months));
       
-      const newMonthCalc = date.getMonth() + months;
-      const newYearOffset = Math.floor(newMonthCalc / 12);
-      const newMonthNormalized = newMonthCalc % 12;
-      const expectedYear = date.getFullYear() + newYearOffset;
+      const outputIso = this.toISODate(result);
+      const outputMonth = result.getMonth() + 1;
+      const outputYear = result.getFullYear();
+      const outputDay = result.getDate();
       
-      logCalendar('addMonths', {
-        input: this.toISODate(date),
+      logCalendar('addMonths (date-fns)', {
+        input: inputIso,
         months: months,
-        currentMonth: date.getMonth() + 1,
-        expectedNewMonth: (newMonthNormalized + 12) % 12 + 1 || 12,
-        expectedNewYear: expectedYear,
-        output: this.toISODate(result),
-        validation: result.getFullYear() === expectedYear ? '✅ YEAR OK' : '❌ YEAR MISMATCH'
+        output: outputIso,
+        outputMonth: outputMonth,
+        outputYear: outputYear,
+        outputDay: outputDay,
+        validation: outputDay === 1 ? '✅ DAY 1' : '❌ NOT DAY 1',
+        library: 'date-fns.addMonths() + startOfMonth()'
       });
       
       return result;
@@ -3743,10 +3756,8 @@ const CalendarUtils = {
    * @returns {string} Fecha en formato YYYY-MM-DD
    */
   toISODate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    // date-fns: format con patrón yyyy-MM-dd
+    return dateFns.format(date, 'yyyy-MM-dd');
   },
 
   /**
@@ -3756,7 +3767,8 @@ const CalendarUtils = {
    * @returns {boolean} True si son el mismo día
    */
   isSameDay(date1, date2) {
-    return this.toISODate(date1) === this.toISODate(date2);
+    // date-fns: isSameDay (ignora hora/minuto/segundo)
+    return dateFns.isSameDay(date1, date2);
   },
 
   /**
@@ -3765,8 +3777,8 @@ const CalendarUtils = {
    * @returns {string} Nombre del día (Lunes, Martes, etc.)
    */
   getDayName(date) {
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return days[date.getDay()];
+    // date-fns: format con patrón EEEE y locale español
+    return dateFns.format(date, 'EEEE', { locale: dateFns.locale.es });
   }
 };
 
