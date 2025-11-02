@@ -1534,6 +1534,229 @@ function getRolColor(rolEmpleado) {
 }
 ```
 
+## Portal de Empleados - Sistema de Horarios Asignados
+
+**Implementado**: Sistema de visualización de horarios personales para empleados (noviembre 2025).
+
+### **Descripción General**
+
+El portal de empleados (`/frontend/public/employee.html`) incluye una sección "Mis Horarios Asignados" que permite a cada empleado ver únicamente sus propios horarios asignados.
+
+### **Características Principales**
+
+**1. Dos Vistas de Calendario**:
+- **Vista Semanal** (por defecto):
+  * Grid de 7 días (Lunes-Domingo)
+  * Navegación prev/next con botones
+  * Muestra turno, horario (HH:MM - HH:MM), horas totales, notas
+  * Resalta el día actual con ring naranja
+  * Horarios con colores personalizados por turno
+  
+- **Vista Mensual**:
+  * Calendario completo del mes (grid 7 columnas x N filas)
+  * Navegación prev/next mes
+  * Máximo 2 turnos visibles por día + contador si hay más
+  * **Panel de Estadísticas**:
+    - Turnos Asignados (total del mes)
+    - Horas Totales (suma de horasTotales)
+    - Días Trabajados (días únicos con horarios)
+    - Promedio/Día (horas totales / días trabajados)
+
+### **Arquitectura del Sistema**
+
+**Frontend** (`/frontend/src/js/pages/employee.js`):
+```javascript
+// Clases y utilidades
+CalendarUtilsEmployee      // Wrapper sobre DateUtils local
+CalendarStateEmployee      // Gestión de estado (semana/mes actual)
+getRolColorEmployee()      // Sistema de colores por rol (preparado)
+
+// Vistas
+renderEmployeeWeekView()   // Renderiza vista semanal
+renderEmployeeMonthView()  // Renderiza vista mensual + estadísticas
+switchEmployeeScheduleView(view)  // Cambia entre vistas
+renderCurrentEmployeeScheduleView() // Renderiza vista actual
+
+// Inicialización
+initEmployeeSchedules()    // Configura event listeners y carga inicial
+```
+
+**Backend** (endpoints existentes):
+```javascript
+GET /work-schedules/weekly?fecha=YYYY-MM-DD&empleadoId=ID
+GET /work-schedules/monthly?mes=N&anio=YYYY&empleadoId=ID
+```
+
+### **Seguridad - CRÍTICO**
+
+**Filtrado Automático por Empleado**:
+```javascript
+// Backend: workScheduleController.js
+if (req.user.rol === 'empleado') {
+  filter.empleado = req.user._id;  // SIEMPRE usa el ID del token
+} else if (empleadoId) {
+  filter.empleado = empleadoId;     // Solo si es admin
+}
+```
+
+**Reglas de Seguridad**:
+- ✅ Empleados **SOLO** ven sus propios horarios (filtrado en backend)
+- ✅ El `empleadoId` enviado desde el frontend se **ignora** si `rol='empleado'`
+- ✅ El backend siempre usa `req.user._id` del token JWT
+- ❌ NO es posible que un empleado vea horarios de otros
+
+### **Estructura de Datos - Resumen Mensual**
+
+**Backend retorna** (`WorkSchedule.getResumenMensual()`):
+```javascript
+{
+  mes: 11,
+  anio: 2025,
+  totalHoras: 11.0,           // Suma de horasTotales
+  diasTrabajo: 3,             // Días únicos trabajados
+  turnosProgramados: 2,       // Total de turnos asignados
+  estadisticas: {
+    programados: 1,
+    confirmados: 1,
+    completados: 0
+  }
+}
+```
+
+**Frontend debe usar**:
+- `r.turnosProgramados` → Total de turnos (NO `totalHorarios`)
+- `r.diasTrabajo` → Días trabajados (NO `diasConHorarios`)
+- `r.totalHoras` → Horas totales del mes
+- Promedio: `totalHoras / diasTrabajo`
+
+**⚠️ IMPORTANTE**: NO usar `totalHorarios` ni `diasConHorarios` - esas propiedades **no existen** en el backend.
+
+### **Ubicación en la Página**
+
+```
+Portal del Empleado (employee.html)
+├── Header (nombre empleado + logout)
+├── Reloj y Estado Actual
+├── Botones de Fichar (Entrada/Salida)
+├── Resumen de Hoy
+├── ✨ MIS HORARIOS ASIGNADOS ✨
+│   ├── Botones de Vista (Semanal/Mensual)
+│   ├── Vista Semanal (grid 7 días)
+│   │   ├── Navegación prev/next
+│   │   └── Horarios del día
+│   └── Vista Mensual (calendario completo)
+│       ├── Navegación prev/next
+│       ├── Grid calendario
+│       └── Panel de estadísticas
+└── Historial Reciente (registros de entrada/salida)
+```
+
+### **Event Listeners**
+
+```javascript
+// Cambio de vista
+btnViewWeekEmployee.click → switchEmployeeScheduleView('week')
+btnViewMonthEmployee.click → switchEmployeeScheduleView('month')
+
+// Navegación semanal
+btnPrevWeekEmployee.click → calendarStateEmployee.goToPreviousWeek()
+btnNextWeekEmployee.click → calendarStateEmployee.goToNextWeek()
+
+// Navegación mensual
+btnPrevMonthEmployee.click → calendarStateEmployee.goToPreviousMonth()
+btnNextMonthEmployee.click → calendarStateEmployee.goToNextMonth()
+```
+
+### **Inicialización**
+
+```javascript
+// En DOMContentLoaded de employee.js
+document.addEventListener('DOMContentLoaded', () => {
+  // ... código existente ...
+  
+  // Inicializar horarios con delay
+  setTimeout(() => {
+    initEmployeeSchedules();  // Configura listeners y carga vista semanal
+  }, 500);
+});
+```
+
+**Delay de 500ms**: Asegura que el DOM esté completamente cargado y el módulo DateUtils esté disponible.
+
+### **Estilos y UI**
+
+**Colores Corporativos**:
+- Primary: Naranja (#f97316, `orange-500`)
+- Activo: Día actual con `ring-2 ring-orange-500`
+- Horarios: `bg-orange-50 border-orange-200`
+
+**Responsive**:
+- **Móvil** (<768px): Grid semanal en columna (`grid-cols-1`)
+- **Tablet** (768px-1024px): Grid semanal 2 columnas (`sm:grid-cols-2`)
+- **Desktop** (>1024px): Grid semanal 7 columnas (`md:grid-cols-7`)
+
+**Iconos**:
+- Header sección: 📅 SVG calendario
+- Botón semanal: 📅 emoji
+- Botón mensual: 📆 emoji
+
+### **Archivos Modificados**
+
+1. **`employee.html`**:
+   - Nueva sección "Mis Horarios Asignados" (~60 líneas HTML)
+   - Import de `date-utils.js` en `<head>`
+   - Cache: `v=3`
+
+2. **`employee.js`**:
+   - ~400 líneas nuevas (sistema completo de calendario)
+   - Utilidades: CalendarUtilsEmployee, CalendarStateEmployee
+   - Vistas: renderEmployeeWeekView, renderEmployeeMonthView
+   - Event listeners y navegación
+
+### **Dependencias**
+
+- **DateUtils** (`/frontend/src/js/modules/date-utils.js`): Módulo local para manejo de fechas
+- **Auth** (`/frontend/src/js/modules/auth.js`): Para obtener usuario actual y authFetch
+- **Config** (`/frontend/src/js/modules/config.js`): Para API_URL
+
+### **Testing**
+
+**Flujo de Prueba**:
+1. Login como empleado (rol='empleado')
+2. Verificar que se carga la vista semanal por defecto
+3. Cambiar a vista mensual y verificar estadísticas
+4. Navegar semanas/meses con botones prev/next
+5. Verificar que solo se muestran horarios del empleado actual
+6. Intentar con otro empleado y confirmar separación de datos
+
+**Casos de Uso**:
+- Empleado sin horarios asignados → Muestra "Sin horarios"
+- Empleado con 1 horario → Estadísticas correctas
+- Empleado con múltiples horarios en un día → Muestra todos
+- Día actual → Resaltado con borde naranja
+
+### **Problemas Conocidos y Soluciones**
+
+**1. Estadísticas Muestran Ceros**
+- **Causa**: Frontend usa `totalHorarios` en vez de `turnosProgramados`
+- **Solución**: Usar nombres correctos del backend (commit 022faf7)
+
+**2. DateUtils No Cargado**
+- **Causa**: Script ejecuta antes de que DateUtils esté disponible
+- **Solución**: setTimeout de 500ms en initEmployeeSchedules()
+
+**3. Vista No Se Actualiza**
+- **Causa**: Event listeners no configurados correctamente
+- **Solución**: Verificar que initEmployeeSchedules() se llame
+
+### **Mejoras Futuras Potenciales**
+
+- [ ] Agregar vista de lista (similar al panel admin)
+- [ ] Exportar horarios del mes a PDF
+- [ ] Notificaciones de próximos turnos
+- [ ] Solicitar cambios de horario
+- [ ] Ver historial de horarios pasados (más de 1 mes)
+
 ## Archivos Clave para Contexto
 
 - **Arquitectura**: `/docs/ESTRUCTURA_PROYECTO.md` - Explicación completa de estructura de archivos
