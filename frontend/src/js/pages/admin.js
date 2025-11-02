@@ -7,22 +7,14 @@
 // ===================================
 // VALIDACIÓN DE DEPENDENCIAS
 // ===================================
-// Validar que Day.js esté cargado (requerido para calendario)
-if (typeof dayjs === 'undefined') {
-  console.error('%c[CALENDAR ERROR] Day.js library not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
-  console.error('Please ensure Day.js CDN scripts are included in HTML before admin.js');
-  alert('Error crítico: No se pudo cargar la librería de fechas. Por favor, recargue la página.');
+// Validar que DateUtils esté cargado (requerido para calendario)
+if (typeof DateUtils === 'undefined') {
+  console.error('%c[CALENDAR ERROR] DateUtils module not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
+  console.error('Please ensure date-utils.js is included in HTML before admin.js');
+  alert('Error crítico: No se pudo cargar el módulo de fechas. Por favor, recargue la página.');
 } else {
-  // Configurar Day.js con plugins y locale español
-  dayjs.extend(window.dayjs_plugin_weekday);
-  dayjs.extend(window.dayjs_plugin_weekOfYear);
-  dayjs.extend(window.dayjs_plugin_isSameOrBefore);
-  dayjs.extend(window.dayjs_plugin_isSameOrAfter);
-  dayjs.locale('es');
-  
-  console.log('%c[CALENDAR] ✅ Day.js v1.11.10 loaded successfully', 'color: #06D6A0; font-weight: bold;');
-  console.log('%c[CALENDAR] Plugins:', 'color: #118AB2;', 'weekday, weekOfYear, isSameOrBefore, isSameOrAfter');
-  console.log('%c[CALENDAR] Locale:', 'color: #118AB2;', 'es (español)');
+  console.log('%c[CALENDAR] ✅ DateUtils module loaded successfully', 'color: #06D6A0; font-weight: bold;');
+  console.log('%c[CALENDAR] Local module - no external dependencies', 'color: #118AB2;');
 }
 
 // Estado global
@@ -3623,11 +3615,10 @@ function logCalendarError(label, error) {
 }
 
 // ===================================
-// CALENDAR UTILS - POWERED BY Day.js
+// CALENDAR UTILS - POWERED BY DateUtils (local module)
 // ===================================
-// Usando Day.js v1.11.10 para manejo robusto de fechas
-// CDN: https://cdn.jsdelivr.net/npm/dayjs@1.11.10/
-// Day.js es 2KB y tiene excelente soporte CDN
+// Usando módulo local DateUtils - sin dependencias CDN
+// Ubicación: /frontend/src/js/modules/date-utils.js
 
 const CalendarUtils = {
   /**
@@ -3639,19 +3630,19 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       
-      // Day.js: startOf('week') da lunes automáticamente con locale 'es'
-      const monday = dayjs(date).startOf('week').toDate();
+      // DateUtils: startOfWeek da lunes automáticamente
+      const monday = DateUtils.startOfWeek(date);
       
       const resultIso = this.toISODate(monday);
       
-      logCalendar('getMonday (Day.js)', {
+      logCalendar('getMonday (DateUtils)', {
         input: inputIso,
         inputDayOfWeek: date.getDay(),
         inputDayName: this.getDayName(date),
         output: resultIso,
         outputDayOfWeek: monday.getDay(),
         validation: monday.getDay() === 1 ? '✅ IS MONDAY' : '❌ NOT MONDAY',
-        library: 'Day.js v1.11.10'
+        library: 'DateUtils (local)'
       });
       
       return monday;
@@ -3668,19 +3659,15 @@ const CalendarUtils = {
    */
   getWeekDates(startDate) {
     try {
-      const result = [];
-      let current = dayjs(startDate);
-      
-      for (let i = 0; i < 7; i++) {
-        result.push(current.toDate());
-        current = current.add(1, 'day');
-      }
+      // DateUtils: eachDayOfInterval genera array
+      const endDate = DateUtils.addDays(startDate, 6);
+      const result = DateUtils.eachDayOfInterval({ start: startDate, end: endDate });
       
       const dateStrings = result.map(d => this.toISODate(d));
       
-      logCalendar('getWeekDates (Day.js)', {
+      logCalendar('getWeekDates (DateUtils)', {
         startDate: this.toISODate(startDate),
-        endDate: this.toISODate(result[6]),
+        endDate: this.toISODate(endDate),
         count: result.length,
         dates: dateStrings,
         validation: result.length === 7 ? '✅ 7 DAYS' : '❌ WRONG COUNT'
@@ -3703,21 +3690,21 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       
-      // Day.js: add(weeks, 'week') - inmutable
-      const result = dayjs(date).add(weeks, 'week').toDate();
+      // DateUtils: addWeeks inmutable
+      const result = DateUtils.addWeeks(date, weeks);
       
       const outputIso = this.toISODate(result);
       const actualDiff = Math.round((result - date) / (1000 * 60 * 60 * 24));
       const expectedDiff = weeks * 7;
       
-      logCalendar('addWeeks (Day.js)', {
+      logCalendar('addWeeks (DateUtils)', {
         input: inputIso,
         weeks: weeks,
         expectedDays: expectedDiff,
         actualDays: actualDiff,
         output: outputIso,
         validation: actualDiff === expectedDiff ? '✅ EXACT' : '❌ MISMATCH',
-        library: 'dayjs.add()'
+        library: 'DateUtils.addWeeks()'
       });
       
       return result;
@@ -3737,15 +3724,16 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       
-      // Day.js: add(months, 'month') + startOf('month') para día 1
-      const result = dayjs(date).add(months, 'month').startOf('month').toDate();
+      // DateUtils: addMonths + startOfMonth para día 1
+      const withMonthsAdded = DateUtils.addMonths(date, months);
+      const result = DateUtils.startOfMonth(withMonthsAdded);
       
       const outputIso = this.toISODate(result);
       const outputMonth = result.getMonth() + 1;
       const outputYear = result.getFullYear();
       const outputDay = result.getDate();
       
-      logCalendar('addMonths (Day.js)', {
+      logCalendar('addMonths (DateUtils)', {
         input: inputIso,
         months: months,
         output: outputIso,
@@ -3753,7 +3741,7 @@ const CalendarUtils = {
         outputYear: outputYear,
         outputDay: outputDay,
         validation: outputDay === 1 ? '✅ DAY 1' : '❌ NOT DAY 1',
-        library: 'dayjs.add() + startOf()'
+        library: 'DateUtils.addMonths() + startOfMonth()'
       });
       
       return result;
@@ -3769,8 +3757,8 @@ const CalendarUtils = {
    * @returns {string} Fecha en formato YYYY-MM-DD
    */
   toISODate(date) {
-    // Day.js: format('YYYY-MM-DD')
-    return dayjs(date).format('YYYY-MM-DD');
+    // DateUtils: format con patrón yyyy-MM-dd
+    return DateUtils.format(date, 'yyyy-MM-dd');
   },
 
   /**
@@ -3780,18 +3768,18 @@ const CalendarUtils = {
    * @returns {boolean} True si son el mismo día
    */
   isSameDay(date1, date2) {
-    // Day.js: isSame con granularidad 'day'
-    return dayjs(date1).isSame(dayjs(date2), 'day');
+    // DateUtils: isSameDay
+    return DateUtils.isSameDay(date1, date2);
   },
 
   /**
    * Obtiene el nombre del día de la semana
    * @param {Date} date - Fecha
-   * @returns {string} Nombre del día (Lunes, Martes, etc.)
+   * @returns {string} Nombre del día (lunes, martes, etc.)
    */
   getDayName(date) {
-    // Day.js: format('dddd') con locale español
-    return dayjs(date).format('dddd');
+    // DateUtils: format con patrón 'dddd'
+    return DateUtils.format(date, 'dddd');
   }
 };
 
