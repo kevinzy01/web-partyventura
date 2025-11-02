@@ -196,7 +196,8 @@ async function cargarDatos() {
     await Promise.all([
       cargarUltimoRegistro(),
       cargarHistorial(),
-      cargarResumenMensual()
+      cargarResumenMensual(),
+      cargarHorasAsignadas()
     ]);
   } catch (error) {
     console.error('Error al cargar datos:', error);
@@ -245,6 +246,50 @@ async function cargarResumenMensual() {
     }
   } catch (error) {
     console.error('Error al cargar resumen mensual:', error);
+  }
+}
+
+/**
+ * Cargar horas asignadas para hoy
+ */
+async function cargarHorasAsignadas() {
+  try {
+    const hoy = new Date();
+    const fechaISO = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    
+    const user = Auth.getUser();
+    const response = await Auth.authFetch(
+      `${API_URL}/work-schedules?fecha=${fechaISO}&empleadoId=${user.id}`
+    );
+    
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      // Sumar horas de todos los horarios asignados hoy
+      const horasAsignadas = data.data.reduce((total, horario) => {
+        return total + (horario.horasTotales || 0);
+      }, 0);
+      
+      const elemento = document.getElementById('horasAsignadasHoy');
+      if (elemento) {
+        elemento.textContent = horasAsignadas > 0 
+          ? `${horasAsignadas}h` 
+          : '--';
+      }
+    } else {
+      // Si no hay horarios asignados, mostrar --
+      const elemento = document.getElementById('horasAsignadasHoy');
+      if (elemento) {
+        elemento.textContent = '--';
+      }
+    }
+  } catch (error) {
+    console.error('Error al cargar horas asignadas:', error);
+    // Mostrar -- si hay error
+    const elemento = document.getElementById('horasAsignadasHoy');
+    if (elemento) {
+      elemento.textContent = '--';
+    }
   }
 }
 
