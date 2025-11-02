@@ -4304,8 +4304,19 @@ function closeWorkScheduleModal() {
   if (notasCount) notasCount.textContent = '0';
 }
 
+// Flag para evitar múltiples configuraciones de event listeners
+let workSchedulesListenersConfigured = false;
+
 // Event Listeners para Work Schedules
 function setupWorkSchedulesEventListeners() {
+  // PROTECCIÓN: Evitar duplicación de event listeners
+  if (workSchedulesListenersConfigured) {
+    console.log('⚠️ Event listeners ya configurados, saltando...');
+    return;
+  }
+  
+  console.log('🎯 Configurando event listeners de Work Schedules...');
+  
   // Botón nuevo horario
   const btnNew = document.getElementById('btnNewWorkSchedule');
   if (btnNew) {
@@ -4465,6 +4476,10 @@ function setupWorkSchedulesEventListeners() {
       renderWorkSchedulesMonthView();
     });
   }
+  
+  // Marcar como configurado
+  workSchedulesListenersConfigured = true;
+  console.log('✅ Event listeners configurados exitosamente');
 }
 
 // ===================================
