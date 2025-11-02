@@ -4,19 +4,6 @@
 // CON SISTEMA DE AUTENTICACIÓN JWT
 // ===================================
 
-// ===================================
-// VALIDACIÓN DE DEPENDENCIAS
-// ===================================
-// Validar que DateUtils esté cargado (requerido para calendario)
-if (typeof DateUtils === 'undefined') {
-  console.error('%c[CALENDAR ERROR] DateUtils module not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
-  console.error('Please ensure date-utils.js is included in HTML before admin.js');
-  alert('Error crítico: No se pudo cargar el módulo de fechas. Por favor, recargue la página.');
-} else {
-  console.log('%c[CALENDAR] ✅ DateUtils module loaded successfully', 'color: #06D6A0; font-weight: bold;');
-  console.log('%c[CALENDAR] Local module - no external dependencies', 'color: #118AB2;');
-}
-
 // Estado global
 let currentContactId = null;
 let currentFilter = 'all';
@@ -4560,6 +4547,19 @@ window.bulkDelete = bulkDelete;
 // ===================================
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Admin panel loaded');
+  
+  // ===================================
+  // VALIDACIÓN DE DEPENDENCIAS
+  // ===================================
+  if (typeof DateUtils === 'undefined') {
+    console.error('%c[CALENDAR ERROR] DateUtils module not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
+    console.error('Please ensure date-utils.js is included in HTML before admin.js');
+    alert('Error crítico: No se pudo cargar el módulo de fechas. Por favor, recargue la página.');
+    return; // Detener inicialización
+  } else {
+    console.log('%c[CALENDAR] ✅ DateUtils module loaded successfully', 'color: #06D6A0; font-weight: bold;');
+    console.log('%c[CALENDAR] Local module - no external dependencies', 'color: #118AB2;');
+  }
   
   // Cargar datos iniciales
   loadNews();
