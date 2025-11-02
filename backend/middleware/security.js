@@ -9,12 +9,12 @@ const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://*.persicity.ai"], 
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com"], 
+      styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://*.persicity.ai", "https://cdn.jsdelivr.net"], 
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com", "https://cdn.jsdelivr.net"], 
       scriptSrcAttr: ["'unsafe-inline'"], 
       imgSrc: ["'self'", "data:", "http:", "https:", "https://*.tile.openstreetmap.org", "https://*.persicity.ai"], 
-      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:*", "https://*.ngrok.io", "https://*.ngrok-free.app", "https://*.tile.openstreetmap.org", "https://*.persicity.ai", "https://unpkg.com"], 
-      fontSrc: ["'self'", "data:", "https://*.persicity.ai", "https://unpkg.com"],
+      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:*", "https://*.ngrok.io", "https://*.ngrok-free.app", "https://*.tile.openstreetmap.org", "https://*.persicity.ai", "https://unpkg.com", "https://cdn.jsdelivr.net"], 
+      fontSrc: ["'self'", "data:", "https://*.persicity.ai", "https://unpkg.com", "https://cdn.jsdelivr.net"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
