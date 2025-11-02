@@ -642,7 +642,7 @@ async function renderEmployeeMonthView() {
       statsDiv.innerHTML = `
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-200">
           <div class="text-center">
-            <div class="text-2xl font-bold text-orange-600">${r.totalHorarios || 0}</div>
+            <div class="text-2xl font-bold text-orange-600">${r.turnosProgramados || 0}</div>
             <div class="text-xs text-gray-600">Turnos Asignados</div>
           </div>
           <div class="text-center">
@@ -650,11 +650,11 @@ async function renderEmployeeMonthView() {
             <div class="text-xs text-gray-600">Horas Totales</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-green-600">${r.diasConHorarios || 0}</div>
+            <div class="text-2xl font-bold text-green-600">${r.diasTrabajo || 0}</div>
             <div class="text-xs text-gray-600">Días Trabajados</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-purple-600">${r.totalHoras && r.diasConHorarios ? (r.totalHoras / r.diasConHorarios).toFixed(1) : '0.0'}h</div>
+            <div class="text-2xl font-bold text-purple-600">${r.totalHoras && r.diasTrabajo ? (r.totalHoras / r.diasTrabajo).toFixed(1) : '0.0'}h</div>
             <div class="text-xs text-gray-600">Promedio/Día</div>
           </div>
         </div>
