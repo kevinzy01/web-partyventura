@@ -27,7 +27,20 @@ const DateUtils = {
    */
   addDays(date, amount) {
     const d = new Date(date);
+    const before = d.getTime();
     d.setDate(d.getDate() + amount);
+    const after = d.getTime();
+    const actualDiff = Math.round((after - before) / (1000 * 60 * 60 * 24));
+    
+    if (window.CALENDAR_DEBUG && Math.abs(actualDiff - amount) > 1) {
+      console.warn('[DateUtils.addDays] Unexpected difference:', {
+        expected: amount,
+        actual: actualDiff,
+        input: new Date(date).toISOString(),
+        output: d.toISOString()
+      });
+    }
+    
     return d;
   },
 
@@ -49,14 +62,31 @@ const DateUtils = {
    */
   addMonths(date, amount) {
     const d = new Date(date);
-    const desiredMonth = d.getMonth() + amount;
-    const desiredYear = d.getFullYear() + Math.floor(desiredMonth / 12);
-    const month = ((desiredMonth % 12) + 12) % 12; // Normaliza mes
     
-    d.setFullYear(desiredYear);
-    d.setMonth(month);
+    // Obtener mes y año actuales
+    const currentMonth = d.getMonth();
+    const currentYear = d.getFullYear();
+    const currentDay = d.getDate();
     
-    return d;
+    // Calcular nuevo mes y año
+    const totalMonths = currentMonth + amount;
+    const newYear = currentYear + Math.floor(totalMonths / 12);
+    const newMonth = ((totalMonths % 12) + 12) % 12;
+    
+    // Crear nueva fecha con el nuevo mes/año
+    // Importante: setMonth() puede causar overflow si el día no existe en el mes destino
+    // Ejemplo: 31 enero + 1 mes = 3 marzo (porque febrero no tiene día 31)
+    const result = new Date(newYear, newMonth, 1); // Empezar con día 1
+    
+    // Luego ajustar al día original si existe en el mes destino
+    // Si el mes destino tiene menos días, usar el último día del mes
+    const daysInNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
+    const dayToSet = Math.min(currentDay, daysInNewMonth);
+    
+    result.setDate(dayToSet);
+    result.setHours(d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+    
+    return result;
   },
 
   /**
