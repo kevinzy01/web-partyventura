@@ -41,6 +41,9 @@ const DateUtils = {
       });
     }
     
+    // Normalizar a medianoche para consistencia
+    d.setHours(0, 0, 0, 0);
+    
     return d;
   },
 
@@ -51,6 +54,7 @@ const DateUtils = {
    * @returns {Date} Nueva fecha
    */
   addWeeks(date, amount) {
+    // addDays ya normaliza a medianoche
     return this.addDays(date, amount * 7);
   },
 
@@ -84,7 +88,9 @@ const DateUtils = {
     const dayToSet = Math.min(currentDay, daysInNewMonth);
     
     result.setDate(dayToSet);
-    result.setHours(d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+    
+    // Normalizar a medianoche para consistencia
+    result.setHours(0, 0, 0, 0);
     
     return result;
   },
