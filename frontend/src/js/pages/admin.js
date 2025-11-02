@@ -7,14 +7,22 @@
 // ===================================
 // VALIDACIÓN DE DEPENDENCIAS
 // ===================================
-// Validar que date-fns esté cargado (requerido para calendario)
-if (typeof dateFns === 'undefined') {
-  console.error('%c[CALENDAR ERROR] date-fns library not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
-  console.error('Please ensure date-fns CDN scripts are included in HTML before admin.js');
+// Validar que Day.js esté cargado (requerido para calendario)
+if (typeof dayjs === 'undefined') {
+  console.error('%c[CALENDAR ERROR] Day.js library not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
+  console.error('Please ensure Day.js CDN scripts are included in HTML before admin.js');
   alert('Error crítico: No se pudo cargar la librería de fechas. Por favor, recargue la página.');
 } else {
-  console.log('%c[CALENDAR] ✅ date-fns v2.30 loaded successfully', 'color: #06D6A0; font-weight: bold;');
-  console.log('%c[CALENDAR] Available functions:', 'color: #118AB2;', Object.keys(dateFns).slice(0, 10).join(', ') + '...');
+  // Configurar Day.js con plugins y locale español
+  dayjs.extend(window.dayjs_plugin_weekday);
+  dayjs.extend(window.dayjs_plugin_weekOfYear);
+  dayjs.extend(window.dayjs_plugin_isSameOrBefore);
+  dayjs.extend(window.dayjs_plugin_isSameOrAfter);
+  dayjs.locale('es');
+  
+  console.log('%c[CALENDAR] ✅ Day.js v1.11.10 loaded successfully', 'color: #06D6A0; font-weight: bold;');
+  console.log('%c[CALENDAR] Plugins:', 'color: #118AB2;', 'weekday, weekOfYear, isSameOrBefore, isSameOrAfter');
+  console.log('%c[CALENDAR] Locale:', 'color: #118AB2;', 'es (español)');
 }
 
 // Estado global
@@ -3615,10 +3623,11 @@ function logCalendarError(label, error) {
 }
 
 // ===================================
-// CALENDAR UTILS - POWERED BY date-fns
+// CALENDAR UTILS - POWERED BY Day.js
 // ===================================
-// Usando date-fns v2.30 para manejo robusto de fechas
-// CDN: https://cdn.jsdelivr.net/npm/date-fns@2.30.0/
+// Usando Day.js v1.11.10 para manejo robusto de fechas
+// CDN: https://cdn.jsdelivr.net/npm/dayjs@1.11.10/
+// Day.js es 2KB y tiene excelente soporte CDN
 
 const CalendarUtils = {
   /**
@@ -3630,19 +3639,19 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       
-      // date-fns: startOfWeek con weekStartsOn: 1 (Monday)
-      const monday = dateFns.startOfWeek(date, { weekStartsOn: 1 });
+      // Day.js: startOf('week') da lunes automáticamente con locale 'es'
+      const monday = dayjs(date).startOf('week').toDate();
       
       const resultIso = this.toISODate(monday);
       
-      logCalendar('getMonday (date-fns)', {
+      logCalendar('getMonday (Day.js)', {
         input: inputIso,
         inputDayOfWeek: date.getDay(),
         inputDayName: this.getDayName(date),
         output: resultIso,
         outputDayOfWeek: monday.getDay(),
         validation: monday.getDay() === 1 ? '✅ IS MONDAY' : '❌ NOT MONDAY',
-        library: 'date-fns v2.30'
+        library: 'Day.js v1.11.10'
       });
       
       return monday;
@@ -3659,15 +3668,19 @@ const CalendarUtils = {
    */
   getWeekDates(startDate) {
     try {
-      // date-fns: eachDayOfInterval para generar array de fechas
-      const endDate = dateFns.addDays(startDate, 6);
-      const result = dateFns.eachDayOfInterval({ start: startDate, end: endDate });
+      const result = [];
+      let current = dayjs(startDate);
+      
+      for (let i = 0; i < 7; i++) {
+        result.push(current.toDate());
+        current = current.add(1, 'day');
+      }
       
       const dateStrings = result.map(d => this.toISODate(d));
       
-      logCalendar('getWeekDates (date-fns)', {
+      logCalendar('getWeekDates (Day.js)', {
         startDate: this.toISODate(startDate),
-        endDate: this.toISODate(endDate),
+        endDate: this.toISODate(result[6]),
         count: result.length,
         dates: dateStrings,
         validation: result.length === 7 ? '✅ 7 DAYS' : '❌ WRONG COUNT'
@@ -3690,21 +3703,21 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       
-      // date-fns: addWeeks (inmutable, garantizado)
-      const result = dateFns.addWeeks(date, weeks);
+      // Day.js: add(weeks, 'week') - inmutable
+      const result = dayjs(date).add(weeks, 'week').toDate();
       
       const outputIso = this.toISODate(result);
       const actualDiff = Math.round((result - date) / (1000 * 60 * 60 * 24));
       const expectedDiff = weeks * 7;
       
-      logCalendar('addWeeks (date-fns)', {
+      logCalendar('addWeeks (Day.js)', {
         input: inputIso,
         weeks: weeks,
         expectedDays: expectedDiff,
         actualDays: actualDiff,
         output: outputIso,
         validation: actualDiff === expectedDiff ? '✅ EXACT' : '❌ MISMATCH',
-        library: 'date-fns.addWeeks()'
+        library: 'dayjs.add()'
       });
       
       return result;
@@ -3724,15 +3737,15 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       
-      // date-fns: addMonths + startOfMonth para obtener día 1
-      const result = dateFns.startOfMonth(dateFns.addMonths(date, months));
+      // Day.js: add(months, 'month') + startOf('month') para día 1
+      const result = dayjs(date).add(months, 'month').startOf('month').toDate();
       
       const outputIso = this.toISODate(result);
       const outputMonth = result.getMonth() + 1;
       const outputYear = result.getFullYear();
       const outputDay = result.getDate();
       
-      logCalendar('addMonths (date-fns)', {
+      logCalendar('addMonths (Day.js)', {
         input: inputIso,
         months: months,
         output: outputIso,
@@ -3740,7 +3753,7 @@ const CalendarUtils = {
         outputYear: outputYear,
         outputDay: outputDay,
         validation: outputDay === 1 ? '✅ DAY 1' : '❌ NOT DAY 1',
-        library: 'date-fns.addMonths() + startOfMonth()'
+        library: 'dayjs.add() + startOf()'
       });
       
       return result;
@@ -3756,8 +3769,8 @@ const CalendarUtils = {
    * @returns {string} Fecha en formato YYYY-MM-DD
    */
   toISODate(date) {
-    // date-fns: format con patrón yyyy-MM-dd
-    return dateFns.format(date, 'yyyy-MM-dd');
+    // Day.js: format('YYYY-MM-DD')
+    return dayjs(date).format('YYYY-MM-DD');
   },
 
   /**
@@ -3767,8 +3780,8 @@ const CalendarUtils = {
    * @returns {boolean} True si son el mismo día
    */
   isSameDay(date1, date2) {
-    // date-fns: isSameDay (ignora hora/minuto/segundo)
-    return dateFns.isSameDay(date1, date2);
+    // Day.js: isSame con granularidad 'day'
+    return dayjs(date1).isSame(dayjs(date2), 'day');
   },
 
   /**
@@ -3777,9 +3790,8 @@ const CalendarUtils = {
    * @returns {string} Nombre del día (Lunes, Martes, etc.)
    */
   getDayName(date) {
-    // date-fns v2: format con patrón EEEE y locale español
-    // En v2.x el locale se importa como dateFns.locale.es desde el CDN
-    return dateFns.format(date, 'EEEE', { locale: window.dateFns && window.dateFns.locale && window.dateFns.locale.es });
+    // Day.js: format('dddd') con locale español
+    return dayjs(date).format('dddd');
   }
 };
 
