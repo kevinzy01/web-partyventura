@@ -3788,102 +3788,99 @@ const CalendarUtils = {
 // ===================================
 
 /**
- * Clase para gestionar el estado del calendario de forma centralizada
+ * Estado del calendario - SIMPLIFICADO
+ * Patrón del calendario de index.html (funciona correctamente)
+ * Variables simples (no objetos Date complejos)
  */
 class CalendarState {
   constructor() {
-    // Estado privado - solo accesible via métodos
     const today = new Date();
+    
+    // Para vista semanal: guardar el lunes actual
     this._currentWeekMonday = CalendarUtils.getMonday(today);
-    this._currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // Para vista mensual: guardar mes y año como NÚMEROS (0-11 y YYYY)
+    this._currentMonth = today.getMonth(); // 0-11
+    this._currentYear = today.getFullYear(); // 2025
     
     logCalendar('CalendarState CONSTRUCTOR', {
-      initialWeekMonday: CalendarUtils.toISODate(this._currentWeekMonday),
-      initialMonth: CalendarUtils.toISODate(this._currentMonth)
+      weekMonday: CalendarUtils.toISODate(this._currentWeekMonday),
+      month: this._currentMonth,
+      year: this._currentYear
     });
   }
 
-  // Getters inmutables (retornan copias)
+  // Getters
   getCurrentWeekMonday() {
-    const copy = new Date(this._currentWeekMonday);
-    logCalendar('getCurrentWeekMonday', CalendarUtils.toISODate(copy));
-    return copy;
+    return new Date(this._currentWeekMonday);
   }
 
   getCurrentMonth() {
-    const copy = new Date(this._currentMonth);
-    logCalendar('getCurrentMonth', CalendarUtils.toISODate(copy));
-    return copy;
+    return this._currentMonth;
   }
 
-  // Navegación semanal
+  getCurrentYear() {
+    return this._currentYear;
+  }
+
+  // Navegación semanal (mantener sistema actual - funciona)
   goToPreviousWeek() {
-    const before = CalendarUtils.toISODate(this._currentWeekMonday);
     this._currentWeekMonday = CalendarUtils.addWeeks(this._currentWeekMonday, -1);
-    const after = CalendarUtils.toISODate(this._currentWeekMonday);
-    
-    logCalendar('goToPreviousWeek', {
-      before: before,
-      after: after,
-      daysBack: -7
-    });
+    logCalendar('goToPreviousWeek', CalendarUtils.toISODate(this._currentWeekMonday));
   }
 
   goToNextWeek() {
-    const before = CalendarUtils.toISODate(this._currentWeekMonday);
     this._currentWeekMonday = CalendarUtils.addWeeks(this._currentWeekMonday, 1);
-    const after = CalendarUtils.toISODate(this._currentWeekMonday);
-    
-    logCalendar('goToNextWeek', {
-      before: before,
-      after: after,
-      daysForward: 7
-    });
+    logCalendar('goToNextWeek', CalendarUtils.toISODate(this._currentWeekMonday));
   }
 
-  // Navegación mensual
+  // Navegación mensual - PATRÓN SIMPLIFICADO del index.html
   goToPreviousMonth() {
-    const before = CalendarUtils.toISODate(this._currentMonth);
-    this._currentMonth = CalendarUtils.addMonths(this._currentMonth, -1);
-    const after = CalendarUtils.toISODate(this._currentMonth);
-    
+    this._currentMonth--;
+    if (this._currentMonth < 0) {
+      this._currentMonth = 11;
+      this._currentYear--;
+    }
     logCalendar('goToPreviousMonth', {
-      before: before,
-      after: after
+      month: this._currentMonth,
+      year: this._currentYear
     });
   }
 
   goToNextMonth() {
-    const before = CalendarUtils.toISODate(this._currentMonth);
-    this._currentMonth = CalendarUtils.addMonths(this._currentMonth, 1);
-    const after = CalendarUtils.toISODate(this._currentMonth);
-    
+    this._currentMonth++;
+    if (this._currentMonth > 11) {
+      this._currentMonth = 0;
+      this._currentYear++;
+    }
     logCalendar('goToNextMonth', {
-      before: before,
-      after: after
+      month: this._currentMonth,
+      year: this._currentYear
     });
   }
 
-  // Reset a fechas específicas
+  // Reset
   setWeek(date) {
     this._currentWeekMonday = CalendarUtils.getMonday(date);
     logCalendar('setWeek', CalendarUtils.toISODate(this._currentWeekMonday));
   }
 
   setMonth(year, month) {
-    this._currentMonth = new Date(year, month - 1, 1);
-    logCalendar('setMonth', CalendarUtils.toISODate(this._currentMonth));
+    this._currentYear = year;
+    this._currentMonth = month - 1; // Convertir de 1-12 a 0-11
+    logCalendar('setMonth', { month: this._currentMonth, year: this._currentYear });
   }
 
-  // Ir a hoy
   goToToday() {
     const today = new Date();
     this._currentWeekMonday = CalendarUtils.getMonday(today);
-    this._currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    this._currentMonth = today.getMonth();
+    this._currentYear = today.getFullYear();
     
     logCalendar('goToToday', {
       weekMonday: CalendarUtils.toISODate(this._currentWeekMonday),
-      month: CalendarUtils.toISODate(this._currentMonth)
+      month: this._currentMonth,
+      year: this._currentYear
     });
   }
 }
@@ -4018,14 +4015,13 @@ async function renderWorkSchedulesMonthView() {
   try {
     logCalendar('=== renderWorkSchedulesMonthView START ===', {});
     
-    const currentMonth = calendarState.getCurrentMonth();
-    const mes = currentMonth.getMonth() + 1; // getMonth() retorna 0-11
-    const anio = currentMonth.getFullYear();
+    // SIMPLIFICADO: Usar números directamente (patrón index.html)
+    const mes = calendarState.getCurrentMonth() + 1; // 0-11 → 1-12 para API
+    const anio = calendarState.getCurrentYear();
 
     logCalendar('Month Parameters', {
       mes: mes,
-      anio: anio,
-      currentMonth: CalendarUtils.toISODate(currentMonth)
+      anio: anio
     });
 
     // 1. OBTENER DATOS DEL BACKEND

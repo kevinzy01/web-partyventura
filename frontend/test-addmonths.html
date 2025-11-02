@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test addMonths</title>
+</head>
+<body>
+  <h1>Test de addMonths()</h1>
+  <div id="output" style="font-family: monospace; white-space: pre;"></div>
+
+  <script src="/src/js/modules/date-utils.js"></script>
+  <script>
+    const output = document.getElementById('output');
+    
+    function log(msg) {
+      output.innerHTML += msg + '\n';
+      console.log(msg);
+    }
+    
+    // Test 1: Empezar con día 1 de noviembre 2025
+    const nov1 = new Date(2025, 10, 1); // Mes 10 = Noviembre (0-indexed)
+    log('=== TEST 1: Navegar desde 1 de Noviembre ===');
+    log(`Fecha inicial: ${DateUtils.format(nov1, 'yyyy-MM-dd')} (día ${nov1.getDate()})`);
+    
+    const oct1 = DateUtils.addMonths(nov1, -1);
+    log(`addMonths(-1):  ${DateUtils.format(oct1, 'yyyy-MM-dd')} (día ${oct1.getDate()})`);
+    
+    const sep1 = DateUtils.addMonths(oct1, -1);
+    log(`addMonths(-1):  ${DateUtils.format(sep1, 'yyyy-MM-dd')} (día ${sep1.getDate()})`);
+    
+    const aug1 = DateUtils.addMonths(sep1, -1);
+    log(`addMonths(-1):  ${DateUtils.format(aug1, 'yyyy-MM-dd')} (día ${aug1.getDate()})`);
+    
+    log('\n=== TEST 2: Navegar hacia adelante desde Agosto ===');
+    const sep2 = DateUtils.addMonths(aug1, 1);
+    log(`addMonths(+1):  ${DateUtils.format(sep2, 'yyyy-MM-dd')} (día ${sep2.getDate()})`);
+    
+    const oct2 = DateUtils.addMonths(sep2, 1);
+    log(`addMonths(+1):  ${DateUtils.format(oct2, 'yyyy-MM-dd')} (día ${oct2.getDate()})`);
+    
+    const nov2 = DateUtils.addMonths(oct2, 1);
+    log(`addMonths(+1):  ${DateUtils.format(nov2, 'yyyy-MM-dd')} (día ${nov2.getDate()})`);
+    
+    log('\n=== TEST 3: Día 31 (caso edge) ===');
+    const jan31 = new Date(2025, 0, 31); // 31 de Enero
+    log(`Fecha inicial: ${DateUtils.format(jan31, 'yyyy-MM-dd')} (día ${jan31.getDate()})`);
+    
+    const feb = DateUtils.addMonths(jan31, 1);
+    log(`addMonths(+1):  ${DateUtils.format(feb, 'yyyy-MM-dd')} (día ${feb.getDate()}) <-- Debería ser 28 o 29`);
+    
+    const mar = DateUtils.addMonths(feb, 1);
+    log(`addMonths(+1):  ${DateUtils.format(mar, 'yyyy-MM-dd')} (día ${mar.getDate()})`);
+    
+    log('\n=== TEST 4: Simular clicks consecutivos del usuario ===');
+    let current = new Date(2025, 10, 2); // 2 de Noviembre (hoy)
+    log(`INICIO: ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    current = DateUtils.addMonths(current, -1);
+    log(`Click 1 (←): ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    current = DateUtils.addMonths(current, -1);
+    log(`Click 2 (←): ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    current = DateUtils.addMonths(current, -1);
+    log(`Click 3 (←): ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    current = DateUtils.addMonths(current, 1);
+    log(`Click 4 (→): ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    current = DateUtils.addMonths(current, 1);
+    log(`Click 5 (→): ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    current = DateUtils.addMonths(current, 1);
+    log(`Click 6 (→): ${DateUtils.format(current, 'yyyy-MM-dd')} (día ${current.getDate()})`);
+    
+    log(`\nFINAL: ${DateUtils.format(current, 'yyyy-MM-dd')} (¿Volvió a Nov 2?)`);
+  </script>
+</body>
+</html>
