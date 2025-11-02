@@ -3600,6 +3600,39 @@ function renderWorkSchedulesListView() {
  * Todas las operaciones son inmutables y retornan nuevas instancias
  */
 // ===================================
+// UTILIDADES DE ROL (colores por puesto)
+// ===================================
+function getRolColor(rolEmpleado) {
+  const roleColors = {
+    'monitor': {
+      bg: 'bg-blue-100',
+      border: 'border-blue-400',
+      text: 'text-blue-900',
+      hex: '#dbeafe' // blue-100
+    },
+    'cocina': {
+      bg: 'bg-orange-100',
+      border: 'border-orange-400',
+      text: 'text-orange-900',
+      hex: '#fed7aa' // orange-100
+    },
+    'barra': {
+      bg: 'bg-purple-100',
+      border: 'border-purple-400',
+      text: 'text-purple-900',
+      hex: '#e9d5ff' // purple-100
+    }
+  };
+  
+  return roleColors[rolEmpleado] || {
+    bg: 'bg-gray-100',
+    border: 'border-gray-400',
+    text: 'text-gray-900',
+    hex: '#f3f4f6' // gray-100
+  };
+}
+
+// ===================================
 // LOGGER DE CALENDARIO (para debugging)
 // ===================================
 const CALENDAR_DEBUG = true; // Cambiar a false para desactivar logs
@@ -3952,6 +3985,7 @@ async function renderWorkSchedulesWeekView() {
                 ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
                 <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
                 <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
+                ${h.empleado?.rolEmpleado ? `<div class="text-xs mt-1 px-2 py-0.5 rounded inline-block ${getRolColor(h.empleado.rolEmpleado).bg} ${getRolColor(h.empleado.rolEmpleado).text}"><strong>${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</strong></div>` : ''}
                 ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
               </div>
             `).join('') :
@@ -4076,13 +4110,18 @@ async function renderWorkSchedulesMonthView() {
           <div class="text-xs font-semibold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
           
           ${hasSchedules ? 
-            horarios.slice(0, 3).map(h => `
-              <div class="text-xs bg-white rounded px-1 py-0.5 mb-1 truncate border-l-2" 
-                   style="border-color: ${h.color || '#f97316'}" 
-                   title="${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}">
-                ${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'} ${h.horaInicio}
-              </div>
-            `).join('') + (horarios.length > 3 ? `<div class="text-xs text-gray-500">+${horarios.length - 3} más</div>` : '') :
+            horarios.slice(0, 3).map(h => {
+              const rolColor = getRolColor(h.empleado?.rolEmpleado);
+              return `
+                <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${rolColor.bg} ${rolColor.text}" 
+                     style="border-color: ${h.color || '#f97316'}" 
+                     title="${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}">
+                  <div class="font-semibold truncate">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
+                  <div>${h.horaInicio}-${h.horaFin}</div>
+                  ${h.empleado?.rolEmpleado ? `<div class="text-xs font-semibold">${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</div>` : ''}
+                </div>
+              `;
+            }).join('') + (horarios.length > 3 ? `<div class="text-xs text-gray-500">+${horarios.length - 3} más</div>` : '') :
             ''
           }
         </div>
