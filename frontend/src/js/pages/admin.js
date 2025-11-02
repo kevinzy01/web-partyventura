@@ -3579,16 +3579,20 @@ function renderWorkSchedulesListView() {
 // Renderizar vista semanal
 async function renderWorkSchedulesWeekView() {
   try {
-    // Obtener el lunes de la semana actual de forma inmutable
+    // Función pura para obtener el lunes de una semana
     const getMondayOfWeek = (date) => {
       const d = new Date(date);
       const day = d.getDay();
       const diff = d.getDate() - (day === 0 ? 6 : day - 1); // Ajustar cuando es domingo
-      return new Date(d.getFullYear(), d.getMonth(), diff);
+      return new Date(d.getFullYear(), d.getMonth(), diff, 0, 0, 0, 0);
     };
     
+    // Calcular el lunes de la semana actual
     const inicioSemana = getMondayOfWeek(currentWeekDate);
-    inicioSemana.setHours(0, 0, 0, 0);
+    
+    // CRÍTICO: Sincronizar currentWeekDate con el lunes calculado
+    // Esto previene drift en navegaciones subsecuentes
+    currentWeekDate = new Date(inicioSemana);
     
     const finSemana = new Date(inicioSemana);
     finSemana.setDate(inicioSemana.getDate() + 6);
@@ -3621,15 +3625,25 @@ async function renderWorkSchedulesWeekView() {
     
     const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     
-    calendar.innerHTML = data.data.dias.map((dia, index) => {
-      const horariosDia = dia.horarios || [];
+    // Generar array de 7 días empezando desde el lunes
+    const diasArray = Array.from({ length: 7 }, (_, i) => {
+      const fecha = new Date(inicioSemana);
+      fecha.setDate(inicioSemana.getDate() + i);
+      return fecha;
+    });
+    
+    // Buscar horarios para cada día
+    calendar.innerHTML = diasArray.map((fechaDia, index) => {
+      const fechaStr = fechaDia.toISOString().split('T')[0];
       
-      // Obtener el día real de la fecha del backend
-      const fechaDia = new Date(dia.fecha);
-      const diaSemanaNum = fechaDia.getDay();
-      // Convertir de domingo=0 a lunes=0
-      const diaIndex = diaSemanaNum === 0 ? 6 : diaSemanaNum - 1;
-      const nombreDia = diasSemana[diaIndex];
+      // Buscar en los datos del backend el día correspondiente
+      const diaData = data.data.dias.find(d => {
+        const backendFecha = new Date(d.fecha).toISOString().split('T')[0];
+        return backendFecha === fechaStr;
+      });
+      
+      const horariosDia = diaData?.horarios || [];
+      const nombreDia = diasSemana[index]; // index ya está en orden lunes=0
       
       return `
         <div class="border rounded-lg p-3 ${horariosDia.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
