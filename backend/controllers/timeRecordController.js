@@ -170,6 +170,97 @@ async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fe
 }
 
 /**
+ * Detectar y gestionar entradas sin cerrar que cruzaron medianoche
+ * @param {ObjectId} empleadoId - ID del empleado
+ * @param {Object} ultimoRegistro - Último registro del empleado
+ * @returns {Object|null} - Información sobre entrada olvidada o null
+ */
+async function detectarYGestionarEntradaOlvidada(empleadoId, ultimoRegistro) {
+  try {
+    // Si no hay último registro o ya es salida, no hay entrada olvidada
+    if (!ultimoRegistro || ultimoRegistro.tipo !== 'entrada') {
+      return null;
+    }
+    
+    // Calcular si la entrada es de un día anterior
+    const fechaEntrada = new Date(ultimoRegistro.fecha);
+    const ahora = new Date();
+    
+    // Normalizar fechas para comparar días
+    const fechaEntradaDay = new Date(fechaEntrada);
+    fechaEntradaDay.setHours(0, 0, 0, 0);
+    
+    const ahoraDay = new Date(ahora);
+    ahoraDay.setHours(0, 0, 0, 0);
+    
+    // Si están en el mismo día, no hay problema
+    if (fechaEntradaDay.getTime() === ahoraDay.getTime()) {
+      return null;
+    }
+    
+    // La entrada es de otro día
+    const diasTranscurridos = (ahoraDay - fechaEntradaDay) / (1000 * 60 * 60 * 24);
+    
+    console.log(`⚠️ ENTRADA OLVIDADA DETECTADA:
+      - Entrada: ${fechaEntrada.toLocaleString('es-ES')}
+      - Ahora: ${ahora.toLocaleString('es-ES')}
+      - Días transcurridos: ${diasTranscurridos}`);
+    
+    // Fijar salida automática a las 23:59 del mismo día de entrada (fin del turno)
+    const salidaAutomatica = new Date(fechaEntrada);
+    salidaAutomatica.setHours(23, 59, 59, 999);
+    
+    // Calcular horas trabajadas
+    const horasTrabajadas = (salidaAutomatica - fechaEntrada) / (1000 * 60 * 60);
+    
+    // Crear registro de salida automático
+    const salidaRecord = new TimeRecord({
+      empleado: empleadoId,
+      empleadoNombre: ultimoRegistro.empleadoNombre,
+      tipo: 'salida',
+      fecha: salidaAutomatica,
+      ubicacion: 'Automática',
+      entradaAsociada: ultimoRegistro._id,
+      horasTrabajadas: horasTrabajadas,
+      notas: `⚠️ SALIDA AUTOMÁTICA - Entrada olvidada detectada.
+               Entrada original: ${fechaEntrada.toLocaleString('es-ES')}
+               Salida ajustada a las 23:59 del mismo día.
+               Horas trabajadas estimadas: ${horasTrabajadas.toFixed(2)}h`
+    });
+    
+    await salidaRecord.save();
+    
+    console.log(`✅ Salida automática creada: ${salidaRecord._id}`);
+    console.log(`   - Horas: ${horasTrabajadas.toFixed(2)}h`);
+    
+    // Ahora gestionar el horario con la salida automática
+    const empleado = await Admin.findById(empleadoId);
+    const gestionHorario = await verificarYGestionarHorario(
+      empleadoId,
+      empleado,
+      fechaEntrada,
+      salidaAutomatica,
+      horasTrabajadas
+    );
+    
+    return {
+      entradaOlvidada: true,
+      diasTranscurridos: diasTranscurridos,
+      entradaFecha: fechaEntrada.toLocaleString('es-ES'),
+      salidaAutomatica: salidaAutomatica.toLocaleString('es-ES'),
+      horasTrabajadas: horasTrabajadas,
+      salidaRecord: salidaRecord.toPublicJSON(),
+      horarioGestionado: gestionHorario,
+      mensaje: `⚠️ Se detectó una entrada sin cerrar desde ${fechaEntrada.toLocaleDateString('es-ES')}. Se registró automáticamente una salida a las 23:59 de ese día (${horasTrabajadas.toFixed(2)}h).`
+    };
+    
+  } catch (error) {
+    console.error('❌ Error al gestionar entrada olvidada:', error);
+    return null;
+  }
+}
+
+/**
  * Registrar entrada/salida (para empleados)
  */
 exports.registrarTiempo = async (req, res) => {
@@ -189,13 +280,29 @@ exports.registrarTiempo = async (req, res) => {
     // Obtener el último registro del empleado
     const ultimoRegistro = await TimeRecord.getUltimoRegistro(empleadoId);
 
+    // ========================================
+    // DETECTAR ENTRADA OLVIDADA (olvida fichar salida, pasa medianoche)
+    // ========================================
+    let entradaOlvidadaGestionada = null;
+    
+    if (tipo === 'entrada') {
+      entradaOlvidadaGestionada = await detectarYGestionarEntradaOlvidada(empleadoId, ultimoRegistro);
+      
+      if (entradaOlvidadaGestionada) {
+        console.log(`🔔 Alerta: Entrada olvidada fue gestionada automáticamente`);
+      }
+    }
+
     // Validar secuencia de entrada/salida
     if (ultimoRegistro) {
       if (tipo === 'entrada' && ultimoRegistro.tipo === 'entrada') {
-        return res.status(400).json({
-          success: false,
-          message: 'Ya tienes una entrada registrada. Debes registrar una salida primero.'
-        });
+        // Si ya hay una entrada y NO fue gestionada automáticamente, bloquear
+        if (!entradaOlvidadaGestionada) {
+          return res.status(400).json({
+            success: false,
+            message: 'Ya tienes una entrada registrada. Debes registrar una salida primero.'
+          });
+        }
       }
       if (tipo === 'salida' && ultimoRegistro.tipo === 'salida') {
         return res.status(400).json({
@@ -249,6 +356,12 @@ exports.registrarTiempo = async (req, res) => {
       message: `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada correctamente`,
       data: nuevoRegistro.toPublicJSON()
     };
+    
+    // Agregar información de entrada olvidada si fue gestionada
+    if (entradaOlvidadaGestionada) {
+      respuesta.entradaOlvidadaGestionada = entradaOlvidadaGestionada;
+      respuesta.message = `⚠️ ${entradaOlvidadaGestionada.mensaje}\n\n✅ ${respuesta.message}`;
+    }
     
     // Agregar información de gestión de horario si existe
     if (verificacionHorario) {

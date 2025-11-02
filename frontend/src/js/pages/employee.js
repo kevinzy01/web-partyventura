@@ -294,39 +294,58 @@ async function ficharSalida() {
       let mensaje = '';
       let titulo = '¡Salida registrada!';
       
-      // Mostrar horas trabajadas
-      if (data.data.horasTrabajadas) {
-        mensaje = `Horas trabajadas: ${data.data.horasTrabajadas}h`;
+      // ⚠️ DETECTAR ENTRADA OLVIDADA (cruzó medianoche)
+      if (data.entradaOlvidadaGestionada) {
+        const entrada = data.entradaOlvidadaGestionada;
+        titulo = '⚠️ ¡Entrada Olvidada Detectada!';
+        mensaje = `
+Se detectó una entrada sin cerrar desde ${entrada.entradaFecha}.
+
+🔧 ACCIÓN AUTOMÁTICA:
+- Se registró automáticamente una salida a las 23:59 de ese día
+- Horas trabajadas: ${entrada.horasTrabajadas.toFixed(2)}h
+- Se creó el horario correspondiente
+
+Tu entrada de HOY también ha sido registrada exitosamente.
+        `.trim();
+        
+        showToast(titulo, mensaje, 'warning');
       } else {
-        mensaje = `Hora: ${new Date(data.data.fecha).toLocaleTimeString('es-ES')}`;
+        // Mostrar horas trabajadas
+        if (data.data.horasTrabajadas) {
+          mensaje = `Horas trabajadas: ${data.data.horasTrabajadas}h`;
+        } else {
+          mensaje = `Hora: ${new Date(data.data.fecha).toLocaleTimeString('es-ES')}`;
+        }
+        
+        // ✨ VERIFICAR GESTIÓN DE HORARIO (retrocompatible)
+        const gestion = data.horarioGestionado || data.horarioVerificado;
+        
+        if (gestion) {
+          // CASO 1: Horario creado automáticamente
+          if (gestion.creado) {
+            titulo = '📝 ¡Horario Creado!';
+            mensaje = `${gestion.mensaje}\n✅ Se ha creado automáticamente tu horario en el sistema`;
+          } 
+          // CASO 2: Horario completado automáticamente
+          else if (gestion.completado) {
+            titulo = '🎯 ¡Turno Completado!';
+            mensaje = `${gestion.mensaje}\n✅ Tu horario ha sido marcado como completado automáticamente`;
+          } 
+          // CASO 3: No se completó por diferencia de horas
+          else if (gestion.razon === 'diferencia_horas') {
+            const diferenciaMins = (gestion.diferencia * 60).toFixed(0);
+            mensaje += `\n⚠️ ${gestion.mensaje}`;
+          }
+          // CASO 4: Ya estaba procesado
+          else if (gestion.razon === 'ya_procesado') {
+            mensaje += `\nℹ️ ${gestion.mensaje}`;
+          }
+        }
+        
+        showToast(titulo, mensaje, 'success');
       }
       
-      // ✨ NUEVO: Verificar gestión de horario (retrocompatible)
-      const gestion = data.horarioGestionado || data.horarioVerificado;
-      
-      if (gestion) {
-        // CASO 1: Horario creado automáticamente
-        if (gestion.creado) {
-          titulo = '📝 ¡Horario Creado!';
-          mensaje = `${gestion.mensaje}\n✅ Se ha creado automáticamente tu horario en el sistema`;
-        } 
-        // CASO 2: Horario completado automáticamente
-        else if (gestion.completado) {
-          titulo = '🎯 ¡Turno Completado!';
-          mensaje = `${gestion.mensaje}\n✅ Tu horario ha sido marcado como completado automáticamente`;
-        } 
-        // CASO 3: No se completó por diferencia de horas
-        else if (gestion.razon === 'diferencia_horas') {
-          const diferenciaMins = (gestion.diferencia * 60).toFixed(0);
-          mensaje += `\n⚠️ ${gestion.mensaje}`;
-        }
-        // CASO 4: Ya estaba procesado
-        else if (gestion.razon === 'ya_procesado') {
-          mensaje += `\nℹ️ ${gestion.mensaje}`;
-        }
-      }
-      
-      showToast(titulo, mensaje, 'success');
       await cargarDatos();
       
       // Recargar horarios si existe la función (para actualizar el calendario)
