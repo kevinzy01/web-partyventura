@@ -4167,7 +4167,15 @@ async function createWorkSchedule(formData) {
     if (data.success) {
       showNotification('✅ Horario asignado exitosamente', 'success');
       closeWorkScheduleModal();
-      await loadWorkSchedules();
+      
+      // Actualizar vista actual
+      if (currentWorkSchedulesView === 'week') {
+        await renderWorkSchedulesWeekView();
+      } else if (currentWorkSchedulesView === 'month') {
+        await renderWorkSchedulesMonthView();
+      } else {
+        await loadWorkSchedules();
+      }
     } else if (response.status === 409) {
       // Conflicto de solapamiento
       const conflicto = data.conflicto;
@@ -4235,7 +4243,15 @@ async function updateWorkSchedule(id, formData) {
     if (data.success) {
       showNotification('✅ Horario actualizado exitosamente', 'success');
       closeWorkScheduleModal();
-      await loadWorkSchedules();
+      
+      // Actualizar vista actual
+      if (currentWorkSchedulesView === 'week') {
+        await renderWorkSchedulesWeekView();
+      } else if (currentWorkSchedulesView === 'month') {
+        await renderWorkSchedulesMonthView();
+      } else {
+        await loadWorkSchedules();
+      }
     } else if (response.status === 409) {
       showNotification('⚠️ Solapamiento detectado: El empleado ya tiene un turno en ese horario', 'warning');
     } else {
@@ -4265,7 +4281,15 @@ async function deleteWorkSchedule(id) {
     
     if (data.success) {
       showNotification('✅ Horario eliminado exitosamente', 'success');
-      await loadWorkSchedules();
+      
+      // Actualizar vista actual
+      if (currentWorkSchedulesView === 'week') {
+        await renderWorkSchedulesWeekView();
+      } else if (currentWorkSchedulesView === 'month') {
+        await renderWorkSchedulesMonthView();
+      } else {
+        await loadWorkSchedules();
+      }
     } else {
       showNotification(data.message || '❌ Error al eliminar horario', 'error');
     }
