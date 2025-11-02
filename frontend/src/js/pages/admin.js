@@ -3366,8 +3366,9 @@ function exportTimeRecords(selectedOnly = false) {
 
 // Variables globales para work schedules
 let currentWorkSchedulesView = 'list'; // list, week, month
-let currentWeekDate = new Date();
-let currentMonthDate = new Date();
+// DEPRECATED: Reemplazadas por calendarState (línea ~3500)
+// let currentWeekDate = new Date();
+// let currentMonthDate = new Date();
 let empleadosListForSchedules = [];
 let workSchedules = [];
 
@@ -3577,200 +3578,375 @@ function renderWorkSchedulesListView() {
 }
 
 // Renderizar vista semanal
+// ===================================
+// UTILIDADES DE CALENDARIO (INMUTABLES)
+// ===================================
+
+/**
+ * Clase utilitaria para manejo de fechas de calendario
+ * Todas las operaciones son inmutables y retornan nuevas instancias
+ */
+const CalendarUtils = {
+  /**
+   * Obtiene el lunes de la semana para una fecha dada
+   * @param {Date} date - Fecha de referencia
+   * @returns {Date} Lunes de la semana (nueva instancia)
+   */
+  getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // Domingo = -6, Lunes = 0, Martes = -1, etc.
+    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  },
+
+  /**
+   * Genera array de 7 fechas consecutivas desde una fecha de inicio
+   * @param {Date} startDate - Fecha de inicio
+   * @returns {Date[]} Array de 7 fechas
+   */
+  getWeekDates(startDate) {
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      return date;
+    });
+  },
+
+  /**
+   * Suma/resta semanas a una fecha
+   * @param {Date} date - Fecha base
+   * @param {number} weeks - Número de semanas (+ adelante, - atrás)
+   * @returns {Date} Nueva fecha
+   */
+  addWeeks(date, weeks) {
+    const result = new Date(date);
+    result.setDate(date.getDate() + (weeks * 7));
+    return result;
+  },
+
+  /**
+   * Suma/resta meses a una fecha
+   * @param {Date} date - Fecha base
+   * @param {number} months - Número de meses (+ adelante, - atrás)
+   * @returns {Date} Nueva fecha (siempre día 1)
+   */
+  addMonths(date, months) {
+    const result = new Date(date.getFullYear(), date.getMonth() + months, 1);
+    result.setHours(0, 0, 0, 0);
+    return result;
+  },
+
+  /**
+   * Formatea fecha a ISO string sin timezone (YYYY-MM-DD)
+   * @param {Date} date - Fecha a formatear
+   * @returns {string} Fecha en formato YYYY-MM-DD
+   */
+  toISODate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  },
+
+  /**
+   * Compara si dos fechas son el mismo día
+   * @param {Date} date1 - Primera fecha
+   * @param {Date} date2 - Segunda fecha
+   * @returns {boolean} True si son el mismo día
+   */
+  isSameDay(date1, date2) {
+    return this.toISODate(date1) === this.toISODate(date2);
+  },
+
+  /**
+   * Obtiene el nombre del día de la semana
+   * @param {Date} date - Fecha
+   * @returns {string} Nombre del día (Lunes, Martes, etc.)
+   */
+  getDayName(date) {
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return days[date.getDay()];
+  }
+};
+
+// ===================================
+// GESTOR DE ESTADO DEL CALENDARIO
+// ===================================
+
+/**
+ * Clase para gestionar el estado del calendario de forma centralizada
+ */
+class CalendarState {
+  constructor() {
+    // Estado privado - solo accesible via métodos
+    this._currentWeekMonday = CalendarUtils.getMonday(new Date());
+    this._currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  }
+
+  // Getters inmutables (retornan copias)
+  getCurrentWeekMonday() {
+    return new Date(this._currentWeekMonday);
+  }
+
+  getCurrentMonth() {
+    return new Date(this._currentMonth);
+  }
+
+  // Navegación semanal
+  goToPreviousWeek() {
+    this._currentWeekMonday = CalendarUtils.addWeeks(this._currentWeekMonday, -1);
+  }
+
+  goToNextWeek() {
+    this._currentWeekMonday = CalendarUtils.addWeeks(this._currentWeekMonday, 1);
+  }
+
+  // Navegación mensual
+  goToPreviousMonth() {
+    this._currentMonth = CalendarUtils.addMonths(this._currentMonth, -1);
+  }
+
+  goToNextMonth() {
+    this._currentMonth = CalendarUtils.addMonths(this._currentMonth, 1);
+  }
+
+  // Reset a fechas específicas
+  setWeek(date) {
+    this._currentWeekMonday = CalendarUtils.getMonday(date);
+  }
+
+  setMonth(year, month) {
+    this._currentMonth = new Date(year, month - 1, 1);
+  }
+
+  // Ir a hoy
+  goToToday() {
+    const today = new Date();
+    this._currentWeekMonday = CalendarUtils.getMonday(today);
+    this._currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  }
+}
+
+// Instancia global del estado del calendario
+const calendarState = new CalendarState();
+
+// ===================================
+// VISTA SEMANAL - REESCRITA
+// ===================================
+
+/**
+ * Renderiza la vista semanal del calendario
+ * Arquitectura: Fetch data → Transform → Render
+ */
 async function renderWorkSchedulesWeekView() {
   try {
-    // Función pura para obtener el lunes de una semana
-    const getMondayOfWeek = (date) => {
-      const d = new Date(date);
-      const day = d.getDay();
-      const diff = d.getDate() - (day === 0 ? 6 : day - 1); // Ajustar cuando es domingo
-      return new Date(d.getFullYear(), d.getMonth(), diff, 0, 0, 0, 0);
-    };
-    
-    // Calcular el lunes de la semana actual
-    const inicioSemana = getMondayOfWeek(currentWeekDate);
-    
-    // CRÍTICO: Sincronizar currentWeekDate con el lunes calculado
-    // Esto previene drift en navegaciones subsecuentes
-    currentWeekDate = new Date(inicioSemana);
-    
-    const finSemana = new Date(inicioSemana);
-    finSemana.setDate(inicioSemana.getDate() + 6);
-    finSemana.setHours(23, 59, 59, 999);
-    
-    // Obtener datos de la semana
+    const monday = calendarState.getCurrentWeekMonday();
+    const weekDates = CalendarUtils.getWeekDates(monday);
+    const sunday = weekDates[6];
+
+    // 1. OBTENER DATOS DEL BACKEND
     const empleadoId = document.getElementById('filterEmployee')?.value || '';
-    let url = `${API_URL}/work-schedules/weekly?fecha=${inicioSemana.toISOString()}`;
+    let url = `${API_URL}/work-schedules/weekly?fecha=${monday.toISOString()}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
-    
+
     const response = await fetch(url, { headers: Auth.getAuthHeaders() });
     const data = await response.json();
-    
+
     if (!data.success) {
       showNotification('Error al cargar vista semanal', 'error');
       return;
     }
-    
-    // Actualizar título
+
+    // 2. ACTUALIZAR TÍTULO
     const weekTitle = document.getElementById('weekTitle');
     if (weekTitle) {
-      const inicioStr = inicioSemana.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-      const finStr = finSemana.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-      weekTitle.textContent = `Semana del ${inicioStr} al ${finStr}`;
+      const startStr = monday.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+      const endStr = sunday.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      weekTitle.textContent = `Semana del ${startStr} al ${endStr}`;
     }
-    
-    // Renderizar calendario
+
+    // 3. TRANSFORMAR DATOS
+    // Crear mapa de fechas → horarios para lookup O(1)
+    const horariosMap = new Map();
+    if (data.data.dias) {
+      data.data.dias.forEach(dia => {
+        horariosMap.set(dia.fecha.split('T')[0], dia.horarios || []);
+      });
+    }
+
+    // 4. RENDERIZAR CALENDARIO
     const calendar = document.getElementById('weekCalendar');
     if (!calendar) return;
-    
-    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    
-    // Generar array de 7 días empezando desde el lunes
-    const diasArray = Array.from({ length: 7 }, (_, i) => {
-      const fecha = new Date(inicioSemana);
-      fecha.setDate(inicioSemana.getDate() + i);
-      return fecha;
-    });
-    
-    // Buscar horarios para cada día
-    calendar.innerHTML = diasArray.map((fechaDia, index) => {
-      const fechaStr = fechaDia.toISOString().split('T')[0];
-      
-      // Buscar en los datos del backend el día correspondiente
-      const diaData = data.data.dias.find(d => {
-        const backendFecha = new Date(d.fecha).toISOString().split('T')[0];
-        return backendFecha === fechaStr;
-      });
-      
-      const horariosDia = diaData?.horarios || [];
-      const nombreDia = diasSemana[index]; // index ya está en orden lunes=0
-      
+
+    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    calendar.innerHTML = weekDates.map((date, index) => {
+      const dateISO = CalendarUtils.toISODate(date);
+      const dayName = dayNames[index];
+      const horarios = horariosMap.get(dateISO) || [];
+      const hasSchedules = horarios.length > 0;
+
       return `
-        <div class="border rounded-lg p-3 ${horariosDia.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
-          <div class="font-semibold text-sm mb-2 text-gray-700">${nombreDia}</div>
-          <div class="text-xs text-gray-500 mb-3">${fechaDia.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
+        <div class="border rounded-lg p-3 ${hasSchedules ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
+          <div class="font-semibold text-sm mb-2 text-gray-700">${dayName}</div>
+          <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
-          ${horariosDia.length === 0 ? 
-            '<div class="text-xs text-gray-400 italic">Sin horarios</div>' :
-            horariosDia.map(h => `
+          ${hasSchedules ? 
+            horarios.map(h => `
               <div class="bg-white rounded p-2 mb-2 border-l-4" style="border-color: ${h.color || '#f97316'}">
                 ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
                 <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
                 <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
                 ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
               </div>
-            `).join('')
+            `).join('') :
+            '<div class="text-xs text-gray-400 italic">Sin horarios</div>'
           }
         </div>
       `;
     }).join('');
-    
+
   } catch (error) {
     console.error('Error al renderizar vista semanal:', error);
     showNotification('Error al cargar vista semanal', 'error');
   }
 }
 
-// Renderizar vista mensual
+// ===================================
+// VISTA MENSUAL - REESCRITA
+// ===================================
+
+/**
+ * Renderiza la vista mensual del calendario
+ */
+/**
+ * Renderiza la vista mensual del calendario
+ */
 async function renderWorkSchedulesMonthView() {
   try {
-    const mes = currentMonthDate.getMonth() + 1;
-    const anio = currentMonthDate.getFullYear();
+    const currentMonth = calendarState.getCurrentMonth();
+    const mes = currentMonth.getMonth() + 1; // getMonth() retorna 0-11
+    const anio = currentMonth.getFullYear();
+
+    // 1. OBTENER DATOS DEL BACKEND
     const empleadoId = document.getElementById('filterEmployee')?.value || '';
-    
     let url = `${API_URL}/work-schedules/monthly?mes=${mes}&anio=${anio}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
-    
+
     const response = await fetch(url, { headers: Auth.getAuthHeaders() });
     const data = await response.json();
-    
+
     if (!data.success) {
       showNotification('Error al cargar vista mensual', 'error');
       return;
     }
-    
-    // Actualizar título
+
+    // 2. ACTUALIZAR TÍTULO
     const monthTitle = document.getElementById('monthTitle');
     if (monthTitle) {
-      const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
-                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-      monthTitle.textContent = `${meses[mes - 1]} ${anio}`;
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      monthTitle.textContent = `${monthNames[mes - 1]} ${anio}`;
     }
+
+    // 3. CALCULAR ESTRUCTURA DEL CALENDARIO
+    const firstDayOfMonth = new Date(anio, mes - 1, 1);
+    const lastDayOfMonth = new Date(anio, mes, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
     
-    // Renderizar resumen
-    const summaryContainer = document.getElementById('monthSummary');
-    if (summaryContainer && data.data.resumen) {
-      const r = data.data.resumen;
-      summaryContainer.innerHTML = `
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-blue-600">${r.totalHoras || 0}h</div>
-          <div class="text-sm text-gray-600">Horas Totales</div>
-        </div>
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-green-600">${r.diasTrabajo || 0}</div>
-          <div class="text-sm text-gray-600">Días de Trabajo</div>
-        </div>
-        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-orange-600">${r.turnosProgramados || 0}</div>
-          <div class="text-sm text-gray-600">Turnos Asignados</div>
-        </div>
-        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-purple-600">${r.estadisticas?.confirmados || 0}</div>
-          <div class="text-sm text-gray-600">Confirmados</div>
+    // Día de la semana del primer día (0=Domingo, 1=Lunes, ..., 6=Sábado)
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    // Ajustar para que Lunes=0 (restar 1, si es Domingo=0, convertir a 6)
+    const startOffset = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
+
+    // 4. TRANSFORMAR DATOS
+    // Crear mapa de fechas → horarios
+    const horariosMap = new Map();
+    if (data.data.horarios) {
+      data.data.horarios.forEach(h => {
+        const dateKey = new Date(h.fecha).toISOString().split('T')[0];
+        if (!horariosMap.has(dateKey)) {
+          horariosMap.set(dateKey, []);
+        }
+        horariosMap.get(dateKey).push(h);
+      });
+    }
+
+    // 5. RENDERIZAR CALENDARIO
+    const calendar = document.getElementById('monthCalendar');
+    if (!calendar) return;
+
+    let html = '<div class="grid grid-cols-7 gap-2">';
+    
+    // Headers de días de la semana
+    const dayHeaders = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    dayHeaders.forEach(day => {
+      html += `<div class="text-center text-xs font-semibold text-gray-600 p-2">${day}</div>`;
+    });
+
+    // Celdas vacías antes del primer día
+    for (let i = 0; i < startOffset; i++) {
+      html += '<div class="border border-gray-200 rounded bg-gray-100 min-h-[80px]"></div>';
+    }
+
+    // Días del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(anio, mes - 1, day);
+      const dateISO = CalendarUtils.toISODate(date);
+      const horarios = horariosMap.get(dateISO) || [];
+      const hasSchedules = horarios.length > 0;
+      const isToday = CalendarUtils.isSameDay(date, new Date());
+
+      html += `
+        <div class="border rounded p-2 min-h-[80px] ${hasSchedules ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}
+                    ${isToday ? 'ring-2 ring-orange-500' : ''}">
+          <div class="text-xs font-semibold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
+          
+          ${hasSchedules ? 
+            horarios.slice(0, 3).map(h => `
+              <div class="text-xs bg-white rounded px-1 py-0.5 mb-1 truncate border-l-2" 
+                   style="border-color: ${h.color || '#f97316'}" 
+                   title="${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}">
+                ${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'} ${h.horaInicio}
+              </div>
+            `).join('') + (horarios.length > 3 ? `<div class="text-xs text-gray-500">+${horarios.length - 3} más</div>` : '') :
+            ''
+          }
         </div>
       `;
     }
-    
-    // Renderizar calendario (tabla simple)
-    const calendarContainer = document.getElementById('monthCalendar');
-    if (calendarContainer) {
-      const horarios = data.data.horarios || [];
-      
-      if (horarios.length === 0) {
-        calendarContainer.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <div class="text-6xl mb-4">📅</div>
-            <p class="text-lg">No hay horarios asignados este mes</p>
+
+    html += '</div>';
+    calendar.innerHTML = html;
+
+    // 6. MOSTRAR ESTADÍSTICAS
+    const statsDiv = document.getElementById('monthStats');
+    if (statsDiv && data.data.resumen) {
+      const r = data.data.resumen;
+      statsDiv.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-orange-600">${r.totalHorarios || 0}</div>
+            <div class="text-xs text-gray-600">Total Horarios</div>
           </div>
-        `;
-      } else {
-        calendarContainer.innerHTML = `
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Empleado</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Turno</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Horario</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-              ${horarios.map(h => {
-                const fecha = new Date(h.fecha);
-                const fechaStr = fecha.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' });
-                const estadoBadge = {
-                  'programado': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Programado</span>',
-                  'confirmado': '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Confirmado</span>',
-                  'completado': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Completado</span>'
-                };
-                
-                return `
-                  <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-900 capitalize">${fechaStr}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">${h.empleado?.nombre || 'N/A'}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">${h.turno} (${h.horasTotales}h)</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">${h.horaInicio} - ${h.horaFin}</td>
-                    <td class="px-4 py-3">${estadoBadge[h.estado]}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        `;
-      }
+          <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600">${r.totalHoras ? r.totalHoras.toFixed(1) : '0.0'}h</div>
+            <div class="text-xs text-gray-600">Horas Totales</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-green-600">${r.empleadosActivos || 0}</div>
+            <div class="text-xs text-gray-600">Empleados</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-purple-600">${r.diasConHorarios || 0}</div>
+            <div class="text-xs text-gray-600">Días con Horarios</div>
+          </div>
+        </div>
+      `;
     }
-    
+
   } catch (error) {
     console.error('Error al renderizar vista mensual:', error);
     showNotification('Error al cargar vista mensual', 'error');
@@ -4082,19 +4258,13 @@ function setupWorkSchedulesEventListeners() {
     btnViewMonth.addEventListener('click', () => switchWorkSchedulesView('month'));
   }
   
-  // Navegación semanal
+  // ===================================
+  // NAVEGACIÓN SEMANAL - REESCRITA
+  // ===================================
   const btnPrevWeek = document.getElementById('btnPrevWeek');
   if (btnPrevWeek) {
     btnPrevWeek.addEventListener('click', () => {
-      // Crear nueva fecha basada en la actual, sin mutar el original
-      const nuevaFecha = new Date(currentWeekDate.getFullYear(), currentWeekDate.getMonth(), currentWeekDate.getDate());
-      
-      // Restar 7 días
-      nuevaFecha.setDate(nuevaFecha.getDate() - 7);
-      
-      // Actualizar la referencia global
-      currentWeekDate = nuevaFecha;
-      
+      calendarState.goToPreviousWeek();
       renderWorkSchedulesWeekView();
     });
   }
@@ -4102,32 +4272,18 @@ function setupWorkSchedulesEventListeners() {
   const btnNextWeek = document.getElementById('btnNextWeek');
   if (btnNextWeek) {
     btnNextWeek.addEventListener('click', () => {
-      // Crear nueva fecha basada en la actual, sin mutar el original
-      const nuevaFecha = new Date(currentWeekDate.getFullYear(), currentWeekDate.getMonth(), currentWeekDate.getDate());
-      
-      // Sumar 7 días
-      nuevaFecha.setDate(nuevaFecha.getDate() + 7);
-      
-      // Actualizar la referencia global
-      currentWeekDate = nuevaFecha;
-      
+      calendarState.goToNextWeek();
       renderWorkSchedulesWeekView();
     });
   }
   
-  // Navegación mensual
+  // ===================================
+  // NAVEGACIÓN MENSUAL - REESCRITA
+  // ===================================
   const btnPrevMonth = document.getElementById('btnPrevMonth');
   if (btnPrevMonth) {
     btnPrevMonth.addEventListener('click', () => {
-      // Crear nueva fecha sin mutar el original
-      const nuevaFecha = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
-      
-      // Restar 1 mes
-      nuevaFecha.setMonth(nuevaFecha.getMonth() - 1);
-      
-      // Actualizar la referencia global
-      currentMonthDate = nuevaFecha;
-      
+      calendarState.goToPreviousMonth();
       renderWorkSchedulesMonthView();
     });
   }
@@ -4135,15 +4291,7 @@ function setupWorkSchedulesEventListeners() {
   const btnNextMonth = document.getElementById('btnNextMonth');
   if (btnNextMonth) {
     btnNextMonth.addEventListener('click', () => {
-      // Crear nueva fecha sin mutar el original
-      const nuevaFecha = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
-      
-      // Sumar 1 mes
-      nuevaFecha.setMonth(nuevaFecha.getMonth() + 1);
-      
-      // Actualizar la referencia global
-      currentMonthDate = nuevaFecha;
-      
+      calendarState.goToNextMonth();
       renderWorkSchedulesMonthView();
     });
   }
