@@ -4022,7 +4022,8 @@ async function renderWorkSchedulesMonthView() {
     }
 
     // 3. CALCULAR ESTRUCTURA DEL CALENDARIO
-    const firstDayOfMonth = new Date(anio, mes - 1, 1);
+    // Usar DateUtils para consistencia
+    const firstDayOfMonth = DateUtils.startOfMonth(new Date(anio, mes - 1, 1));
     const lastDayOfMonth = new Date(anio, mes, 0);
     const daysInMonth = lastDayOfMonth.getDate();
     
@@ -4032,11 +4033,11 @@ async function renderWorkSchedulesMonthView() {
     const startOffset = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
 
     // 4. TRANSFORMAR DATOS
-    // Crear mapa de fechas → horarios
+    // Crear mapa de fechas → horarios usando DateUtils
     const horariosMap = new Map();
     if (data.data.horarios) {
       data.data.horarios.forEach(h => {
-        const dateKey = new Date(h.fecha).toISOString().split('T')[0];
+        const dateKey = DateUtils.format(new Date(h.fecha), 'yyyy-MM-dd');
         if (!horariosMap.has(dateKey)) {
           horariosMap.set(dateKey, []);
         }
@@ -4064,10 +4065,10 @@ async function renderWorkSchedulesMonthView() {
     // Días del mes
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(anio, mes - 1, day);
-      const dateISO = CalendarUtils.toISODate(date);
+      const dateISO = DateUtils.format(date, 'yyyy-MM-dd');
       const horarios = horariosMap.get(dateISO) || [];
       const hasSchedules = horarios.length > 0;
-      const isToday = CalendarUtils.isSameDay(date, new Date());
+      const isToday = DateUtils.isSameDay(date, new Date());
 
       html += `
         <div class="border rounded p-2 min-h-[80px] ${hasSchedules ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}
