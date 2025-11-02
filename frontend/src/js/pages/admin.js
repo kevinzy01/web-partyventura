@@ -3586,6 +3586,21 @@ function renderWorkSchedulesListView() {
  * Clase utilitaria para manejo de fechas de calendario
  * Todas las operaciones son inmutables y retornan nuevas instancias
  */
+// ===================================
+// LOGGER DE CALENDARIO (para debugging)
+// ===================================
+const CALENDAR_DEBUG = true; // Cambiar a false para desactivar logs
+
+function logCalendar(label, data) {
+  if (!CALENDAR_DEBUG) return;
+  console.log(`%c[CALENDAR] ${label}`, 'color: #FF6B35; font-weight: bold;', data);
+}
+
+function logCalendarError(label, error) {
+  if (!CALENDAR_DEBUG) return;
+  console.error(`%c[CALENDAR ERROR] ${label}`, 'color: #E63946; font-weight: bold;', error);
+}
+
 const CalendarUtils = {
   /**
    * Obtiene el lunes de la semana para una fecha dada
@@ -3593,12 +3608,30 @@ const CalendarUtils = {
    * @returns {Date} Lunes de la semana (nueva instancia)
    */
   getMonday(date) {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day; // Domingo = -6, Lunes = 0, Martes = -1, etc.
-    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
+    try {
+      const inputIso = this.toISODate(date);
+      const d = new Date(date);
+      const day = d.getDay();
+      
+      // Cálculo del diff
+      const diff = day === 0 ? -6 : 1 - day;
+      logCalendar('getMonday', {
+        input: inputIso,
+        dayOfWeek: day,
+        dayName: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][day],
+        diffDays: diff
+      });
+      
+      const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+      monday.setHours(0, 0, 0, 0);
+      const resultIso = this.toISODate(monday);
+      
+      logCalendar('  → monday result', resultIso);
+      return monday;
+    } catch (e) {
+      logCalendarError('getMonday', e);
+      throw e;
+    }
   },
 
   /**
@@ -3607,11 +3640,24 @@ const CalendarUtils = {
    * @returns {Date[]} Array de 7 fechas
    */
   getWeekDates(startDate) {
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-      return date;
-    });
+    try {
+      const result = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        return date;
+      });
+      
+      const dateStrings = result.map(d => this.toISODate(d));
+      logCalendar('getWeekDates', {
+        startDate: this.toISODate(startDate),
+        dates: dateStrings
+      });
+      
+      return result;
+    } catch (e) {
+      logCalendarError('getWeekDates', e);
+      throw e;
+    }
   },
 
   /**
@@ -3621,9 +3667,23 @@ const CalendarUtils = {
    * @returns {Date} Nueva fecha
    */
   addWeeks(date, weeks) {
-    const result = new Date(date);
-    result.setDate(date.getDate() + (weeks * 7));
-    return result;
+    try {
+      const result = new Date(date);
+      const newDateNum = date.getDate() + (weeks * 7);
+      result.setDate(newDateNum);
+      
+      logCalendar('addWeeks', {
+        input: this.toISODate(date),
+        weeks: weeks,
+        daysToAdd: weeks * 7,
+        output: this.toISODate(result)
+      });
+      
+      return result;
+    } catch (e) {
+      logCalendarError('addWeeks', e);
+      throw e;
+    }
   },
 
   /**
@@ -3633,9 +3693,24 @@ const CalendarUtils = {
    * @returns {Date} Nueva fecha (siempre día 1)
    */
   addMonths(date, months) {
-    const result = new Date(date.getFullYear(), date.getMonth() + months, 1);
-    result.setHours(0, 0, 0, 0);
-    return result;
+    try {
+      const newMonth = date.getMonth() + months;
+      const result = new Date(date.getFullYear(), newMonth, 1);
+      result.setHours(0, 0, 0, 0);
+      
+      logCalendar('addMonths', {
+        input: this.toISODate(date),
+        months: months,
+        newMonth: newMonth % 12,
+        newYear: Math.floor(newMonth / 12) > 0 ? date.getFullYear() + 1 : date.getFullYear(),
+        output: this.toISODate(result)
+      });
+      
+      return result;
+    } catch (e) {
+      logCalendarError('addMonths', e);
+      throw e;
+    }
   },
 
   /**
@@ -3681,44 +3756,86 @@ const CalendarUtils = {
 class CalendarState {
   constructor() {
     // Estado privado - solo accesible via métodos
-    this._currentWeekMonday = CalendarUtils.getMonday(new Date());
-    this._currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const today = new Date();
+    this._currentWeekMonday = CalendarUtils.getMonday(today);
+    this._currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    logCalendar('CalendarState CONSTRUCTOR', {
+      initialWeekMonday: CalendarUtils.toISODate(this._currentWeekMonday),
+      initialMonth: CalendarUtils.toISODate(this._currentMonth)
+    });
   }
 
   // Getters inmutables (retornan copias)
   getCurrentWeekMonday() {
-    return new Date(this._currentWeekMonday);
+    const copy = new Date(this._currentWeekMonday);
+    logCalendar('getCurrentWeekMonday', CalendarUtils.toISODate(copy));
+    return copy;
   }
 
   getCurrentMonth() {
-    return new Date(this._currentMonth);
+    const copy = new Date(this._currentMonth);
+    logCalendar('getCurrentMonth', CalendarUtils.toISODate(copy));
+    return copy;
   }
 
   // Navegación semanal
   goToPreviousWeek() {
+    const before = CalendarUtils.toISODate(this._currentWeekMonday);
     this._currentWeekMonday = CalendarUtils.addWeeks(this._currentWeekMonday, -1);
+    const after = CalendarUtils.toISODate(this._currentWeekMonday);
+    
+    logCalendar('goToPreviousWeek', {
+      before: before,
+      after: after,
+      daysBack: -7
+    });
   }
 
   goToNextWeek() {
+    const before = CalendarUtils.toISODate(this._currentWeekMonday);
     this._currentWeekMonday = CalendarUtils.addWeeks(this._currentWeekMonday, 1);
+    const after = CalendarUtils.toISODate(this._currentWeekMonday);
+    
+    logCalendar('goToNextWeek', {
+      before: before,
+      after: after,
+      daysForward: 7
+    });
   }
 
   // Navegación mensual
   goToPreviousMonth() {
+    const before = CalendarUtils.toISODate(this._currentMonth);
     this._currentMonth = CalendarUtils.addMonths(this._currentMonth, -1);
+    const after = CalendarUtils.toISODate(this._currentMonth);
+    
+    logCalendar('goToPreviousMonth', {
+      before: before,
+      after: after
+    });
   }
 
   goToNextMonth() {
+    const before = CalendarUtils.toISODate(this._currentMonth);
     this._currentMonth = CalendarUtils.addMonths(this._currentMonth, 1);
+    const after = CalendarUtils.toISODate(this._currentMonth);
+    
+    logCalendar('goToNextMonth', {
+      before: before,
+      after: after
+    });
   }
 
   // Reset a fechas específicas
   setWeek(date) {
     this._currentWeekMonday = CalendarUtils.getMonday(date);
+    logCalendar('setWeek', CalendarUtils.toISODate(this._currentWeekMonday));
   }
 
   setMonth(year, month) {
     this._currentMonth = new Date(year, month - 1, 1);
+    logCalendar('setMonth', CalendarUtils.toISODate(this._currentMonth));
   }
 
   // Ir a hoy
@@ -3726,6 +3843,11 @@ class CalendarState {
     const today = new Date();
     this._currentWeekMonday = CalendarUtils.getMonday(today);
     this._currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    logCalendar('goToToday', {
+      weekMonday: CalendarUtils.toISODate(this._currentWeekMonday),
+      month: CalendarUtils.toISODate(this._currentMonth)
+    });
   }
 }
 
@@ -3742,17 +3864,33 @@ const calendarState = new CalendarState();
  */
 async function renderWorkSchedulesWeekView() {
   try {
+    logCalendar('=== renderWorkSchedulesWeekView START ===', {});
+    
     const monday = calendarState.getCurrentWeekMonday();
     const weekDates = CalendarUtils.getWeekDates(monday);
     const sunday = weekDates[6];
+    
+    logCalendar('Week Dates', {
+      monday: CalendarUtils.toISODate(monday),
+      sunday: CalendarUtils.toISODate(sunday),
+      allDates: weekDates.map(d => CalendarUtils.toISODate(d))
+    });
 
     // 1. OBTENER DATOS DEL BACKEND
     const empleadoId = document.getElementById('filterEmployee')?.value || '';
     let url = `${API_URL}/work-schedules/weekly?fecha=${monday.toISOString()}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
 
+    logCalendar('Fetching from', url);
+    
     const response = await fetch(url, { headers: Auth.getAuthHeaders() });
     const data = await response.json();
+    
+    logCalendar('Backend Response', {
+      success: data.success,
+      diasCount: data.data?.dias?.length || 0,
+      dias: data.data?.dias?.map(d => ({ fecha: d.fecha, horarios: d.horarios?.length || 0 })) || []
+    });
 
     if (!data.success) {
       showNotification('Error al cargar vista semanal', 'error');
@@ -3782,11 +3920,23 @@ async function renderWorkSchedulesWeekView() {
 
     const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+    logCalendar('Map Contents', {
+      size: horariosMap.size,
+      keys: Array.from(horariosMap.keys()),
+      values: Array.from(horariosMap.entries()).map(([k, v]) => `${k}: ${v.length} horarios`)
+    });
+
     calendar.innerHTML = weekDates.map((date, index) => {
       const dateISO = CalendarUtils.toISODate(date);
       const dayName = dayNames[index];
       const horarios = horariosMap.get(dateISO) || [];
       const hasSchedules = horarios.length > 0;
+
+      logCalendar(`Day ${index} (${dateISO})`, {
+        dayName: dayName,
+        horariosCount: horarios.length,
+        found: horariosMap.has(dateISO)
+      });
 
       return `
         <div class="border rounded-lg p-3 ${hasSchedules ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
@@ -3808,7 +3958,10 @@ async function renderWorkSchedulesWeekView() {
       `;
     }).join('');
 
+    logCalendar('=== renderWorkSchedulesWeekView END ===', { rendered: true });
+
   } catch (error) {
+    logCalendarError('renderWorkSchedulesWeekView', error);
     console.error('Error al renderizar vista semanal:', error);
     showNotification('Error al cargar vista semanal', 'error');
   }
@@ -3826,17 +3979,32 @@ async function renderWorkSchedulesWeekView() {
  */
 async function renderWorkSchedulesMonthView() {
   try {
+    logCalendar('=== renderWorkSchedulesMonthView START ===', {});
+    
     const currentMonth = calendarState.getCurrentMonth();
     const mes = currentMonth.getMonth() + 1; // getMonth() retorna 0-11
     const anio = currentMonth.getFullYear();
+
+    logCalendar('Month Parameters', {
+      mes: mes,
+      anio: anio,
+      currentMonth: CalendarUtils.toISODate(currentMonth)
+    });
 
     // 1. OBTENER DATOS DEL BACKEND
     const empleadoId = document.getElementById('filterEmployee')?.value || '';
     let url = `${API_URL}/work-schedules/monthly?mes=${mes}&anio=${anio}`;
     if (empleadoId) url += `&empleadoId=${empleadoId}`;
 
+    logCalendar('Fetching from', url);
+
     const response = await fetch(url, { headers: Auth.getAuthHeaders() });
     const data = await response.json();
+
+    logCalendar('Backend Response', {
+      success: data.success,
+      horariosCount: data.data?.horarios?.length || 0
+    });
 
     if (!data.success) {
       showNotification('Error al cargar vista mensual', 'error');
