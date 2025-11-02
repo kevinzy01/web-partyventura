@@ -3611,22 +3611,32 @@ const CalendarUtils = {
     try {
       const inputIso = this.toISODate(date);
       const d = new Date(date);
-      const day = d.getDay();
+      const day = d.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
       
-      // Cálculo del diff
+      // Cálculo del diff (cuántos días atrás está el lunes)
+      // Si es domingo (0), restar 6 días; si es lunes (1), restar 0; si es martes (2), restar 1, etc.
       const diff = day === 0 ? -6 : 1 - day;
+      
       logCalendar('getMonday', {
         input: inputIso,
         dayOfWeek: day,
         dayName: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][day],
-        diffDays: diff
+        diffDays: diff,
+        calculation: `date.getDate() + diff = ${d.getDate()} + ${diff}`
       });
       
-      const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+      // FIX: Usar setDate() en vez del constructor (más seguro)
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diff);
       monday.setHours(0, 0, 0, 0);
+      
       const resultIso = this.toISODate(monday);
       
-      logCalendar('  → monday result', resultIso);
+      logCalendar('  → monday result', {
+        result: resultIso,
+        validation: `Monday.getDay() = ${monday.getDay()} (should be 1)`
+      });
+      
       return monday;
     } catch (e) {
       logCalendarError('getMonday', e);
@@ -3669,14 +3679,19 @@ const CalendarUtils = {
   addWeeks(date, weeks) {
     try {
       const result = new Date(date);
-      const newDateNum = date.getDate() + (weeks * 7);
-      result.setDate(newDateNum);
+      result.setDate(date.getDate() + (weeks * 7));
+      
+      const inputIso = this.toISODate(date);
+      const outputIso = this.toISODate(result);
+      const actualDiff = (result - date) / (1000 * 60 * 60 * 24);
       
       logCalendar('addWeeks', {
-        input: this.toISODate(date),
+        input: inputIso,
         weeks: weeks,
-        daysToAdd: weeks * 7,
-        output: this.toISODate(result)
+        expectedDaysToAdd: weeks * 7,
+        actualDaysAdded: actualDiff,
+        output: outputIso,
+        validation: actualDiff === (weeks * 7) ? '✅ OK' : '❌ MISMATCH'
       });
       
       return result;
@@ -3694,16 +3709,25 @@ const CalendarUtils = {
    */
   addMonths(date, months) {
     try {
-      const newMonth = date.getMonth() + months;
-      const result = new Date(date.getFullYear(), newMonth, 1);
+      const result = new Date(date);
+      
+      // Usar setMonth() que maneja automáticamente el año
+      result.setMonth(date.getMonth() + months, 1); // Día 1
       result.setHours(0, 0, 0, 0);
+      
+      const newMonthCalc = date.getMonth() + months;
+      const newYearOffset = Math.floor(newMonthCalc / 12);
+      const newMonthNormalized = newMonthCalc % 12;
+      const expectedYear = date.getFullYear() + newYearOffset;
       
       logCalendar('addMonths', {
         input: this.toISODate(date),
         months: months,
-        newMonth: newMonth % 12,
-        newYear: Math.floor(newMonth / 12) > 0 ? date.getFullYear() + 1 : date.getFullYear(),
-        output: this.toISODate(result)
+        currentMonth: date.getMonth() + 1,
+        expectedNewMonth: (newMonthNormalized + 12) % 12 + 1 || 12,
+        expectedNewYear: expectedYear,
+        output: this.toISODate(result),
+        validation: result.getFullYear() === expectedYear ? '✅ YEAR OK' : '❌ YEAR MISMATCH'
       });
       
       return result;
