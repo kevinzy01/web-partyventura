@@ -4060,6 +4060,12 @@ function setupWorkSchedulesEventListeners() {
   const btnPrevWeek = document.getElementById('btnPrevWeek');
   if (btnPrevWeek) {
     btnPrevWeek.addEventListener('click', () => {
+      // Primero, encontrar el lunes de la semana actual
+      const diaSemana = currentWeekDate.getDay();
+      const diasAlMon = diaSemana === 0 ? 6 : diaSemana - 1;
+      currentWeekDate.setDate(currentWeekDate.getDate() - diasAlMon);
+      
+      // Luego restar 7 días para ir a la semana anterior
       currentWeekDate.setDate(currentWeekDate.getDate() - 7);
       renderWorkSchedulesWeekView();
     });
@@ -4068,7 +4074,13 @@ function setupWorkSchedulesEventListeners() {
   const btnNextWeek = document.getElementById('btnNextWeek');
   if (btnNextWeek) {
     btnNextWeek.addEventListener('click', () => {
-      currentWeekDate.setDate(currentWeekDate.getDate() + 7);
+      // Primero, encontrar el lunes de la semana actual
+      const diaSemana = currentWeekDate.getDay();
+      const diasAlMon = diaSemana === 0 ? 6 : diaSemana - 1;
+      currentWeekDate.setDate(currentWeekDate.getDate() - diasAlMon);
+      
+      // Luego sumar 14 días para ir al lunes de la próxima semana
+      currentWeekDate.setDate(currentWeekDate.getDate() + 14);
       renderWorkSchedulesWeekView();
     });
   }
@@ -4077,6 +4089,8 @@ function setupWorkSchedulesEventListeners() {
   const btnPrevMonth = document.getElementById('btnPrevMonth');
   if (btnPrevMonth) {
     btnPrevMonth.addEventListener('click', () => {
+      // Establecer al primer día del mes actual y luego restar 1 mes
+      currentMonthDate.setDate(1);
       currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
       renderWorkSchedulesMonthView();
     });
@@ -4085,6 +4099,8 @@ function setupWorkSchedulesEventListeners() {
   const btnNextMonth = document.getElementById('btnNextMonth');
   if (btnNextMonth) {
     btnNextMonth.addEventListener('click', () => {
+      // Establecer al primer día del mes actual y luego sumar 1 mes
+      currentMonthDate.setDate(1);
       currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
       renderWorkSchedulesMonthView();
     });
