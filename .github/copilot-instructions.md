@@ -1267,6 +1267,273 @@ function scrollToPosition(position) {
 - Las tarifas tienen diseño complejo (múltiples precios, características, imágenes) mejor mantenido en HTML
 - Si se necesita funcionalidad dinámica en el futuro, reimplementar funciones de carga
 
+## Sistema de Calendario de Horarios Laborales
+
+**Implementado**: Sistema completo de gestión de horarios con tres vistas (Lista, Semanal, Mensual) usando DateUtils local (noviembre 2025).
+
+### **Arquitectura del Sistema**
+
+**Módulo DateUtils Local** (`/frontend/src/js/modules/date-utils.js`):
+- **166 líneas**, cero dependencias externas
+- Todas las operaciones normalizan fechas a medianoche (00:00:00)
+- Funciones principales:
+  * `startOfWeek(date)` - Retorna lunes de la semana
+  * `addDays(date, amount)` - Suma/resta días
+  * `addWeeks(date, amount)` - Suma/resta semanas
+  * `addMonths(date, amount)` - Suma/resta meses
+  * `startOfMonth(date)` - Primer día del mes
+  * `format(date, pattern)` - Formatea fecha (soporta 'yyyy-MM-dd', 'dddd', etc.)
+  * `isSameDay(date1, date2)` - Compara días
+  * `eachDayOfInterval({start, end})` - Array de fechas en intervalo
+
+**CalendarState Class** (`/frontend/src/js/pages/admin.js` ~línea 3792):
+```javascript
+class CalendarState {
+  constructor() {
+    const today = new Date();
+    this._currentWeekMonday = CalendarUtils.getMonday(today);
+    this._currentMonth = today.getMonth(); // 0-11
+    this._currentYear = today.getFullYear(); // YYYY
+  }
+  
+  // Vista Semanal: usa DateUtils.addWeeks()
+  goToNextWeek() / goToPreviousWeek()
+  
+  // Vista Mensual: aritmética simple (patrón index.html)
+  goToNextMonth() / goToPreviousMonth()
+}
+```
+
+**CalendarUtils Wrapper** (`/frontend/src/js/pages/admin.js` ~línea 3650):
+- Capa de abstracción sobre DateUtils
+- Funciones de logging para debugging
+- Método crítico: `toISODate(date)` retorna 'YYYY-MM-DD' (NO ISO con timezone)
+
+### **Tres Vistas de Calendario**
+
+**1. Vista Lista** (`renderWorkSchedulesListView()`):
+- Endpoint: `GET /api/work-schedules/all`
+- Tabla tradicional con filtros de empleado, mes, año, estado
+- Muestra rol de empleado con badges de color (monitor/cocina/barra)
+- Datos: workSchedules array global
+
+**2. Vista Semanal** (`renderWorkSchedulesWeekView()` ~línea 3888):
+- Endpoint: `GET /api/work-schedules/weekly?fecha=YYYY-MM-DD`
+- Grid de 7 días (Lunes-Domingo)
+- **CRÍTICO**: Usar `CalendarUtils.toISODate(monday)` en URL, NO `toISOString()`
+  * ✅ Correcto: `fecha=2025-11-04`
+  * ❌ Incorrecto: `fecha=2025-11-04T00:00:00.000Z`
+- Navegación: Botones prev/next, actualiza `calendarState`
+- Datos: Fetch dinámico por semana
+
+**3. Vista Mensual** (`renderWorkSchedulesMonthView()` ~línea 4008):
+- Endpoint: `GET /api/work-schedules/monthly?mes=N&anio=YYYY`
+- Grid calendario estilo mes (7 columnas x N filas)
+- Usa números simples: `mes` (1-12), `anio` (YYYY)
+- Navegación: Aritmética pura (no DateUtils.addMonths)
+- Estadísticas: Total horarios, horas, empleados activos, días con horarios
+- Datos: Fetch dinámico por mes
+
+### **Sistema de Filtros**
+
+**IDs de Elementos HTML** (CRÍTICO - evitar duplicados):
+- **Horarios Laborales**: `filterEmployeeSchedules` (línea 1927 admin.html)
+- **Control Horario**: `filterEmployee` (línea 1728 admin.html)
+- **Problema anterior**: Ambos usaban `filterEmployee` → `getElementById()` devolvía el primero
+- **Solución**: Renombrar a `filterEmployeeSchedules` para Horarios Laborales
+
+**Referencias en JavaScript** (todas actualizadas a `filterEmployeeSchedules`):
+- `loadEmpleadosForSchedules()` - Línea 3416
+- `loadWorkSchedules()` - Línea 3479
+- `renderWorkSchedulesWeekView()` - Línea 3924
+- `renderWorkSchedulesMonthView()` - Línea 4039
+- `btnClearFilters` listener - Línea 4490
+
+### **Actualización Automática de Vistas**
+
+**Sistema de Detección de Vista Actual** (`currentWorkSchedulesView`):
+```javascript
+// En createWorkSchedule(), updateWorkSchedule(), deleteWorkSchedule()
+if (currentWorkSchedulesView === 'week') {
+  await renderWorkSchedulesWeekView();
+} else if (currentWorkSchedulesView === 'month') {
+  await renderWorkSchedulesMonthView();
+} else {
+  await loadWorkSchedules(); // lista
+}
+```
+
+**Función de Render Actual** (`renderCurrentWorkSchedulesView()`):
+- Determina qué vista mostrar según `currentWorkSchedulesView`
+- Llamada en: `switchWorkSchedulesView()`, `loadWorkSchedules()`
+
+### **Navegación de Calendario**
+
+**Semanal** (usa DateUtils):
+```javascript
+// Botones prev/next
+btnPrevWeek.addEventListener('click', () => {
+  calendarState.goToPreviousWeek(); // Usa DateUtils.addWeeks(-1)
+  renderWorkSchedulesWeekView();
+});
+```
+
+**Mensual** (aritmética simple):
+```javascript
+// Patrón simplificado del calendario de index.html
+goToNextMonth() {
+  this._currentMonth++;
+  if (this._currentMonth > 11) {
+    this._currentMonth = 0;
+    this._currentYear++;
+  }
+}
+```
+
+### **Formato de Fechas - CRÍTICO**
+
+**Problema Común**: Vista semanal no muestra horarios tras crear
+**Causa**: Usar `date.toISOString()` envía formato con timezone
+**Solución**: SIEMPRE usar `CalendarUtils.toISODate(date)` o `DateUtils.format(date, 'yyyy-MM-dd')`
+
+```javascript
+// ❌ INCORRECTO
+const monday = new Date();
+const url = `${API_URL}/work-schedules/weekly?fecha=${monday.toISOString()}`;
+// Resultado: fecha=2025-11-04T00:00:00.000Z (backend no encuentra)
+
+// ✅ CORRECTO
+const monday = calendarState.getCurrentWeekMonday();
+const mondayISO = CalendarUtils.toISODate(monday);
+const url = `${API_URL}/work-schedules/weekly?fecha=${mondayISO}`;
+// Resultado: fecha=2025-11-04 (backend encuentra correctamente)
+```
+
+### **Event Listeners - Prevención de Duplicación**
+
+**Guard Flag Pattern**:
+```javascript
+let workSchedulesListenersConfigured = false;
+
+function setupWorkSchedulesEventListeners() {
+  if (workSchedulesListenersConfigured) {
+    console.log('⚠️ Event listeners ya configurados, saltando...');
+    return;
+  }
+  
+  // ... configurar listeners ...
+  
+  workSchedulesListenersConfigured = true;
+}
+```
+
+### **Logging de Calendario (Debugging)**
+
+**Logger con Flag de Activación**:
+```javascript
+const CALENDAR_DEBUG = true; // Cambiar a false para desactivar
+
+function logCalendar(label, data) {
+  if (!CALENDAR_DEBUG) return;
+  console.log(`%c[CALENDAR] ${label}`, 'color: #FF6B35; font-weight: bold;', data);
+}
+```
+
+**Logs Críticos**:
+- Construcción de URL de API
+- Fechas calculadas (monday, sunday)
+- Respuestas del backend
+- Mapeo de datos (horariosMap)
+
+### **Rol de Empleado con Colores**
+
+**Función getRolColor()** (~línea 3600):
+```javascript
+function getRolColor(rolEmpleado) {
+  const roleColors = {
+    'monitor': { bg: 'bg-blue-100', hex: '#dbeafe' },
+    'cocina': { bg: 'bg-orange-100', hex: '#fed7aa' },
+    'barra': { bg: 'bg-purple-100', hex: '#e9d5ff' }
+  };
+  return roleColors[rolEmpleado] || { bg: 'bg-gray-100', hex: '#f3f4f6' };
+}
+```
+
+**Uso en Vistas**:
+- Vista Lista: Badge con rol (sin emoji)
+- Vista Semanal: Border color según rol
+- Vista Mensual: Background color según rol
+
+### **Problemas Conocidos y Soluciones**
+
+**1. Vista Semanal No Actualiza Tras Crear Horario**
+- **Causa**: `loadWorkSchedules()` usa endpoint `/all`, no `/weekly`
+- **Solución**: Detección de vista actual en `createWorkSchedule()` (línea 4175)
+
+**2. Filtro de Empleados Vacío**
+- **Causa**: ID duplicado `filterEmployee` en dos secciones
+- **Solución**: Renombrar a `filterEmployeeSchedules` (commit daa48fe)
+
+**3. Navegación Mensual con Saltos Raros**
+- **Causa**: Event listeners duplicados
+- **Solución**: Guard flag `workSchedulesListenersConfigured`
+
+**4. Backend No Encuentra Horarios con Fecha Correcta**
+- **Causa**: Formato ISO con timezone (`toISOString()`)
+- **Solución**: Usar `toISODate()` que retorna solo 'YYYY-MM-DD'
+
+### **Cache de Archivos**
+
+**Versión Actual**: `v=87` (admin.html línea 2596)
+**Incrementar tras**: Cambios en admin.js, date-utils.js
+
+**Hard Refresh Obligatorio**:
+- Ctrl + Shift + R (Windows)
+- Cmd + Shift + R (Mac)
+- Necesario tras cambios en lógica de calendario
+
+### **Estructura de Datos del Backend**
+
+**Respuesta Semanal**:
+```javascript
+{
+  success: true,
+  data: {
+    dias: [
+      {
+        fecha: "2025-11-03",
+        horarios: [
+          {
+            empleado: { nombre, rolEmpleado },
+            horaInicio: "17:00",
+            horaFin: "22:00",
+            turno: "tarde",
+            horasTotales: 5,
+            color: "#f97316"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Respuesta Mensual**:
+```javascript
+{
+  success: true,
+  data: {
+    horarios: [...],
+    resumen: {
+      totalHorarios: 20,
+      totalHoras: 100.5,
+      empleadosActivos: 3,
+      diasConHorarios: 15
+    }
+  }
+}
+```
+
 ## Archivos Clave para Contexto
 
 - **Arquitectura**: `/docs/ESTRUCTURA_PROYECTO.md` - Explicación completa de estructura de archivos
