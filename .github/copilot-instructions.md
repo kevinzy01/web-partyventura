@@ -616,7 +616,79 @@ app.use((req, res, next) => {
 - `min-height` debe ser suficiente para la tarjeta con más contenido
 - Badges con `position: absolute` deben estar en tarjetas con `position: relative`
 
+### 17. Empleado Olvida Fichar Salida y Pasa Medianoche (Edge Case - RESUELTO ✅)
+
+**Problema**: Empleado ficha entrada a las 23:00, olvida fichar salida, llega medianoche, día siguiente intenta fichar entrada y queda BLOQUEADO.
+
+```
+Lunes 23:00 → Ficha entrada
+           → OLVIDA fichar salida (se duerme)
+Martes 00:00 → Pasa medianoche
+Martes 09:00 → Intenta fichar entrada
+           → ❌ ERROR: "Ya tienes entrada registrada"
+```
+
+**Causa Raíz**: El sistema valida que no haya 2 entradas consecutivas, pero no detecta que la primera es de otro día.
+
+**Solución Implementada**: Función `detectarYGestionarEntradaOlvidada()` que:
+1. **Detecta**: Si hay entrada de día anterior sin cerrar
+2. **Auto-cierra**: Crea registro de salida automático a las 23:59 del mismo día
+3. **Crea horario**: Genera WorkSchedule completado (verde/automático)
+4. **Audita**: Registra todo con notas detalladas
+5. **Desbloquea**: Permite empleado fichar entrada nueva sin problemas
+
+**Tecnología**:
+- **Backend**: Función `detectarYGestionarEntradaOlvidada()` en `timeRecordController.js` (~60 líneas)
+- **Frontend**: Detección de `data.entradaOlvidadaGestionada` en `ficharSalida()` 
+- **UI**: Toast ⚠️ explicativo con detalles de acción automática
+
+**Resultados en BD**:
+```javascript
+// Entrada original (Lunes 23:00)
+TimeRecord {
+  _id: "67234...",
+  tipo: "entrada",
+  fecha: "2025-11-03T23:00:00.000Z",
+  ...
+}
+
+// Salida automática (CREADA, Lunes 23:59)
+TimeRecord {
+  _id: "67235...",
+  tipo: "salida",
+  fecha: "2025-11-03T23:59:59.999Z",
+  horasTrabajadas: 0.98,
+  notas: "⚠️ SALIDA AUTOMÁTICA - Entrada olvidada detectada...",
+  ...
+}
+
+// Horario (CREADO, completado)
+WorkSchedule {
+  _id: "67236...",
+  fecha: "2025-11-03",
+  turno: "tarde",
+  estado: "completado",
+  color: "#10b981",  // Verde (automático)
+  notas: "🤖 Creado automáticamente..."
+}
+```
+
+**Impacto en UX**:
+- ✅ Empleado desbloqueado automáticamente
+- ✅ Toast explicativo: "Se detectó entrada de Lunes. Se auto-cerró a 23:59"
+- ✅ Horarios visibles en panel admin (color verde = automático)
+- ✅ Auditoría completa de qué pasó
+
+**Documentación Completa**: Ver `/docs/EDGE_CASE_MEDIANOCHE.md` (482 líneas) y `/docs/RESUMEN_EDGE_CASE.md`
+
+**Testing**:
+1. Crear entrada a las 23:00 (SIN fichar salida)
+2. Esperar a que pase medianoche o forzar fecha en BD
+3. Día siguiente, fichar entrada
+4. Verificar: Ambos registros creados, horario visible, Toast mostrado
+
 ## Sistema de Slideshow de Instalaciones
+
 
 **Implementado**: Slideshow full-width con auto-play y navegación manual en sección "Instalaciones".
 
