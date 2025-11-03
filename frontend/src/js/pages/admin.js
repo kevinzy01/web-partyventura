@@ -4134,15 +4134,39 @@ async function renderWorkSchedulesWeekView() {
       const horarios = horariosMap.get(dateISO) || [];
       const hasSchedules = horarios.length > 0;
       
+      // DEBUG: Log estructura de horarios
+      if (hasSchedules) {
+        console.log(`🔍 [MONITOR COUNT] Día ${dayName} (${dateISO}):`, {
+          totalHorarios: horarios.length,
+          horarios: horarios.map(h => ({
+            empleadoNombre: h.empleado?.nombre,
+            empleadoId: h.empleado?._id,
+            rolEmpleado: h.empleado?.rolEmpleado,
+            hasEmpleado: !!h.empleado,
+            estructuraCompleta: h.empleado
+          }))
+        });
+      }
+      
       // Contar monitores ÚNICOS asignados ese día
       const monitoresUnicos = new Set();
       horarios.forEach(h => {
         // Case-insensitive comparison para 'monitor'
         if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && h.empleado?._id) {
           monitoresUnicos.add(h.empleado._id);
+          console.log(`✅ [MONITOR COUNT] Monitor agregado: ${h.empleado.nombre} (ID: ${h.empleado._id})`);
+        } else {
+          console.log(`❌ [MONITOR COUNT] NO es monitor:`, {
+            nombre: h.empleado?.nombre,
+            rol: h.empleado?.rolEmpleado,
+            hasRol: !!h.empleado?.rolEmpleado,
+            hasId: !!h.empleado?._id
+          });
         }
       });
       const cantidadMonitores = monitoresUnicos.size;
+      
+      console.log(`📊 [MONITOR COUNT] ${dayName}: ${cantidadMonitores} monitores únicos de ${horarios.length} horarios`);
       
       // Determinar color de fondo según cantidad de monitores
       let bgColorStyle = '#f3f4f6'; // gray-50 default
