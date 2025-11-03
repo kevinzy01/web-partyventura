@@ -3566,8 +3566,11 @@ function renderWorkSchedulesListView() {
     
     const isChecked = bulkSelection.workSchedules.has(ws.id) ? 'checked' : '';
     
+    // Detectar si es horario auto-creado (horas extra)
+    const esHoraExtra = ws.color === '#10b981';
+    
     return `
-      <tr class="hover:bg-gray-50 transition-colors">
+      <tr class="hover:bg-gray-50 transition-colors ${esHoraExtra ? 'bg-blue-50' : ''}">
         <td class="px-6 py-4">
           <input 
             type="checkbox" 
@@ -3587,6 +3590,7 @@ function renderWorkSchedulesListView() {
           <span class="text-sm text-gray-600 capitalize">${ws.diaSemana}</span>
         </td>
         <td class="px-6 py-4">
+          ${esHoraExtra ? `<span class="inline-block px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded mb-1">🕒 HORAS EXTRA</span><br>` : ''}
           <span class="text-sm text-gray-900">${turnoIcon[ws.turno] || ''} ${ws.turno}</span>
         </td>
         <td class="px-6 py-4">
@@ -4008,15 +4012,22 @@ async function renderWorkSchedulesWeekView() {
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
           ${hasSchedules ? 
-            horarios.map(h => `
-              <div class="bg-white rounded p-2 mb-2 border-l-4" style="border-color: ${h.color || '#f97316'}">
+            horarios.map(h => {
+              // Detectar si es horario auto-creado (horas extra)
+              const esHoraExtra = h.color === '#10b981';
+              const bgColor = esHoraExtra ? 'bg-blue-100' : 'bg-white';
+              
+              return `
+              <div class="${bgColor} rounded p-2 mb-2 border-l-4" style="border-color: ${h.color || '#f97316'}">
+                ${esHoraExtra ? `<div class="inline-block px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded mb-1">🕒 HORAS EXTRA</div>` : ''}
                 ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
                 <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
                 <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
                 ${h.empleado?.rolEmpleado ? `<div class="text-xs mt-1 px-2 py-0.5 rounded inline-block ${getRolColor(h.empleado.rolEmpleado).bg} ${getRolColor(h.empleado.rolEmpleado).text}"><strong>${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</strong></div>` : ''}
                 ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
               </div>
-            `).join('') :
+            `;
+            }).join('') :
             '<div class="text-xs text-gray-400 italic">Sin horarios</div>'
           }
         </div>
@@ -4139,11 +4150,16 @@ async function renderWorkSchedulesMonthView() {
           
           ${hasSchedules ? 
             horarios.slice(0, 3).map(h => {
+              const esHoraExtra = h.color === '#10b981';
               const rolColor = getRolColor(h.empleado?.rolEmpleado);
+              const bgColor = esHoraExtra ? 'bg-blue-100' : rolColor.bg;
+              const textColor = esHoraExtra ? 'text-blue-900' : rolColor.text;
+              
               return `
-                <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${rolColor.bg} ${rolColor.text}" 
+                <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${bgColor} ${textColor}" 
                      style="border-color: ${h.color || '#f97316'}" 
-                     title="${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}">
+                     title="${esHoraExtra ? '🕒 HORAS EXTRA - ' : ''}${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}">
+                  ${esHoraExtra ? `<div class="text-[9px] font-bold text-blue-600">🕒 EXTRA</div>` : ''}
                   <div class="font-semibold truncate">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
                   <div>${h.horaInicio}-${h.horaFin}</div>
                   ${h.empleado?.rolEmpleado ? `<div class="text-xs font-semibold">${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</div>` : ''}

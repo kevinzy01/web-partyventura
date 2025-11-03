@@ -143,6 +143,13 @@ workScheduleSchema.pre('save', function(next) {
 
 // Validación: horarios dentro del rango del parque
 workScheduleSchema.pre('save', function(next) {
+  // ⚠️ EXCEPCIÓN: Horarios auto-creados (color verde #10b981) NO se validan
+  // porque se crean dinámicamente cuando el empleado ficha, incluso fuera del horario oficial
+  if (this.color === '#10b981') {
+    console.log(`⚠️ Horario auto-creado detectado, saltando validación de rango horario`);
+    return next();
+  }
+  
   const fecha = new Date(this.fecha);
   const diaSemana = fecha.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
   
@@ -323,12 +330,22 @@ workScheduleSchema.methods.toPublicJSON = function() {
 
 // Método para JSON completo (para administradores)
 workScheduleSchema.methods.toAdminJSON = function() {
+  // Si empleado está populated, usar sus datos; si no, usar campos virtuales
+  const empleadoData = this.empleado && typeof this.empleado === 'object' 
+    ? {
+        id: this.empleado._id,
+        nombre: this.empleado.nombre,
+        username: this.empleado.username,
+        rolEmpleado: this.empleado.rolEmpleado
+      }
+    : {
+        id: this.empleado,
+        nombre: this.empleadoNombre
+      };
+
   return {
     id: this._id,
-    empleado: {
-      id: this.empleado,
-      nombre: this.empleadoNombre
-    },
+    empleado: empleadoData,
     fecha: this.fecha,
     fechaFormateada: this.fechaFormateada,
     diaSemana: this.diaSemana,

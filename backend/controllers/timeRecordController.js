@@ -59,6 +59,18 @@ async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fe
     if (!horario) {
       console.log(`📝 No hay horario asignado - Creando horario automático...`);
       
+      // Para sesiones muy cortas (< 1 minuto), ajustar horaFin para pasar validación
+      let fechaSalidaAjustada = new Date(fechaSalida);
+      const duracionMs = fechaSalidaAjustada - fechaEntrada;
+      const duracionMinutos = duracionMs / (1000 * 60);
+      
+      // Si la sesión es menor a 1 minuto, ajustar a 1 minuto mínimo
+      if (duracionMinutos < 1) {
+        console.log(`⚠️ Sesión muy corta (${duracionMinutos.toFixed(2)} min), ajustando a 1 minuto mínimo`);
+        fechaSalidaAjustada = new Date(fechaEntrada);
+        fechaSalidaAjustada.setMinutes(fechaSalidaAjustada.getMinutes() + 1);
+      }
+      
       // Extraer horas de las fechas
       const horaInicio = fechaEntrada.toLocaleTimeString('es-ES', { 
         hour: '2-digit', 
@@ -66,7 +78,7 @@ async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fe
         hour12: false 
       });
       
-      const horaFin = fechaSalida.toLocaleTimeString('es-ES', { 
+      const horaFin = fechaSalidaAjustada.toLocaleTimeString('es-ES', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: false 
@@ -87,7 +99,8 @@ async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fe
         notas: `🤖 Horario creado automáticamente tras fichaje sin asignación previa.\n` +
                `Entrada: ${fechaEntrada.toLocaleString('es-ES')}\n` +
                `Salida: ${fechaSalida.toLocaleString('es-ES')}\n` +
-               `Horas trabajadas: ${horasTrabajadas}h`,
+               `Horas trabajadas: ${horasTrabajadas}h` +
+               (duracionMinutos < 1 ? `\n⚠️ Sesión corta ajustada a 1 minuto para validación` : ''),
         color: '#10b981', // Verde para horarios auto-creados
         creadoPor: empleadoId, // El propio empleado lo "crea" al fichar
         horasTotales: horasTrabajadas
@@ -337,7 +350,10 @@ exports.registrarTiempo = async (req, res) => {
       );
       
       // ✨ GESTIONAR HORARIO: VERIFICAR/COMPLETAR O CREAR AUTOMÁTICAMENTE
-      if (nuevoRegistro.horasTrabajadas) {
+      // SIEMPRE gestionar horario si se calcularon horas (incluso si son 0 tras redondeo)
+      // Esto permite crear registros de trabajo incluso para fichajes de prueba
+      if (nuevoRegistro.horasTrabajadas !== null && nuevoRegistro.horasTrabajadas !== undefined) {
+        console.log(`🔍 Gestionando horario con ${nuevoRegistro.horasTrabajadas}h trabajadas`);
         verificacionHorario = await verificarYGestionarHorario(
           empleadoId,
           empleado,

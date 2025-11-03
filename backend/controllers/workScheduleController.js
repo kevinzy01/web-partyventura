@@ -120,7 +120,7 @@ exports.getAllWorkSchedules = async (req, res) => {
     }
     
     const workSchedules = await WorkSchedule.find(filter)
-      .populate('empleado', 'nombre username email rol')
+      .populate('empleado', 'nombre username email rol rolEmpleado')
       .populate('creadoPor', 'nombre username')
       .populate('modificadoPor', 'nombre username')
       .sort({ fecha: -1, horaInicio: 1 });
@@ -191,7 +191,7 @@ exports.getMyWorkSchedules = async (req, res) => {
 exports.getWorkScheduleById = async (req, res) => {
   try {
     const workSchedule = await WorkSchedule.findById(req.params.id)
-      .populate('empleado', 'nombre username email')
+      .populate('empleado', 'nombre username email rolEmpleado')
       .populate('creadoPor', 'nombre username')
       .populate('modificadoPor', 'nombre username');
     
@@ -299,7 +299,7 @@ exports.updateWorkSchedule = async (req, res) => {
     
     await workSchedule.save();
     
-    await workSchedule.populate('empleado', 'nombre username email');
+    await workSchedule.populate('empleado', 'nombre username email rolEmpleado');
     await workSchedule.populate('creadoPor', 'nombre username');
     await workSchedule.populate('modificadoPor', 'nombre username');
     
@@ -394,7 +394,7 @@ exports.getWeeklyView = async (req, res) => {
     }
     
     const horarios = await WorkSchedule.find(filter)
-      .populate('empleado', 'nombre username')
+      .populate('empleado', 'nombre username rolEmpleado')
       .sort({ fecha: 1, horaInicio: 1 });
     
     // Organizar por días de la semana
@@ -469,7 +469,7 @@ exports.getMonthlyView = async (req, res) => {
     }
     
     const horarios = await WorkSchedule.find(filter)
-      .populate('empleado', 'nombre username')
+      .populate('empleado', 'nombre username rolEmpleado')
       .sort({ fecha: 1, horaInicio: 1 });
     
     // Obtener resumen
