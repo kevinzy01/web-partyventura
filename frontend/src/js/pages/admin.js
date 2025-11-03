@@ -4024,32 +4024,52 @@ async function renderWorkSchedulesWeekView() {
       });
 
       return `
-        <div class="border rounded-lg p-3 ${hasSchedules ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
+        <div class="day-cell border rounded-lg p-3 ${hasSchedules ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'} transition-all"
+             data-date="${dateISO}"
+             ondrop="handleScheduleDrop(event, '${dateISO}')"
+             ondragover="handleScheduleDragOver(event)"
+             ondragleave="handleScheduleDragLeave(event)"
+             ondragenter="handleScheduleDragEnter(event)">
           <div class="font-semibold text-sm mb-2 text-gray-700">${dayName}</div>
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
-          ${hasSchedules ? 
-            horarios.map(h => {
-              // Detectar si es horario auto-creado (horas extra)
-              const esHoraExtra = h.color === '#10b981';
-              const bgColor = esHoraExtra ? 'bg-blue-100' : 'bg-white';
-              
-              return `
-              <div class="${bgColor} rounded p-2 mb-2 border-l-4 cursor-pointer hover:shadow-md transition-shadow" style="border-color: ${h.color || '#f97316'}" onclick="editWorkSchedule('${h.id}')">
-                ${esHoraExtra ? `<div class="inline-block px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded mb-1">🕒 HORAS EXTRA</div>` : ''}
-                ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
-                <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
-                <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
-                ${h.empleado?.rolEmpleado ? `<div class="text-xs mt-1 px-2 py-0.5 rounded inline-block ${getRolColor(h.empleado.rolEmpleado).bg} ${getRolColor(h.empleado.rolEmpleado).text}"><strong>${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</strong></div>` : ''}
-                ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
-              </div>
-            `;
-            }).join('') :
-            '<div class="text-xs text-gray-400 italic">Sin horarios</div>'
-          }
+          <div class="schedule-cards-container min-h-[40px]">
+            ${hasSchedules ? 
+              horarios.map(h => {
+                // Detectar si es horario auto-creado (horas extra)
+                const esHoraExtra = h.color === '#10b981';
+                const bgColor = esHoraExtra ? 'bg-blue-100' : 'bg-white';
+                
+                return `
+                <div class="schedule-card ${bgColor} rounded p-2 mb-2 border-l-4 cursor-move hover:shadow-lg transition-all active:opacity-50" 
+                     style="border-color: ${h.color || '#f97316'}" 
+                     draggable="true"
+                     data-schedule-id="${h.id}"
+                     data-schedule-date="${dateISO}"
+                     data-employee-name="${h.empleado?.nombre || 'N/A'}"
+                     ondragstart="handleScheduleDragStart(event, '${h.id}', '${dateISO}')"
+                     ondragend="handleScheduleDragEnd(event)"
+                     onclick="event.stopPropagation(); editWorkSchedule('${h.id}')">
+                  <div class="flex items-center gap-1 mb-1">
+                    <span class="drag-handle text-gray-400 text-xs">⋮⋮</span>
+                    ${esHoraExtra ? `<div class="inline-block px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded">🕒 HORAS EXTRA</div>` : ''}
+                  </div>
+                  ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
+                  <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
+                  <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
+                  ${h.empleado?.rolEmpleado ? `<div class="text-xs mt-1 px-2 py-0.5 rounded inline-block ${getRolColor(h.empleado.rolEmpleado).bg} ${getRolColor(h.empleado.rolEmpleado).text}"><strong>${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</strong></div>` : ''}
+                  ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
+                </div>
+              `;
+              }).join('') :
+              '<div class="text-xs text-gray-400 italic">Arrastra aquí un horario</div>'
+            }
+          </div>
         </div>
       `;
     }).join('');
+    
+    logCalendar('=== Vista semanal renderizada con drag & drop habilitado ===', {});
 
     logCalendar('=== renderWorkSchedulesWeekView END ===', { rendered: true });
 
@@ -4161,31 +4181,45 @@ async function renderWorkSchedulesMonthView() {
       const isToday = DateUtils.isSameDay(date, new Date());
 
       html += `
-        <div class="border rounded p-2 min-h-[80px] ${hasSchedules ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}
-                    ${isToday ? 'ring-2 ring-orange-500' : ''}">
+        <div class="day-cell border rounded p-2 min-h-[100px] transition-all
+                    ${hasSchedules ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}
+                    ${isToday ? 'ring-2 ring-orange-500' : ''}"
+             data-date="${dateISO}"
+             ondrop="handleScheduleDrop(event, '${dateISO}')"
+             ondragover="handleScheduleDragOver(event)"
+             ondragleave="handleScheduleDragLeave(event)"
+             ondragenter="handleScheduleDragEnter(event)">
           <div class="text-xs font-semibold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
           
-          ${hasSchedules ? 
-            horarios.slice(0, 3).map(h => {
-              const esHoraExtra = h.color === '#10b981';
-              const rolColor = getRolColor(h.empleado?.rolEmpleado);
-              const bgColor = esHoraExtra ? 'bg-blue-100' : rolColor.bg;
-              const textColor = esHoraExtra ? 'text-blue-900' : rolColor.text;
-              
-              return `
-                <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${bgColor} ${textColor} cursor-pointer hover:shadow-md transition-shadow" 
-                     style="border-color: ${h.color || '#f97316'}" 
-                     title="${esHoraExtra ? '🕒 HORAS EXTRA - ' : ''}${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}"
-                     onclick="editWorkSchedule('${h.id}')">
-                  ${esHoraExtra ? `<div class="text-[9px] font-bold text-blue-600">🕒 EXTRA</div>` : ''}
-                  <div class="font-semibold truncate">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
-                  <div>${h.horaInicio}-${h.horaFin}</div>
-                  ${h.empleado?.rolEmpleado ? `<div class="text-xs font-semibold">${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</div>` : ''}
-                </div>
-              `;
-            }).join('') + (horarios.length > 3 ? `<div class="text-xs text-gray-500">+${horarios.length - 3} más</div>` : '') :
-            ''
-          }
+          <div class="schedule-cards-container">
+            ${hasSchedules ? 
+              horarios.slice(0, 3).map(h => {
+                const esHoraExtra = h.color === '#10b981';
+                const rolColor = getRolColor(h.empleado?.rolEmpleado);
+                const bgColor = esHoraExtra ? 'bg-blue-100' : rolColor.bg;
+                const textColor = esHoraExtra ? 'text-blue-900' : rolColor.text;
+                
+                return `
+                  <div class="schedule-card text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${bgColor} ${textColor} cursor-move hover:shadow-lg transition-all active:opacity-50" 
+                       style="border-color: ${h.color || '#f97316'}" 
+                       draggable="true"
+                       data-schedule-id="${h.id}"
+                       data-schedule-date="${dateISO}"
+                       data-employee-name="${h.empleado?.nombre || 'N/A'}"
+                       ondragstart="handleScheduleDragStart(event, '${h.id}', '${dateISO}')"
+                       ondragend="handleScheduleDragEnd(event)"
+                       title="${esHoraExtra ? '🕒 HORAS EXTRA - ' : ''}${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}"
+                       onclick="event.stopPropagation(); editWorkSchedule('${h.id}')">
+                    ${esHoraExtra ? `<div class="text-[9px] font-bold text-blue-600">🕒 EXTRA</div>` : ''}
+                    <div class="font-semibold truncate">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
+                    <div>${h.horaInicio}-${h.horaFin}</div>
+                    ${h.empleado?.rolEmpleado ? `<div class="text-xs font-semibold">${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</div>` : ''}
+                  </div>
+                `;
+              }).join('') + (horarios.length > 3 ? `<div class="text-xs text-gray-500">+${horarios.length - 3} más</div>` : '') :
+              '<div class="text-xs text-gray-400 italic opacity-0 hover:opacity-100 transition-opacity">Arrastra aquí</div>'
+            }
+          </div>
         </div>
       `;
     }
@@ -4224,6 +4258,174 @@ async function renderWorkSchedulesMonthView() {
     showNotification('Error al cargar vista mensual', 'error');
   }
 }
+
+// ===================================
+// SISTEMA DRAG & DROP PARA HORARIOS
+// ===================================
+
+let draggedSchedule = null; // Almacena el horario siendo arrastrado
+
+/**
+ * Maneja el inicio del arrastre de un horario
+ */
+window.handleScheduleDragStart = function(event, scheduleId, currentDate) {
+  draggedSchedule = {
+    id: scheduleId,
+    originalDate: currentDate,
+    element: event.target
+  };
+  
+  // Aplicar estilo visual
+  event.target.classList.add('opacity-50', 'scale-95');
+  
+  // Configurar datos de transferencia
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', scheduleId);
+  
+  console.log('🎯 Drag started:', draggedSchedule);
+};
+
+/**
+ * Maneja el fin del arrastre
+ */
+window.handleScheduleDragEnd = function(event) {
+  event.target.classList.remove('opacity-50', 'scale-95');
+  
+  // Limpiar estilos de todas las celdas
+  document.querySelectorAll('.day-cell').forEach(cell => {
+    cell.classList.remove('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+  });
+  
+  console.log('🏁 Drag ended');
+};
+
+/**
+ * Maneja cuando el elemento entra en una zona válida
+ */
+window.handleScheduleDragEnter = function(event) {
+  event.preventDefault();
+  const cell = event.currentTarget;
+  if (cell.classList.contains('day-cell')) {
+    cell.classList.add('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+  }
+};
+
+/**
+ * Maneja cuando el elemento está sobre una zona válida
+ */
+window.handleScheduleDragOver = function(event) {
+  event.preventDefault(); // Necesario para permitir drop
+  event.dataTransfer.dropEffect = 'move';
+};
+
+/**
+ * Maneja cuando el elemento sale de una zona válida
+ */
+window.handleScheduleDragLeave = function(event) {
+  const cell = event.currentTarget;
+  if (cell.classList.contains('day-cell')) {
+    cell.classList.remove('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+  }
+};
+
+/**
+ * Maneja el drop del horario en una nueva fecha
+ */
+window.handleScheduleDrop = async function(event, newDate) {
+  event.preventDefault();
+  
+  const cell = event.currentTarget;
+  cell.classList.remove('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+  
+  if (!draggedSchedule) {
+    console.error('❌ No hay horario siendo arrastrado');
+    return;
+  }
+  
+  const { id, originalDate } = draggedSchedule;
+  
+  // Verificar si la fecha es diferente
+  if (originalDate === newDate) {
+    console.log('ℹ️ Misma fecha, no se requiere actualización');
+    draggedSchedule = null;
+    return;
+  }
+  
+  console.log('📅 Cambiando horario:', {
+    scheduleId: id,
+    from: originalDate,
+    to: newDate
+  });
+  
+  // Mostrar confirmación
+  const employeeName = draggedSchedule.element.dataset.employeeName || 'Empleado';
+  const confirmMessage = `¿Cambiar horario de ${employeeName} de ${originalDate} a ${newDate}?`;
+  
+  const confirmed = await Swal.fire({
+    title: '📅 Cambiar Fecha de Horario',
+    html: `
+      <div class="text-left">
+        <p class="mb-2"><strong>Empleado:</strong> ${employeeName}</p>
+        <p class="mb-2"><strong>Fecha Original:</strong> ${new Date(originalDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        <p class="mb-2"><strong>Nueva Fecha:</strong> ${new Date(newDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#f97316',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: '✅ Sí, cambiar',
+    cancelButtonText: '❌ Cancelar'
+  });
+  
+  if (!confirmed.isConfirmed) {
+    draggedSchedule = null;
+    return;
+  }
+  
+  try {
+    // Hacer petición al backend
+    const response = await fetch(`${API_URL}/work-schedules/${id}`, {
+      method: 'PUT',
+      headers: {
+        ...Auth.getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ fecha: newDate })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Error al actualizar horario');
+    }
+    
+    // Mostrar notificación de éxito
+    showNotification('✅ Horario movido exitosamente', 'success');
+    
+    // Recargar vista actual
+    if (currentWorkSchedulesView === 'week') {
+      await renderWorkSchedulesWeekView();
+    } else if (currentWorkSchedulesView === 'month') {
+      await renderWorkSchedulesMonthView();
+    }
+    
+    console.log('✅ Horario actualizado exitosamente');
+    
+  } catch (error) {
+    console.error('❌ Error al mover horario:', error);
+    showNotification(`❌ Error: ${error.message}`, 'error');
+    
+    // Recargar para restaurar estado original
+    if (currentWorkSchedulesView === 'week') {
+      await renderWorkSchedulesWeekView();
+    } else if (currentWorkSchedulesView === 'month') {
+      await renderWorkSchedulesMonthView();
+    }
+  } finally {
+    draggedSchedule = null;
+  }
+};
 
 // Crear nuevo horario
 async function createWorkSchedule(formData) {

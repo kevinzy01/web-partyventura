@@ -410,6 +410,97 @@
     .password-toggle:active {
       transform: translateY(-50%) scale(0.95);
     }
+    
+    /* ===================================
+       DRAG & DROP STYLES - HORARIOS
+       =================================== */
+    
+    /* Cursor para indicar que el elemento es arrastrable */
+    .schedule-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .schedule-card:hover .drag-handle {
+      color: #f97316;
+    }
+    
+    /* Estilo cuando se está arrastrando */
+    .schedule-card:active {
+      cursor: grabbing !important;
+    }
+    
+    /* Animación suave al soltar */
+    .schedule-card {
+      transform-origin: center;
+    }
+    
+    /* Drop zone válida (cuando se arrastra encima) */
+    .day-cell.drag-over {
+      background-color: #d1fae5 !important;
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      transform: scale(1.02);
+    }
+    
+    /* Efecto de pulso en la celda de destino */
+    @keyframes pulse-green {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+      }
+    }
+    
+    .day-cell.drag-over {
+      animation: pulse-green 1.5s infinite;
+    }
+    
+    /* Drag handle (icono de agarre) */
+    .drag-handle {
+      display: inline-block;
+      cursor: grab;
+      transition: all 0.2s ease;
+      font-weight: bold;
+    }
+    
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    
+    /* Placeholder cuando no hay horarios */
+    .schedule-cards-container {
+      min-height: 40px;
+      transition: all 0.2s ease;
+    }
+    
+    /* Feedback visual mejorado */
+    .schedule-card[draggable="true"]:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    /* Indicador de que la celda puede recibir drops */
+    .day-cell {
+      position: relative;
+    }
+    
+    .day-cell::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px dashed transparent;
+      border-radius: 0.5rem;
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+    
+    .day-cell.bg-green-100::after {
+      border-color: #10b981;
+      background-color: rgba(16, 185, 129, 0.05);
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -2628,6 +2719,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=92"></script>
+  <script src="/src/js/pages/admin.js?v=93"></script>
 </body>
 </html>
