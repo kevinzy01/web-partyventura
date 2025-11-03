@@ -4580,6 +4580,31 @@ function setupWorkSchedulesEventListeners() {
       renderWorkSchedulesMonthView();
     });
   }
+
+  // ===================================
+  // FILTROS RÁPIDOS - ESTA SEMANA / ESTE MES
+  // ===================================
+  const btnFilterWeek = document.getElementById('btnFilterWeek');
+  if (btnFilterWeek) {
+    btnFilterWeek.addEventListener('click', () => {
+      // Resetear a esta semana
+      calendarState.goToToday(); // Ir a hoy
+      switchWorkSchedulesView('week');
+      renderWorkSchedulesWeekView();
+      console.log('📅 Filtro: Esta Semana activado');
+    });
+  }
+
+  const btnFilterMonth = document.getElementById('btnFilterMonth');
+  if (btnFilterMonth) {
+    btnFilterMonth.addEventListener('click', () => {
+      // Resetear a este mes
+      calendarState.goToToday(); // Ir a hoy
+      switchWorkSchedulesView('month');
+      renderWorkSchedulesMonthView();
+      console.log('📆 Filtro: Este Mes activado');
+    });
+  }
   
   // Marcar como configurado
   workSchedulesListenersConfigured = true;
