@@ -4020,7 +4020,8 @@ async function renderWorkSchedulesWeekView() {
       // Contar monitores ÚNICOS asignados ese día
       const monitoresUnicos = new Set();
       horarios.forEach(h => {
-        if (h.empleado?.rolEmpleado === 'monitor' && h.empleado?._id) {
+        // Case-insensitive comparison para 'monitor'
+        if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && h.empleado?._id) {
           monitoresUnicos.add(h.empleado._id);
         }
       });
@@ -4030,7 +4031,12 @@ async function renderWorkSchedulesWeekView() {
       console.log(`📊 [SEMANAL] Día ${dateISO}:`, {
         horarios: horarios.length,
         monitores: cantidadMonitores,
-        empleados: horarios.map(h => `${h.empleado?.nombre} (${h.empleado?.rolEmpleado})`)
+        empleados: horarios.map(h => ({
+          nombre: h.empleado?.nombre,
+          rol: h.empleado?.rolEmpleado,
+          id: h.empleado?._id,
+          esMonitor: h.empleado?.rolEmpleado?.toLowerCase() === 'monitor'
+        }))
       });
       
       // Determinar color de fondo según cantidad de monitores
@@ -4240,7 +4246,8 @@ async function renderWorkSchedulesMonthView() {
       // Contar monitores ÚNICOS asignados ese día
       const monitoresUnicos = new Set();
       horarios.forEach(h => {
-        if (h.empleado?.rolEmpleado === 'monitor' && h.empleado?._id) {
+        // Case-insensitive comparison para 'monitor'
+        if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && h.empleado?._id) {
           monitoresUnicos.add(h.empleado._id);
         }
       });
@@ -4250,7 +4257,12 @@ async function renderWorkSchedulesMonthView() {
       console.log(`📊 [MENSUAL] Día ${dateISO}:`, {
         horarios: horarios.length,
         monitores: cantidadMonitores,
-        empleados: horarios.map(h => `${h.empleado?.nombre} (${h.empleado?.rolEmpleado})`)
+        empleados: horarios.map(h => ({
+          nombre: h.empleado?.nombre,
+          rol: h.empleado?.rolEmpleado,
+          id: h.empleado?._id,
+          esMonitor: h.empleado?.rolEmpleado?.toLowerCase() === 'monitor'
+        }))
       });
       
       // Determinar color de fondo según cantidad de monitores
