@@ -4018,7 +4018,7 @@ async function renderWorkSchedulesWeekView() {
               const bgColor = esHoraExtra ? 'bg-blue-100' : 'bg-white';
               
               return `
-              <div class="${bgColor} rounded p-2 mb-2 border-l-4" style="border-color: ${h.color || '#f97316'}">
+              <div class="${bgColor} rounded p-2 mb-2 border-l-4 cursor-pointer hover:shadow-md transition-shadow" style="border-color: ${h.color || '#f97316'}" onclick="editWorkSchedule('${h.id}')">
                 ${esHoraExtra ? `<div class="inline-block px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded mb-1">🕒 HORAS EXTRA</div>` : ''}
                 ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
                 <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
@@ -4156,9 +4156,10 @@ async function renderWorkSchedulesMonthView() {
               const textColor = esHoraExtra ? 'text-blue-900' : rolColor.text;
               
               return `
-                <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${bgColor} ${textColor}" 
+                <div class="text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${bgColor} ${textColor} cursor-pointer hover:shadow-md transition-shadow" 
                      style="border-color: ${h.color || '#f97316'}" 
-                     title="${esHoraExtra ? '🕒 HORAS EXTRA - ' : ''}${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}">
+                     title="${esHoraExtra ? '🕒 HORAS EXTRA - ' : ''}${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}"
+                     onclick="editWorkSchedule('${h.id}')">
                   ${esHoraExtra ? `<div class="text-[9px] font-bold text-blue-600">🕒 EXTRA</div>` : ''}
                   <div class="font-semibold truncate">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
                   <div>${h.horaInicio}-${h.horaFin}</div>
