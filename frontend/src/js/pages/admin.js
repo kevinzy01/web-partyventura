@@ -4037,13 +4037,13 @@ async function renderWorkSchedulesWeekView() {
         if (cantidadMonitores >= 6) {
           bgColorStyle = '#dcfce7'; // green-50
           borderColorStyle = '#86efac'; // green-300
-          badgeText = `✅ ${cantidadMonitores} monitores`;
+          badgeText = `<span style="font-size: 1.2em; margin-right: 2px;">✅</span>${cantidadMonitores} monitores`;
           badgeBgStyle = '#dcfce7'; // green-100
           badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
           bgColorStyle = '#fee2e2'; // red-50
           borderColorStyle = '#fca5a5'; // red-300
-          badgeText = `⚠️ ${cantidadMonitores} monitores`;
+          badgeText = `<span style="font-size: 1.2em; margin-right: 2px;">⚠️</span>${cantidadMonitores} monitores`;
           badgeBgStyle = '#fee2e2'; // red-100
           badgeTextStyle = '#991b1b'; // red-800
         } else {
@@ -4060,6 +4060,11 @@ async function renderWorkSchedulesWeekView() {
         found: horariosMap.has(dateISO)
       });
 
+      // Debug: Verificar que badgeText se crea correctamente
+      if (badgeText) {
+        console.log(`✅ Badge creado para ${dateISO}:`, badgeText);
+      }
+
       return `
         <div class="day-cell border-2 rounded-lg p-3 transition-all cursor-default"
              style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; min-height: 120px; position: relative;"
@@ -4071,7 +4076,7 @@ async function renderWorkSchedulesWeekView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-2">
             <div class="font-semibold text-sm text-gray-700">${dayName}</div>
-            ${badgeText ? `<div class="text-[11px] px-2.5 py-1 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="badge-monitor text-[11px] px-2.5 py-1 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;">${badgeText}</div>` : ''}
           </div>
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
@@ -4242,13 +4247,13 @@ async function renderWorkSchedulesMonthView() {
         if (cantidadMonitores >= 6) {
           bgColorStyle = '#dcfce7'; // green-50
           borderColorStyle = '#86efac'; // green-300
-          badgeText = `✅ ${cantidadMonitores}`;
+          badgeText = `<span style="font-size: 1.1em; margin-right: 2px;">✅</span>${cantidadMonitores}`;
           badgeBgStyle = '#dcfce7'; // green-100
           badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
           bgColorStyle = '#fee2e2'; // red-50
           borderColorStyle = '#fca5a5'; // red-300
-          badgeText = `⚠️ ${cantidadMonitores}`;
+          badgeText = `<span style="font-size: 1.1em; margin-right: 2px;">⚠️</span>${cantidadMonitores}`;
           badgeBgStyle = '#fee2e2'; // red-100
           badgeTextStyle = '#991b1b'; // red-800
         } else {
@@ -4268,7 +4273,7 @@ async function renderWorkSchedulesMonthView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-1">
             <div class="text-xs font-semibold ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
-            ${badgeText ? `<div class="text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};" title="Monitores asignados">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="badge-monitor text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;" title="Monitores asignados">${badgeText}</div>` : ''}
           </div>
           
           <div class="schedule-cards-container">
@@ -4306,6 +4311,15 @@ async function renderWorkSchedulesMonthView() {
 
     html += '</div>';
     calendar.innerHTML = html;
+    
+    // Debug: Verificar que los badges estén en el DOM
+    const badges = calendar.querySelectorAll('[style*="background-color"]');
+    console.log(`✅ Total badges renderizados: ${badges.length}`);
+    badges.forEach((badge, i) => {
+      if (badge.textContent) {
+        console.log(`Badge ${i}: "${badge.textContent}" - Style: ${badge.getAttribute('style')}`);
+      }
+    });
 
     // 6. MOSTRAR ESTADÍSTICAS
     const statsDiv = document.getElementById('monthStats');
