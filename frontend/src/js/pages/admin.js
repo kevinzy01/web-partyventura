@@ -4016,21 +4016,58 @@ async function renderWorkSchedulesWeekView() {
       const dayName = dayNames[index];
       const horarios = horariosMap.get(dateISO) || [];
       const hasSchedules = horarios.length > 0;
+      
+      // Contar monitores ÚNICOS asignados ese día
+      const monitoresUnicos = new Set();
+      horarios.forEach(h => {
+        if (h.empleado?.rolEmpleado === 'monitor' && h.empleado?._id) {
+          monitoresUnicos.add(h.empleado._id);
+        }
+      });
+      const cantidadMonitores = monitoresUnicos.size;
+      
+      // Determinar color de fondo según cantidad de monitores
+      let bgColor = 'bg-gray-50';
+      let borderColor = 'border-gray-200';
+      let badgeText = '';
+      let badgeColor = '';
+      
+      if (hasSchedules) {
+        if (cantidadMonitores >= 6) {
+          bgColor = 'bg-green-50';
+          borderColor = 'border-green-300';
+          badgeText = `✅ ${cantidadMonitores} monitores`;
+          badgeColor = 'bg-green-100 text-green-800';
+        } else if (cantidadMonitores > 0) {
+          bgColor = 'bg-red-50';
+          borderColor = 'border-red-300';
+          badgeText = `⚠️ ${cantidadMonitores} monitores`;
+          badgeColor = 'bg-red-100 text-red-800';
+        } else {
+          bgColor = 'bg-blue-50';
+          borderColor = 'border-blue-200';
+        }
+      }
 
       logCalendar(`Day ${index} (${dateISO})`, {
         dayName: dayName,
         horariosCount: horarios.length,
+        monitoresUnicos: cantidadMonitores,
         found: horariosMap.has(dateISO)
       });
 
       return `
-        <div class="day-cell border rounded-lg p-3 ${hasSchedules ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'} transition-all"
+        <div class="day-cell border rounded-lg p-3 ${bgColor} ${borderColor} transition-all"
              data-date="${dateISO}"
+             data-monitores="${cantidadMonitores}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
              ondragover="handleScheduleDragOver(event)"
              ondragleave="handleScheduleDragLeave(event)"
              ondragenter="handleScheduleDragEnter(event)">
-          <div class="font-semibold text-sm mb-2 text-gray-700">${dayName}</div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="font-semibold text-sm text-gray-700">${dayName}</div>
+            ${badgeText ? `<div class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeColor}">${badgeText}</div>` : ''}
+          </div>
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
           <div class="schedule-cards-container min-h-[40px]">
@@ -4179,17 +4216,53 @@ async function renderWorkSchedulesMonthView() {
       const horarios = horariosMap.get(dateISO) || [];
       const hasSchedules = horarios.length > 0;
       const isToday = DateUtils.isSameDay(date, new Date());
+      
+      // Contar monitores ÚNICOS asignados ese día
+      const monitoresUnicos = new Set();
+      horarios.forEach(h => {
+        if (h.empleado?.rolEmpleado === 'monitor' && h.empleado?._id) {
+          monitoresUnicos.add(h.empleado._id);
+        }
+      });
+      const cantidadMonitores = monitoresUnicos.size;
+      
+      // Determinar color de fondo según cantidad de monitores
+      let bgColor = 'bg-white';
+      let borderColor = 'border-gray-200';
+      let badgeText = '';
+      let badgeColor = '';
+      
+      if (hasSchedules) {
+        if (cantidadMonitores >= 6) {
+          bgColor = 'bg-green-50';
+          borderColor = 'border-green-300';
+          badgeText = `✅ ${cantidadMonitores}`;
+          badgeColor = 'bg-green-100 text-green-800';
+        } else if (cantidadMonitores > 0) {
+          bgColor = 'bg-red-50';
+          borderColor = 'border-red-300';
+          badgeText = `⚠️ ${cantidadMonitores}`;
+          badgeColor = 'bg-red-100 text-red-800';
+        } else {
+          bgColor = 'bg-blue-50';
+          borderColor = 'border-blue-300';
+        }
+      }
 
       html += `
         <div class="day-cell border rounded p-2 min-h-[100px] transition-all
-                    ${hasSchedules ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}
+                    ${bgColor} ${borderColor}
                     ${isToday ? 'ring-2 ring-orange-500' : ''}"
              data-date="${dateISO}"
+             data-monitores="${cantidadMonitores}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
              ondragover="handleScheduleDragOver(event)"
              ondragleave="handleScheduleDragLeave(event)"
              ondragenter="handleScheduleDragEnter(event)">
-          <div class="text-xs font-semibold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
+          <div class="flex items-center justify-between mb-1">
+            <div class="text-xs font-semibold ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
+            ${badgeText ? `<div class="text-[9px] px-1 py-0.5 rounded font-bold ${badgeColor}" title="Monitores asignados">${badgeText}</div>` : ''}
+          </div>
           
           <div class="schedule-cards-container">
             ${hasSchedules ? 

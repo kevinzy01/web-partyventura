@@ -2096,6 +2096,37 @@
           📆 Mes
         </button>
       </div>
+      
+      <!-- Leyenda de indicadores de monitores -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 border-2 border-blue-200">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-lg">ℹ️</span>
+          <h3 class="text-sm font-bold text-gray-800">Indicadores de Cobertura de Monitores</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-green-50 border-2 border-green-300 rounded flex items-center justify-center">
+              <span class="text-xs font-bold text-green-800">✅</span>
+            </div>
+            <div>
+              <span class="font-semibold text-green-800">6+ monitores asignados</span>
+              <span class="text-gray-600 text-xs block">Cobertura completa</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-red-50 border-2 border-red-300 rounded flex items-center justify-center">
+              <span class="text-xs font-bold text-red-800">⚠️</span>
+            </div>
+            <div>
+              <span class="font-semibold text-red-800">Menos de 6 monitores</span>
+              <span class="text-gray-600 text-xs block">Refuerzo necesario</span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-gray-600 italic">
+          💡 Los monitores con horario partido cuentan como 1 solo monitor
+        </div>
+      </div>
     </div>
 
     <!-- Vista Lista -->
@@ -2719,6 +2750,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=93"></script>
+  <script src="/src/js/pages/admin.js?v=94"></script>
 </body>
 </html>
