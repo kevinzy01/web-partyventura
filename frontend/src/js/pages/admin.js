@@ -3988,26 +3988,16 @@ function renderMonitorBadges() {
   // Buscar todos los contenedores de badges en el calendario
   const badgeContainers = document.querySelectorAll('.monitor-badge-container');
   
-  console.log('🔍 [BADGES] Contenedores encontrados:', badgeContainers.length);
-  
   badgeContainers.forEach((container, idx) => {
     const monitorCount = parseInt(container.getAttribute('data-monitor-count') || '0');
     const dayCell = container.closest('.day-cell');
     const hasSchedules = dayCell?.getAttribute('data-has-schedules') === 'true';
-    
-    console.log(`🔍 [BADGES] Contenedor ${idx}:`, {
-      monitorCount,
-      hasSchedules,
-      dayCell: !!dayCell,
-      willRender: hasSchedules && monitorCount > 0
-    });
     
     // Limpiar contenedor
     container.innerHTML = '';
     
     // Solo mostrar badge si hay horarios Y monitores
     if (!hasSchedules || monitorCount === 0) {
-      console.log(`⚠️ [BADGES] Contenedor ${idx} saltado: hasSchedules=${hasSchedules}, monitorCount=${monitorCount}`);
       return;
     }
     
@@ -4046,11 +4036,7 @@ function renderMonitorBadges() {
     badgeDiv.appendChild(emojiSpan);
     badgeDiv.appendChild(textSpan);
     container.appendChild(badgeDiv);
-    
-    console.log(`✅ [BADGES] Badge DOM creado para contenedor ${idx}: ${monitorCount} monitores, emoji: ${monitorCount >= 6 ? '✅' : '⚠️'}`);
   });
-  
-  console.log(`🎯 [BADGES] Total badges renderizados: ${document.querySelectorAll('.monitor-badge-container > div').length}`);
 }
 
 // ===================================
@@ -4134,39 +4120,17 @@ async function renderWorkSchedulesWeekView() {
       const horarios = horariosMap.get(dateISO) || [];
       const hasSchedules = horarios.length > 0;
       
-      // DEBUG: Log estructura de horarios
-      if (hasSchedules) {
-        console.log(`🔍 [MONITOR COUNT] Día ${dayName} (${dateISO}):`, {
-          totalHorarios: horarios.length,
-          horarios: horarios.map(h => ({
-            empleadoNombre: h.empleado?.nombre,
-            empleadoId: h.empleado?._id,
-            rolEmpleado: h.empleado?.rolEmpleado,
-            hasEmpleado: !!h.empleado,
-            estructuraCompleta: h.empleado
-          }))
-        });
-      }
-      
       // Contar monitores ÚNICOS asignados ese día
       const monitoresUnicos = new Set();
       horarios.forEach(h => {
         // Case-insensitive comparison para 'monitor'
-        if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && h.empleado?._id) {
-          monitoresUnicos.add(h.empleado._id);
-          console.log(`✅ [MONITOR COUNT] Monitor agregado: ${h.empleado.nombre} (ID: ${h.empleado._id})`);
-        } else {
-          console.log(`❌ [MONITOR COUNT] NO es monitor:`, {
-            nombre: h.empleado?.nombre,
-            rol: h.empleado?.rolEmpleado,
-            hasRol: !!h.empleado?.rolEmpleado,
-            hasId: !!h.empleado?._id
-          });
+        // IMPORTANTE: Backend retorna empleado.id (no _id)
+        const empleadoId = h.empleado?.id || h.empleado?._id;
+        if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && empleadoId) {
+          monitoresUnicos.add(empleadoId);
         }
       });
       const cantidadMonitores = monitoresUnicos.size;
-      
-      console.log(`📊 [MONITOR COUNT] ${dayName}: ${cantidadMonitores} monitores únicos de ${horarios.length} horarios`);
       
       // Determinar color de fondo según cantidad de monitores
       let bgColorStyle = '#f3f4f6'; // gray-50 default
@@ -4241,8 +4205,6 @@ async function renderWorkSchedulesWeekView() {
         </div>
       `;
     }).join('');
-    
-    console.log('📊 [WEEK VIEW] HTML insertado, llamando a renderMonitorBadges()...');
     
     // NUEVO APPROACH: Renderizar badges DESPUÉS de insertar HTML en el DOM
     // Esto asegura que los emojis se rendericen correctamente
@@ -4363,8 +4325,10 @@ async function renderWorkSchedulesMonthView() {
       const monitoresUnicos = new Set();
       horarios.forEach(h => {
         // Case-insensitive comparison para 'monitor'
-        if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && h.empleado?._id) {
-          monitoresUnicos.add(h.empleado._id);
+        // IMPORTANTE: Backend retorna empleado.id (no _id)
+        const empleadoId = h.empleado?.id || h.empleado?._id;
+        if (h.empleado?.rolEmpleado?.toLowerCase() === 'monitor' && empleadoId) {
+          monitoresUnicos.add(empleadoId);
         }
       });
       const cantidadMonitores = monitoresUnicos.size;
