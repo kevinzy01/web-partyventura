@@ -4056,12 +4056,13 @@ async function renderWorkSchedulesWeekView() {
         dayName: dayName,
         horariosCount: horarios.length,
         monitoresUnicos: cantidadMonitores,
+        badgeText: badgeText,
         found: horariosMap.has(dateISO)
       });
 
       return `
-        <div class="day-cell border rounded-lg p-3 transition-all"
-             style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle};"
+        <div class="day-cell border-2 rounded-lg p-3 transition-all cursor-default"
+             style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; min-height: 120px; position: relative;"
              data-date="${dateISO}"
              data-monitores="${cantidadMonitores}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
@@ -4070,7 +4071,7 @@ async function renderWorkSchedulesWeekView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-2">
             <div class="font-semibold text-sm text-gray-700">${dayName}</div>
-            ${badgeText ? `<div class="text-[10px] px-2 py-0.5 rounded font-bold" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="text-[11px] px-2.5 py-1 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};">${badgeText}</div>` : ''}
           </div>
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
@@ -4257,8 +4258,8 @@ async function renderWorkSchedulesMonthView() {
       }
 
       html += `
-        <div class="day-cell border rounded p-2 min-h-[100px] transition-all"
-             style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; ${isToday ? 'box-shadow: 0 0 0 2px rgb(249, 115, 22);' : ''}"
+        <div class="day-cell border-2 rounded p-2 transition-all cursor-default"
+             style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; min-height: 110px; ${isToday ? 'box-shadow: 0 0 0 2px rgb(249, 115, 22);' : ''}"
              data-date="${dateISO}"
              data-monitores="${cantidadMonitores}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
@@ -4267,7 +4268,7 @@ async function renderWorkSchedulesMonthView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-1">
             <div class="text-xs font-semibold ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
-            ${badgeText ? `<div class="text-[9px] px-1 py-0.5 rounded font-bold" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};" title="Monitores asignados">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};" title="Monitores asignados">${badgeText}</div>` : ''}
           </div>
           
           <div class="schedule-cards-container">
@@ -4372,9 +4373,10 @@ window.handleScheduleDragEnd = function(event) {
   
   // Limpiar estilos de todas las celdas
   document.querySelectorAll('.day-cell').forEach(cell => {
-    cell.classList.remove('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+    cell.classList.remove('dragover-active');
   });
   
+  draggedSchedule = null;
   console.log('🏁 Drag ended');
 };
 
@@ -4395,6 +4397,22 @@ window.handleScheduleDragEnter = function(event) {
 window.handleScheduleDragOver = function(event) {
   event.preventDefault(); // Necesario para permitir drop
   event.dataTransfer.dropEffect = 'move';
+  
+  // Agregar feedback visual al contenedor (no solo al event.currentTarget)
+  const cell = event.currentTarget;
+  if (cell.classList.contains('day-cell')) {
+    cell.classList.add('dragover-active');
+  }
+};
+
+/**
+ * Maneja cuando el elemento entra en una zona válida
+ */
+window.handleScheduleDragEnter = function(event) {
+  const cell = event.currentTarget;
+  if (cell.classList.contains('day-cell')) {
+    cell.classList.add('dragover-active');
+  }
 };
 
 /**
@@ -4402,8 +4420,9 @@ window.handleScheduleDragOver = function(event) {
  */
 window.handleScheduleDragLeave = function(event) {
   const cell = event.currentTarget;
-  if (cell.classList.contains('day-cell')) {
-    cell.classList.remove('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+  // Solo remover si realmente estamos saliendo (no entrando en un hijo)
+  if (cell.classList.contains('day-cell') && event.target === cell) {
+    cell.classList.remove('dragover-active');
   }
 };
 
@@ -4414,7 +4433,7 @@ window.handleScheduleDrop = async function(event, newDate) {
   event.preventDefault();
   
   const cell = event.currentTarget;
-  cell.classList.remove('bg-green-100', 'border-green-400', 'ring-2', 'ring-green-300');
+  cell.classList.remove('dragover-active');
   
   if (!draggedSchedule) {
     console.error('❌ No hay horario siendo arrastrado');

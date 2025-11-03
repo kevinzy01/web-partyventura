@@ -350,6 +350,27 @@
       border-radius: 3px 3px 0 0;
     }
     
+    /* Drag and Drop Feedback */
+    .day-cell {
+      position: relative;
+      transition: all 0.2s ease-in-out !important;
+    }
+    
+    .day-cell.dragover-active {
+      transform: scale(1.02);
+      box-shadow: inset 0 0 0 3px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3) !important;
+      background-color: rgba(34, 197, 94, 0.05) !important;
+      filter: brightness(1.1);
+    }
+    
+    .schedule-card {
+      cursor: grab;
+    }
+    
+    .schedule-card:active {
+      cursor: grabbing;
+    }
+    
     .tab-button:not(.active):hover {
       background: var(--gray-50);
       color: var(--primary-orange);
@@ -2750,6 +2771,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=95"></script>
+  <script src="/src/js/pages/admin.js?v=96"></script>
 </body>
 </html>
