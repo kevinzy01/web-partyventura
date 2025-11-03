@@ -3977,6 +3977,71 @@ class CalendarState {
 const calendarState = new CalendarState();
 
 // ===================================
+// RENDERIZADO DE BADGES DE MONITORES
+// ===================================
+
+/**
+ * NUEVO APPROACH: Renderizar badges DESPUÉS de insertar HTML en el DOM
+ * Esto evita problemas con emojis en template literals
+ */
+function renderMonitorBadges() {
+  // Buscar todos los contenedores de badges en el calendario
+  const badgeContainers = document.querySelectorAll('.monitor-badge-container');
+  
+  badgeContainers.forEach(container => {
+    const monitorCount = parseInt(container.getAttribute('data-monitor-count') || '0');
+    const dayCell = container.closest('.day-cell');
+    const hasSchedules = dayCell?.getAttribute('data-has-schedules') === 'true';
+    
+    // Limpiar contenedor
+    container.innerHTML = '';
+    
+    // Solo mostrar badge si hay horarios
+    if (!hasSchedules || monitorCount === 0) {
+      return;
+    }
+    
+    // Crear elementos del badge con DOM API
+    const badgeDiv = document.createElement('div');
+    badgeDiv.style.cssText = `
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-weight: bold;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    `;
+    
+    // Determinar color según cantidad de monitores
+    if (monitorCount >= 6) {
+      badgeDiv.style.backgroundColor = '#dcfce7'; // green-100
+      badgeDiv.style.color = '#166534'; // green-800
+    } else {
+      badgeDiv.style.backgroundColor = '#fee2e2'; // red-100
+      badgeDiv.style.color = '#991b1b'; // red-800
+    }
+    
+    // Crear emoji span
+    const emojiSpan = document.createElement('span');
+    emojiSpan.style.fontSize = '1.2em';
+    emojiSpan.textContent = monitorCount >= 6 ? '✅' : '⚠️';
+    
+    // Crear texto span
+    const textSpan = document.createElement('span');
+    textSpan.textContent = `${monitorCount} monitor${monitorCount !== 1 ? 'es' : ''}`;
+    
+    // Ensamblar badge
+    badgeDiv.appendChild(emojiSpan);
+    badgeDiv.appendChild(textSpan);
+    container.appendChild(badgeDiv);
+    
+    console.log(`✅ Badge DOM creado para día con ${monitorCount} monitores`);
+  });
+}
+
+// ===================================
 // VISTA SEMANAL - REESCRITA
 // ===================================
 
@@ -4067,58 +4132,21 @@ async function renderWorkSchedulesWeekView() {
       });
       const cantidadMonitores = monitoresUnicos.size;
       
-      // Debug logging - Vista Semanal
-      console.log(`📊 [SEMANAL] Día ${dateISO}:`, {
-        horarios: horarios.length,
-        monitores: cantidadMonitores,
-        empleados: horarios.map(h => ({
-          nombre: h.empleado?.nombre,
-          rol: h.empleado?.rolEmpleado,
-          id: h.empleado?._id,
-          esMonitor: h.empleado?.rolEmpleado?.toLowerCase() === 'monitor'
-        }))
-      });
-      
       // Determinar color de fondo según cantidad de monitores
       let bgColorStyle = '#f3f4f6'; // gray-50 default
       let borderColorStyle = '#d1d5db'; // gray-200 default
-      let badgeText = '';
-      let badgeEmoji = '';
-      let badgeBgStyle = '';
-      let badgeTextStyle = '';
       
       if (hasSchedules) {
         if (cantidadMonitores >= 6) {
           bgColorStyle = '#dcfce7'; // green-50
           borderColorStyle = '#86efac'; // green-300
-          badgeEmoji = '✅';
-          badgeText = `${cantidadMonitores} monitores`;
-          badgeBgStyle = '#dcfce7'; // green-100
-          badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
           bgColorStyle = '#fee2e2'; // red-50
           borderColorStyle = '#fca5a5'; // red-300
-          badgeEmoji = '⚠️';
-          badgeText = `${cantidadMonitores} monitores`;
-          badgeBgStyle = '#fee2e2'; // red-100
-          badgeTextStyle = '#991b1b'; // red-800
         } else {
           bgColorStyle = '#eff6ff'; // blue-50
           borderColorStyle = '#bfdbfe'; // blue-200
         }
-      }
-
-      logCalendar(`Day ${index} (${dateISO})`, {
-        dayName: dayName,
-        horariosCount: horarios.length,
-        monitoresUnicos: cantidadMonitores,
-        badgeText: badgeText,
-        found: horariosMap.has(dateISO)
-      });
-
-      // Debug: Verificar que badgeText se crea correctamente
-      if (badgeText) {
-        console.log(`✅ Badge creado para ${dateISO}:`, badgeText);
       }
 
       return `
@@ -4126,17 +4154,18 @@ async function renderWorkSchedulesWeekView() {
              style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; min-height: 120px; position: relative;"
              data-date="${dateISO}"
              data-monitores="${cantidadMonitores}"
+             data-has-schedules="${hasSchedules}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
              ondragover="handleScheduleDragOver(event)"
              ondragleave="handleScheduleDragLeave(event)"
              ondragenter="handleScheduleDragEnter(event)">
-          <div class="flex items-center justify-between mb-2">
-            <div class="font-semibold text-sm text-gray-700">${dayName}</div>
-            ${badgeText ? `<div class="badge-monitor text-[11px] px-2.5 py-1 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;"><span style="font-size: 1.3em; margin-right: 3px; line-height: 1;">${badgeEmoji}</span>${badgeText}</div>` : ''}
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div style="font-weight: 600; font-size: 0.875rem; color: #374151;">${dayName}</div>
+            <div class="monitor-badge-container" data-monitor-count="${cantidadMonitores}"></div>
           </div>
-          <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
+          <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.75rem;">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
-          <div class="schedule-cards-container min-h-[40px]">
+          <div class="schedule-cards-container" style="min-height: 40px;">
             ${hasSchedules ? 
               horarios.map(h => {
                 // Detectar si es horario auto-creado (horas extra)
@@ -4176,6 +4205,10 @@ async function renderWorkSchedulesWeekView() {
         </div>
       `;
     }).join('');
+    
+    // NUEVO APPROACH: Renderizar badges DESPUÉS de insertar HTML en el DOM
+    // Esto asegura que los emojis se rendericen correctamente
+    renderMonitorBadges();
     
     logCalendar('=== Vista semanal renderizada con drag & drop habilitado ===', {});
 
@@ -4298,41 +4331,17 @@ async function renderWorkSchedulesMonthView() {
       });
       const cantidadMonitores = monitoresUnicos.size;
       
-      // Debug logging - Vista Mensual
-      console.log(`📊 [MENSUAL] Día ${dateISO}:`, {
-        horarios: horarios.length,
-        monitores: cantidadMonitores,
-        empleados: horarios.map(h => ({
-          nombre: h.empleado?.nombre,
-          rol: h.empleado?.rolEmpleado,
-          id: h.empleado?._id,
-          esMonitor: h.empleado?.rolEmpleado?.toLowerCase() === 'monitor'
-        }))
-      });
-      
       // Determinar color de fondo según cantidad de monitores
       let bgColorStyle = '#f3f4f6'; // gray-50 default
       let borderColorStyle = '#d1d5db'; // gray-200 default
-      let badgeText = '';
-      let badgeEmoji = '';
-      let badgeBgStyle = '';
-      let badgeTextStyle = '';
       
       if (hasSchedules) {
         if (cantidadMonitores >= 6) {
           bgColorStyle = '#dcfce7'; // green-50
           borderColorStyle = '#86efac'; // green-300
-          badgeEmoji = '✅';
-          badgeText = `${cantidadMonitores}`;
-          badgeBgStyle = '#dcfce7'; // green-100
-          badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
           bgColorStyle = '#fee2e2'; // red-50
           borderColorStyle = '#fca5a5'; // red-300
-          badgeEmoji = '⚠️';
-          badgeText = `${cantidadMonitores}`;
-          badgeBgStyle = '#fee2e2'; // red-100
-          badgeTextStyle = '#991b1b'; // red-800
         } else {
           bgColorStyle = '#eff6ff'; // blue-50
           borderColorStyle = '#93c5fd'; // blue-300
@@ -4344,13 +4353,14 @@ async function renderWorkSchedulesMonthView() {
              style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; min-height: 110px; ${isToday ? 'box-shadow: 0 0 0 2px rgb(249, 115, 22);' : ''}"
              data-date="${dateISO}"
              data-monitores="${cantidadMonitores}"
+             data-has-schedules="${hasSchedules}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
              ondragover="handleScheduleDragOver(event)"
              ondragleave="handleScheduleDragLeave(event)"
              ondragenter="handleScheduleDragEnter(event)">
-          <div class="flex items-center justify-between mb-1">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
             <div style="font-size: 0.75rem; font-weight: 600; ${isToday ? 'color: #ea580c;' : 'color: #374151;'}">${day}</div>
-            ${badgeText ? `<div style="font-size: 0.5rem; padding: 0.125rem 0.375rem; border-radius: 0.375rem; font-weight: bold; white-space: nowrap; background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;" title="Monitores asignados"><span style="font-size: 1.2em; margin-right: 2px; line-height: 1;">${badgeEmoji}</span>${badgeText}</div>` : ''}
+            <div class="monitor-badge-container" data-monitor-count="${cantidadMonitores}"></div>
           </div>
           
           <div class="schedule-cards-container">
@@ -4424,6 +4434,9 @@ async function renderWorkSchedulesMonthView() {
         </div>
       `;
     }
+    
+    // NUEVO APPROACH: Renderizar badges DESPUÉS de insertar HTML en el DOM
+    renderMonitorBadges();
 
   } catch (error) {
     console.error('Error al renderizar vista mensual:', error);
