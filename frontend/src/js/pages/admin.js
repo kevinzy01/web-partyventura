@@ -3988,16 +3988,26 @@ function renderMonitorBadges() {
   // Buscar todos los contenedores de badges en el calendario
   const badgeContainers = document.querySelectorAll('.monitor-badge-container');
   
-  badgeContainers.forEach(container => {
+  console.log('🔍 [BADGES] Contenedores encontrados:', badgeContainers.length);
+  
+  badgeContainers.forEach((container, idx) => {
     const monitorCount = parseInt(container.getAttribute('data-monitor-count') || '0');
     const dayCell = container.closest('.day-cell');
     const hasSchedules = dayCell?.getAttribute('data-has-schedules') === 'true';
     
+    console.log(`🔍 [BADGES] Contenedor ${idx}:`, {
+      monitorCount,
+      hasSchedules,
+      dayCell: !!dayCell,
+      willRender: hasSchedules && monitorCount > 0
+    });
+    
     // Limpiar contenedor
     container.innerHTML = '';
     
-    // Solo mostrar badge si hay horarios
+    // Solo mostrar badge si hay horarios Y monitores
     if (!hasSchedules || monitorCount === 0) {
+      console.log(`⚠️ [BADGES] Contenedor ${idx} saltado: hasSchedules=${hasSchedules}, monitorCount=${monitorCount}`);
       return;
     }
     
@@ -4037,8 +4047,10 @@ function renderMonitorBadges() {
     badgeDiv.appendChild(textSpan);
     container.appendChild(badgeDiv);
     
-    console.log(`✅ Badge DOM creado para día con ${monitorCount} monitores`);
+    console.log(`✅ [BADGES] Badge DOM creado para contenedor ${idx}: ${monitorCount} monitores, emoji: ${monitorCount >= 6 ? '✅' : '⚠️'}`);
   });
+  
+  console.log(`🎯 [BADGES] Total badges renderizados: ${document.querySelectorAll('.monitor-badge-container > div').length}`);
 }
 
 // ===================================
@@ -4205,6 +4217,8 @@ async function renderWorkSchedulesWeekView() {
         </div>
       `;
     }).join('');
+    
+    console.log('📊 [WEEK VIEW] HTML insertado, llamando a renderMonitorBadges()...');
     
     // NUEVO APPROACH: Renderizar badges DESPUÉS de insertar HTML en el DOM
     // Esto asegura que los emojis se rendericen correctamente
