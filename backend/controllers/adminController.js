@@ -448,12 +448,17 @@ exports.createEmpleado = async (req, res) => {
 
     console.log('📥 Datos recibidos para empleado:', { nombreUsuario, email: email || '(vacío)', nombre, rolEmpleado });
 
-    // Validar campos requeridos
-    if (!nombreUsuario || !password || !nombre || !rolEmpleado) {
+    // Validar campos requeridos (password es opcional ahora)
+    if (!nombreUsuario || !nombre || !rolEmpleado) {
       return res.status(400).json({
         success: false,
-        message: 'Por favor completa todos los campos requeridos (nombreUsuario, password, nombre y rolEmpleado)'
+        message: 'Por favor completa todos los campos requeridos (nombreUsuario, nombre y rolEmpleado)'
       });
+    }
+    
+    // Si no se proporciona email, no se podrá enviar email de bienvenida
+    if (!email || !email.trim()) {
+      console.log('⚠️ No se proporcionó email, se usará contraseña proporcionada o se generará sin enviar email');
     }
     
     // Validar que el rolEmpleado (puesto de trabajo) sea válido
@@ -480,13 +485,27 @@ exports.createEmpleado = async (req, res) => {
       });
     }
 
+    // Generar contraseña aleatoria si no se proporcionó
+    const crypto = require('crypto');
+    let tempPassword = null;
+    let passwordToUse = password;
+    
+    if (!password || !password.trim()) {
+      // Generar contraseña segura de 12 caracteres
+      tempPassword = crypto.randomBytes(6).toString('hex'); // 12 caracteres hexadecimales
+      passwordToUse = tempPassword;
+      console.log('🔑 Contraseña temporal generada para empleado');
+    } else {
+      console.log('🔑 Usando contraseña proporcionada por el admin');
+    }
+
     // Crear el empleado
     // IMPORTANTE: rol='empleado' es FIJO (tipo de usuario para login)
     //             rolEmpleado es variable (puesto de trabajo: monitor/cocina/barra)
     const newEmpleadoData = {
       username: nombreUsuario,
       nombre: nombre,
-      password,
+      password: passwordToUse,
       rol: 'empleado',  // FIJO: Acceso al portal de empleados
       rolEmpleado: rolEmpleado  // VARIABLE: Puesto de trabajo
     };
@@ -499,16 +518,53 @@ exports.createEmpleado = async (req, res) => {
     
     const empleado = await Admin.create(newEmpleadoData);
 
+    // Si se generó contraseña temporal y hay email, enviar email de bienvenida
+    let emailSent = false;
+    if (tempPassword && email && email.trim()) {
+      try {
+        // Generar token de reset de contraseña (un solo uso)
+        const resetToken = empleado.generarResetToken();
+        await empleado.save();
+        
+        // Importar template y config de email
+        const welcomeEmployeeEmail = require('../templates/welcomeEmployeeEmail');
+        const transporter = require('../config/email');
+        
+        const htmlContent = welcomeEmployeeEmail(nombre, nombreUsuario, tempPassword, resetToken);
+        
+        await transporter.sendMail({
+          from: `"Partyventura" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: '🎉 Bienvenido a Partyventura - Credenciales de Acceso',
+          html: htmlContent
+        });
+        
+        emailSent = true;
+        console.log(`✅ Email de bienvenida enviado a ${email}`);
+      } catch (emailError) {
+        console.error('❌ Error al enviar email de bienvenida:', emailError);
+        // No fallar la creación si el email falla
+      }
+    }
+
     // No devolver la contraseña
     const empleadoData = empleado.toObject();
     delete empleadoData.password;
+    delete empleadoData.resetPasswordToken;
+    delete empleadoData.resetPasswordExpire;
 
     console.log('✅ Empleado creado:', empleadoData._id, '| rol:', empleadoData.rol, '| rolEmpleado:', empleadoData.rolEmpleado);
 
     res.status(201).json({
       success: true,
-      message: 'Empleado creado exitosamente',
-      data: empleadoData
+      message: emailSent 
+        ? 'Empleado creado exitosamente. Se ha enviado un email con las credenciales y link para cambiar contraseña.'
+        : tempPassword
+          ? `Empleado creado con contraseña temporal: ${tempPassword}. NO se envió email (falta dirección de correo).`
+          : 'Empleado creado exitosamente con la contraseña proporcionada.',
+      data: empleadoData,
+      emailSent,
+      tempPasswordGenerated: !!tempPassword
     });
   } catch (error) {
     console.error('❌ Error al crear empleado:', error);

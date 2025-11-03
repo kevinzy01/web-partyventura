@@ -1760,8 +1760,8 @@ async function handleEmpleadoSubmit(event) {
     return;
   }
   
-  // Validar contraseña en creación
-  if (!empleadoId && (!password || password.length < 6)) {
+  // Validar contraseña solo si se proporciona
+  if (password && password.length < 6) {
     showNotification('La contraseña debe tener al menos 6 caracteres', 'error');
     return;
   }
@@ -1773,6 +1773,17 @@ async function handleEmpleadoSubmit(event) {
       showNotification('Por favor ingresa un email válido', 'error');
       return;
     }
+  }
+  
+  // Advertencia si no hay email y no hay password (no se podrá enviar credenciales)
+  if (!empleadoId && !password && !email) {
+    const confirmacion = confirm(
+      '⚠️ No se ha proporcionado ni contraseña ni email.\n\n' +
+      'Se generará una contraseña automática pero NO se enviará por email.\n' +
+      'Deberás comunicar las credenciales al empleado manualmente.\n\n' +
+      '¿Deseas continuar?'
+    );
+    if (!confirmacion) return;
   }
   
   // Preparar datos
@@ -1811,10 +1822,16 @@ async function handleEmpleadoSubmit(event) {
     const data = await response.json();
     
     if (data.success) {
-      showNotification(
-        empleadoId ? 'Empleado actualizado correctamente' : 'Empleado creado correctamente',
-        'success'
-      );
+      // Mostrar mensaje especial si se envió email
+      let message = empleadoId ? 'Empleado actualizado correctamente' : 'Empleado creado correctamente';
+      
+      if (!empleadoId && data.emailSent) {
+        message += '\n\n📧 Se ha enviado un email al empleado con sus credenciales y un link para cambiar su contraseña.';
+      } else if (!empleadoId && data.tempPasswordGenerated && !data.emailSent) {
+        message += `\n\n🔑 Contraseña temporal generada:\n${data.message.split(': ')[1]?.split('.')[0] || 'Ver consola'}\n\n⚠️ Comunica estas credenciales al empleado.`;
+      }
+      
+      showNotification(message, 'success');
       closeEmpleadoModal();
       loadEmpleados();
     } else {
