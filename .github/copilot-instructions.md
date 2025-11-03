@@ -261,7 +261,159 @@ EMAIL_PASS=contraseña-de-aplicacion-gmail
 
 **Documentación**: Ver `/docs/RECUPERACION_PASSWORD.md` para guía completa y `/docs/TESTING_RECUPERACION_PASSWORD.md` para testing.
 
-### 12. Sistema de Bulk Selection y Eliminación
+### 12. Sistema de Credenciales Automáticas para Empleados
+**Implementado**: Sistema completo de onboarding automático con generación de credenciales y email de bienvenida (noviembre 2025).
+
+**Arquitectura**:
+- **Backend** (`/backend/controllers/adminController.js` línea 437-583):
+  - Contraseña opcional en creación de empleados
+  - Auto-generación con `crypto.randomBytes(6).toString('hex')` (12 caracteres hexadecimales)
+  - Reset token generado con `empleado.generarResetToken()` (24h expiry)
+  - Email enviado con credenciales + link de cambio de contraseña
+  - Flags de respuesta: `emailSent`, `tempPasswordGenerated`
+
+- **Email Template** (`/backend/templates/welcomeEmployeeEmail.js` 180 líneas):
+  - HTML responsive con inline CSS, gradiente corporativo naranja
+  - **Escape de HTML** para prevenir XSS (`escapeHtml()` función)
+  - Muestra: nombre, usuario, contraseña temporal, botón CTA
+  - Link de reset: `${FRONTEND_URL}/reset-password.html?token=XXXXX`
+  - Compatible móvil y desktop
+
+- **Frontend** (`/frontend/public/admin.html` línea 1295-1320):
+  - Campo de contraseña **opcional** (placeholder informativo)
+  - Hint azul: "💡 Si dejas este campo vacío, se generará una contraseña aleatoria..."
+  - Validación actualizada en `admin.js` línea 1746-1820
+
+**Seguridad** (Auditoría Completa - ver `/docs/AUDITORIA_CREDENCIALES_AUTO.md`):
+- ✅ **XSS Prevention**: Función `escapeHtml()` sanitiza nombre, username, tempPassword
+- ✅ **Token Seguro**: `crypto.randomBytes()` para password y `generarResetToken()` para reset
+- ✅ **Un Solo Uso**: Token se limpia tras cambio exitoso (`limpiarResetToken()`)
+- ✅ **Expiración**: Reset token válido por 24 horas
+- ✅ **Validación Multicapa**: Frontend → Backend → Base de Datos
+- ✅ **URL Correcta**: `FRONTEND_URL || NGROK_URL || 'http://localhost:5000'` (puerto 5000)
+
+**Flujo Completo**:
+1. Admin crea empleado SIN contraseña (campo vacío)
+2. Backend verifica que tenga email válido
+3. Genera contraseña temporal (12 chars hex)
+4. Crea reset token (24h expiry, hasheado SHA-256)
+5. Envía email con template HTML (credenciales + link)
+6. Empleado recibe email, anota credenciales
+7. Hace clic en "Cambiar mi Contraseña"
+8. Ingresa nueva contraseña segura
+9. Token se limpia automáticamente
+10. Accede al portal con su nueva contraseña
+
+**Casos de Uso**:
+```javascript
+// Caso 1: Auto-credenciales (RECOMENDADO)
+{
+  nombre: "Juan Pérez",
+  nombreUsuario: "juan.perez",
+  email: "juan@example.com",  // ✅ REQUERIDO
+  password: "",                // ← VACÍO = auto-generado
+  rolEmpleado: "monitor"
+}
+→ ✅ Password generado
+→ ✅ Email enviado
+→ ✅ Frontend muestra: "📧 Email enviado con credenciales..."
+
+// Caso 2: Contraseña manual (tradicional)
+{
+  password: "miPassword123"  // ← PROPORCIONADO
+}
+→ ❌ NO genera password automática
+→ ❌ NO envía email
+→ ✅ Usa contraseña del admin
+
+// Caso 3: Sin email NI contraseña (NO RECOMENDADO)
+{
+  email: "",
+  password: ""
+}
+→ ⚠️ Warning frontend: "El empleado NO podrá acceder..."
+→ ⚠️ Requiere confirmación explícita del admin
+→ ⚠️ Empleado creado pero sin credenciales
+```
+
+**Mensajes de Respuesta**:
+```javascript
+// Éxito con email
+{
+  success: true,
+  message: "Empleado creado exitosamente. Email enviado con credenciales.",
+  emailSent: true,
+  tempPasswordGenerated: true,
+  data: { ...empleadoData }
+}
+
+// Éxito sin email (SMTP caído)
+{
+  success: true,
+  message: "Empleado creado. Email NO enviado - comunica contraseña manualmente.",
+  emailSent: false,
+  tempPasswordGenerated: true,
+  data: { ...empleadoData, tempPassword: "abc123def456" }
+}
+
+// Éxito con contraseña manual
+{
+  success: true,
+  message: "Empleado creado con contraseña proporcionada.",
+  emailSent: false,
+  tempPasswordGenerated: false
+}
+```
+
+**Edge Cases Manejados**:
+- ✅ **SMTP caído**: Contraseña retornada en respuesta, admin debe comunicar manualmente
+- ✅ **Token expirado**: Error 400 tras 24h, empleado debe usar "Olvidé contraseña"
+- ✅ **Token re-usado**: Limpiado tras primer uso, segundo intento falla
+- ✅ **Caracteres especiales**: Validación regex bloquea SQL/XSS, permite acentos
+- ✅ **Email duplicado**: Índice único en MongoDB lanza error E11000
+- ✅ **Sin email ni password**: Warning con confirmación explícita
+
+**Validación de Inputs**:
+```javascript
+// adminController.js línea 464-483
+nombre: /^[a-záéíóúñü\s]+$/i  // Letras y espacios (permite acentos)
+username: /^[a-z0-9_.-]+$/    // Alfanumérico + _ . -
+email: isEmail() + normalizeEmail()  // RFC 5322
+password: opcional, min 6 si se proporciona
+```
+
+**Configuración Requerida**:
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=tu-email@gmail.com
+EMAIL_PASS=contraseña-de-aplicacion-gmail  # NO contraseña normal
+FRONTEND_URL=http://localhost:5000          # Desarrollo
+NGROK_URL=https://xxxx.ngrok.io             # Producción con Ngrok
+```
+
+**Testing**:
+```bash
+# Test de email local
+npm run dev  # Backend en puerto 5000
+# Crear empleado sin contraseña con email válido
+# Verificar email recibido en inbox
+# Hacer clic en link, cambiar contraseña
+# Login con nuevas credenciales
+```
+
+**Documentación Completa**: 
+- `/docs/AUDITORIA_CREDENCIALES_AUTO.md` - Auditoría de seguridad exhaustiva (45+ edge cases)
+- Commit inicial: `30656af`
+- Commit fix XSS: `PENDING`
+
+**Recomendaciones de Producción**:
+- [ ] Implementar rate limiting específico para creación de empleados (10/hora)
+- [ ] Agregar logging de auditoría de credenciales enviadas
+- [ ] Monitoreo de emails fallidos con alertas
+- [ ] Dashboard de empleados pendientes de activación
+
+### 13. Sistema de Bulk Selection y Eliminación
 **Implementado**: Sistema de selección masiva con checkbox "Seleccionar Todo" en 6 secciones del panel admin.
 
 **Secciones Afectadas**:

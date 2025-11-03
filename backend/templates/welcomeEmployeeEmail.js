@@ -3,8 +3,28 @@
  * Incluye credenciales iniciales y link para cambiar contraseña
  */
 
+// Función para escapar HTML y prevenir XSS
+const escapeHtml = (text) => {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const welcomeEmployeeEmail = (nombre, username, tempPassword, resetToken) => {
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password.html?token=${resetToken}`;
+  // Escapar todos los inputs del usuario
+  const nombreEscapado = escapeHtml(nombre);
+  const usernameEscapado = escapeHtml(username);
+  const tempPasswordEscapado = escapeHtml(tempPassword);
+  
+  // Determinar URL del frontend
+  // En desarrollo: http://localhost:5000
+  // En producción: URL de Ngrok o dominio
+  const baseUrl = process.env.FRONTEND_URL || process.env.NGROK_URL || 'http://localhost:5000';
+  const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
   
   return `
     <!DOCTYPE html>
@@ -39,7 +59,7 @@ const welcomeEmployeeEmail = (nombre, username, tempPassword, resetToken) => {
                   
                   <!-- Saludo personalizado -->
                   <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hola <strong>${nombre}</strong>,
+                    Hola <strong>${nombreEscapado}</strong>,
                   </p>
                   
                   <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px;">
@@ -53,11 +73,11 @@ const welcomeEmployeeEmail = (nombre, username, tempPassword, resetToken) => {
                         <table width="100%" cellpadding="8" cellspacing="0">
                           <tr>
                             <td style="color: #6b7280; font-size: 14px; font-weight: 600; width: 140px;">👤 Usuario:</td>
-                            <td style="color: #111827; font-size: 16px; font-weight: 700; font-family: 'Courier New', monospace;">${username}</td>
+                            <td style="color: #111827; font-size: 16px; font-weight: 700; font-family: 'Courier New', monospace;">${usernameEscapado}</td>
                           </tr>
                           <tr>
                             <td style="color: #6b7280; font-size: 14px; font-weight: 600; padding-top: 10px;">🔑 Contraseña:</td>
-                            <td style="color: #f97316; font-size: 16px; font-weight: 700; font-family: 'Courier New', monospace; padding-top: 10px;">${tempPassword}</td>
+                            <td style="color: #f97316; font-size: 16px; font-weight: 700; font-family: 'Courier New', monospace; padding-top: 10px;">${tempPasswordEscapado}</td>
                           </tr>
                         </table>
                       </td>
