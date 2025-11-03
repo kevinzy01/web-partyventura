@@ -3654,27 +3654,31 @@ function getRolColor(rolEmpleado) {
       bg: 'bg-blue-100',
       border: 'border-blue-400',
       text: 'text-blue-900',
-      hex: '#dbeafe' // blue-100
+      hex: '#dbeafe',        // blue-100 background
+      hexText: '#1e3a8a'     // blue-900 text
     },
     'cocina': {
       bg: 'bg-orange-100',
       border: 'border-orange-400',
       text: 'text-orange-900',
-      hex: '#fed7aa' // orange-100
+      hex: '#fed7aa',        // orange-100 background
+      hexText: '#92400e'     // orange-900 text
     },
     'barra': {
       bg: 'bg-purple-100',
       border: 'border-purple-400',
       text: 'text-purple-900',
-      hex: '#e9d5ff' // purple-100
+      hex: '#e9d5ff',        // purple-100 background
+      hexText: '#581c87'     // purple-900 text
     }
   };
   
-  return roleColors[rolEmpleado] || {
+  return roleColors[rolEmpleado?.toLowerCase()] || {
     bg: 'bg-gray-100',
     border: 'border-gray-400',
     text: 'text-gray-900',
-    hex: '#f3f4f6' // gray-100
+    hex: '#f3f4f6',          // gray-100 background
+    hexText: '#111827'       // gray-900 text
   };
 }
 
@@ -4101,31 +4105,36 @@ async function renderWorkSchedulesWeekView() {
               horarios.map(h => {
                 // Detectar si es horario auto-creado (horas extra)
                 const esHoraExtra = h.color === '#10b981';
-                const bgColor = esHoraExtra ? 'bg-blue-100' : 'bg-white';
+                const bgColorStyle = esHoraExtra ? '#dbeafe' : '#ffffff'; // blue-100 o white
+                const rolColor = getRolColor(h.empleado?.rolEmpleado);
+                const rolBgStyle = rolColor ? rolColor.hex : '#f3f4f6';
+                const rolTextStyle = rolColor ? rolColor.hexText : '#1f2937';
                 
                 return `
-                <div class="schedule-card ${bgColor} rounded p-2 mb-2 border-l-4 cursor-move hover:shadow-lg transition-all active:opacity-50" 
-                     style="border-color: ${h.color || '#f97316'}" 
+                <div class="schedule-card rounded cursor-move transition-all active:opacity-50" 
+                     style="background-color: ${bgColorStyle}; border-left: 4px solid ${h.color || '#f97316'}; padding: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: move;" 
                      draggable="true"
                      data-schedule-id="${h.id}"
                      data-schedule-date="${dateISO}"
                      data-employee-name="${h.empleado?.nombre || 'N/A'}"
                      ondragstart="handleScheduleDragStart(event, '${h.id}', '${dateISO}')"
                      ondragend="handleScheduleDragEnd(event)"
-                     onclick="event.stopPropagation(); editWorkSchedule('${h.id}')">
-                  <div class="flex items-center gap-1 mb-1">
-                    <span class="drag-handle text-gray-400 text-xs">⋮⋮</span>
-                    ${esHoraExtra ? `<div class="inline-block px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded">🕒 HORAS EXTRA</div>` : ''}
+                     onclick="event.stopPropagation(); editWorkSchedule('${h.id}')"
+                     onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'"
+                     onmouseout="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'">
+                  <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem;">
+                    <span class="drag-handle" style="color: #9ca3af; font-size: 0.75rem; cursor: grab;">⋮⋮</span>
+                    ${esHoraExtra ? `<div style="display: inline-block; padding: 0.125rem 0.5rem; background-color: #3b82f6; color: white; font-size: 0.625rem; font-weight: bold; border-radius: 0.375rem;">🕒 HORAS EXTRA</div>` : ''}
                   </div>
-                  ${h.empleado?.nombre ? `<div class="text-xs font-semibold text-gray-800">${h.empleado.nombre}</div>` : ''}
-                  <div class="text-xs text-gray-600">${h.horaInicio} - ${h.horaFin}</div>
-                  <div class="text-xs text-gray-500">${h.turno} (${h.horasTotales}h)</div>
-                  ${h.empleado?.rolEmpleado ? `<div class="text-xs mt-1 px-2 py-0.5 rounded inline-block ${getRolColor(h.empleado.rolEmpleado).bg} ${getRolColor(h.empleado.rolEmpleado).text}"><strong>${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</strong></div>` : ''}
-                  ${h.notas ? `<div class="text-xs text-gray-500 mt-1 italic">${h.notas}</div>` : ''}
+                  ${h.empleado?.nombre ? `<div style="font-size: 0.75rem; font-weight: 600; color: #1f2937;">${h.empleado.nombre}</div>` : ''}
+                  <div style="font-size: 0.75rem; color: #4b5563;">${h.horaInicio} - ${h.horaFin}</div>
+                  <div style="font-size: 0.75rem; color: #6b7280;">${h.turno} (${h.horasTotales}h)</div>
+                  ${h.empleado?.rolEmpleado ? `<div style="font-size: 0.75rem; margin-top: 0.25rem; padding: 0.125rem 0.5rem; border-radius: 0.375rem; display: inline-block; background-color: ${rolBgStyle}; color: ${rolTextStyle};"><strong>${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</strong></div>` : ''}
+                  ${h.notas ? `<div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; font-style: italic;">${h.notas}</div>` : ''}
                 </div>
               `;
               }).join('') :
-              '<div class="text-xs text-gray-400 italic">Arrastra aquí un horario</div>'
+              '<div style="font-size: 0.75rem; color: #9ca3af; font-style: italic;">Arrastra aquí un horario</div>'
             }
           </div>
         </div>
@@ -4304,8 +4313,8 @@ async function renderWorkSchedulesMonthView() {
              ondragleave="handleScheduleDragLeave(event)"
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-1">
-            <div class="text-xs font-semibold ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
-            ${badgeText ? `<div class="badge-monitor text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;" title="Monitores asignados"><span style="font-size: 1.2em; margin-right: 2px; line-height: 1;">${badgeEmoji}</span>${badgeText}</div>` : ''}
+            <div style="font-size: 0.75rem; font-weight: 600; ${isToday ? 'color: #ea580c;' : 'color: #374151;'}">${day}</div>
+            ${badgeText ? `<div style="font-size: 0.5rem; padding: 0.125rem 0.375rem; border-radius: 0.375rem; font-weight: bold; white-space: nowrap; background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;" title="Monitores asignados"><span style="font-size: 1.2em; margin-right: 2px; line-height: 1;">${badgeEmoji}</span>${badgeText}</div>` : ''}
           </div>
           
           <div class="schedule-cards-container">
@@ -4313,28 +4322,29 @@ async function renderWorkSchedulesMonthView() {
               horarios.slice(0, 3).map(h => {
                 const esHoraExtra = h.color === '#10b981';
                 const rolColor = getRolColor(h.empleado?.rolEmpleado);
-                const bgColor = esHoraExtra ? 'bg-blue-100' : rolColor.bg;
-                const textColor = esHoraExtra ? 'text-blue-900' : rolColor.text;
+                const bgColorMonthStyle = esHoraExtra ? '#dbeafe' : rolColor.hex;
+                const textColorMonthStyle = esHoraExtra ? '#1e3a8a' : rolColor.hexText;
                 
                 return `
-                  <div class="schedule-card text-xs rounded px-1 py-0.5 mb-1 border-l-2 ${bgColor} ${textColor} cursor-move hover:shadow-lg transition-all active:opacity-50" 
-                       style="border-color: ${h.color || '#f97316'}" 
+                  <div style="font-size: 0.75rem; border-radius: 0.375rem; padding: 0.25rem 0.25rem; margin-bottom: 0.25rem; border-left: 2px solid ${h.color || '#f97316'}; background-color: ${bgColorMonthStyle}; color: ${textColorMonthStyle}; cursor: move; transition: all 0.2s;" 
                        draggable="true"
                        data-schedule-id="${h.id}"
                        data-schedule-date="${dateISO}"
                        data-employee-name="${h.empleado?.nombre || 'N/A'}"
                        ondragstart="handleScheduleDragStart(event, '${h.id}', '${dateISO}')"
                        ondragend="handleScheduleDragEnd(event)"
+                       onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'"
+                       onmouseout="this.style.boxShadow='none'"
                        title="${esHoraExtra ? '🕒 HORAS EXTRA - ' : ''}${h.empleado?.nombre || ''}: ${h.horaInicio}-${h.horaFin}"
                        onclick="event.stopPropagation(); editWorkSchedule('${h.id}')">
-                    ${esHoraExtra ? `<div class="text-[9px] font-bold text-blue-600">🕒 EXTRA</div>` : ''}
-                    <div class="font-semibold truncate">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
+                    ${esHoraExtra ? `<div style="font-size: 0.625rem; font-weight: bold; color: #2563eb;">🕒 EXTRA</div>` : ''}
+                    <div style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${h.empleado?.nombre ? h.empleado.nombre.split(' ')[0] : 'N/A'}</div>
                     <div>${h.horaInicio}-${h.horaFin}</div>
-                    ${h.empleado?.rolEmpleado ? `<div class="text-xs font-semibold">${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</div>` : ''}
+                    ${h.empleado?.rolEmpleado ? `<div style="font-size: 0.75rem; font-weight: 600;">${h.empleado.rolEmpleado.charAt(0).toUpperCase() + h.empleado.rolEmpleado.slice(1)}</div>` : ''}
                   </div>
                 `;
-              }).join('') + (horarios.length > 3 ? `<div class="text-xs text-gray-500">+${horarios.length - 3} más</div>` : '') :
-              '<div class="text-xs text-gray-400 italic opacity-0 hover:opacity-100 transition-opacity">Arrastra aquí</div>'
+              }).join('') + (horarios.length > 3 ? `<div style="font-size: 0.75rem; color: #6b7280;">+${horarios.length - 3} más</div>` : '') :
+              '<div style="font-size: 0.75rem; color: #9ca3af; font-style: italic; opacity: 0; transition: opacity 0.2s;" onmouseover="this.style.opacity=\'1\'" onmouseout="this.style.opacity=\'0\'">Arrastra aquí</div>'
             }
           </div>
         </div>
