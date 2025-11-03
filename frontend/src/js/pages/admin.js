@@ -4560,28 +4560,14 @@ window.handleScheduleDrop = async function(event, newDate) {
     to: newDate
   });
   
-  // Mostrar confirmación
+  // Mostrar confirmación con confirm() nativo
   const employeeName = draggedSchedule.element.dataset.employeeName || 'Empleado';
-  const confirmMessage = `¿Cambiar horario de ${employeeName} de ${originalDate} a ${newDate}?`;
+  const originalDateFormatted = new Date(originalDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const newDateFormatted = new Date(newDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   
-  const confirmed = await Swal.fire({
-    title: '📅 Cambiar Fecha de Horario',
-    html: `
-      <div class="text-left">
-        <p class="mb-2"><strong>Empleado:</strong> ${employeeName}</p>
-        <p class="mb-2"><strong>Fecha Original:</strong> ${new Date(originalDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-        <p class="mb-2"><strong>Nueva Fecha:</strong> ${new Date(newDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-      </div>
-    `,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#f97316',
-    cancelButtonColor: '#6b7280',
-    confirmButtonText: '✅ Sí, cambiar',
-    cancelButtonText: '❌ Cancelar'
-  });
+  const confirmMessage = `¿Cambiar horario de ${employeeName}?\n\nDe: ${originalDateFormatted}\nA: ${newDateFormatted}`;
   
-  if (!confirmed.isConfirmed) {
+  if (!confirm(confirmMessage)) {
     draggedSchedule = null;
     return;
   }
