@@ -4030,6 +4030,7 @@ async function renderWorkSchedulesWeekView() {
       let bgColorStyle = '#f3f4f6'; // gray-50 default
       let borderColorStyle = '#d1d5db'; // gray-200 default
       let badgeText = '';
+      let badgeEmoji = '';
       let badgeBgStyle = '';
       let badgeTextStyle = '';
       
@@ -4037,13 +4038,15 @@ async function renderWorkSchedulesWeekView() {
         if (cantidadMonitores >= 6) {
           bgColorStyle = '#dcfce7'; // green-50
           borderColorStyle = '#86efac'; // green-300
-          badgeText = `<span style="font-size: 1.2em; margin-right: 2px;">✅</span>${cantidadMonitores} monitores`;
+          badgeEmoji = '✅';
+          badgeText = `${cantidadMonitores} monitores`;
           badgeBgStyle = '#dcfce7'; // green-100
           badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
           bgColorStyle = '#fee2e2'; // red-50
           borderColorStyle = '#fca5a5'; // red-300
-          badgeText = `<span style="font-size: 1.2em; margin-right: 2px;">⚠️</span>${cantidadMonitores} monitores`;
+          badgeEmoji = '⚠️';
+          badgeText = `${cantidadMonitores} monitores`;
           badgeBgStyle = '#fee2e2'; // red-100
           badgeTextStyle = '#991b1b'; // red-800
         } else {
@@ -4076,7 +4079,7 @@ async function renderWorkSchedulesWeekView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-2">
             <div class="font-semibold text-sm text-gray-700">${dayName}</div>
-            ${badgeText ? `<div class="badge-monitor text-[11px] px-2.5 py-1 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="badge-monitor text-[11px] px-2.5 py-1 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;"><span style="font-size: 1.3em; margin-right: 3px; line-height: 1;">${badgeEmoji}</span>${badgeText}</div>` : ''}
           </div>
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
@@ -4240,6 +4243,7 @@ async function renderWorkSchedulesMonthView() {
       let bgColorStyle = '#f3f4f6'; // gray-50 default
       let borderColorStyle = '#d1d5db'; // gray-200 default
       let badgeText = '';
+      let badgeEmoji = '';
       let badgeBgStyle = '';
       let badgeTextStyle = '';
       
@@ -4247,13 +4251,15 @@ async function renderWorkSchedulesMonthView() {
         if (cantidadMonitores >= 6) {
           bgColorStyle = '#dcfce7'; // green-50
           borderColorStyle = '#86efac'; // green-300
-          badgeText = `<span style="font-size: 1.1em; margin-right: 2px;">✅</span>${cantidadMonitores}`;
+          badgeEmoji = '✅';
+          badgeText = `${cantidadMonitores}`;
           badgeBgStyle = '#dcfce7'; // green-100
           badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
           bgColorStyle = '#fee2e2'; // red-50
           borderColorStyle = '#fca5a5'; // red-300
-          badgeText = `<span style="font-size: 1.1em; margin-right: 2px;">⚠️</span>${cantidadMonitores}`;
+          badgeEmoji = '⚠️';
+          badgeText = `${cantidadMonitores}`;
           badgeBgStyle = '#fee2e2'; // red-100
           badgeTextStyle = '#991b1b'; // red-800
         } else {
@@ -4273,7 +4279,7 @@ async function renderWorkSchedulesMonthView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-1">
             <div class="text-xs font-semibold ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
-            ${badgeText ? `<div class="badge-monitor text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;" title="Monitores asignados">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="badge-monitor text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle}; display: inline-block;" title="Monitores asignados"><span style="font-size: 1.2em; margin-right: 2px; line-height: 1;">${badgeEmoji}</span>${badgeText}</div>` : ''}
           </div>
           
           <div class="schedule-cards-container">
