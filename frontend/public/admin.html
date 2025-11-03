@@ -522,6 +522,22 @@
       border-color: #10b981;
       background-color: rgba(16, 185, 129, 0.05);
     }
+    
+    /* ===================================
+       VISTA SEMANAL - RESPONSIVE GRID
+       =================================== */
+    #weekCalendar {
+      display: grid;
+      grid-template-columns: 1fr; /* Móvil: 1 columna */
+      gap: 0.5rem;
+    }
+    
+    /* Tablets y superior */
+    @media (min-width: 768px) {
+      #weekCalendar {
+        grid-template-columns: repeat(7, 1fr); /* Desktop: 7 columnas */
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -2224,7 +2240,7 @@
         </button>
       </div>
       
-      <div id="weekCalendar" class="grid grid-cols-1 md:grid-cols-7 gap-2">
+      <div id="weekCalendar">
         <!-- Días de la semana generados dinámicamente -->
       </div>
     </div>
@@ -2771,6 +2787,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=102"></script>
+  <script src="/src/js/pages/admin.js?v=103"></script>
 </body>
 </html>
