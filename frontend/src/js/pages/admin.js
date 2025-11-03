@@ -4253,35 +4253,48 @@ async function createWorkSchedule(formData) {
 
 // Editar horario existente
 async function editWorkSchedule(id) {
-  const ws = workSchedules.find(w => w.id === id);
-  if (!ws) {
-    showNotification('Horario no encontrado', 'error');
-    return;
+  try {
+    // Obtener datos actualizados del backend en lugar de usar cache
+    const response = await fetch(`${API_URL}/work-schedules/${id}`, {
+      headers: Auth.getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      showNotification('Horario no encontrado', 'error');
+      return;
+    }
+    
+    const ws = data.data;
+    
+    // Llenar formulario con datos actualizados del backend
+    document.getElementById('workScheduleId').value = id;
+    document.getElementById('wsEmpleado').value = ws.empleado?.id || '';
+    document.getElementById('wsFecha').value = ws.fecha.split('T')[0];
+    document.getElementById('wsTurno').value = ws.turno;
+    document.getElementById('wsHoraInicio').value = ws.horaInicio;
+    document.getElementById('wsHoraFin').value = ws.horaFin;
+    document.getElementById('wsEstado').value = ws.estado;
+    document.getElementById('wsNotas').value = ws.notas || '';
+    document.getElementById('wsColor').value = ws.color;
+    document.getElementById('wsColorHex').value = ws.color;
+    
+    // Actualizar contador de caracteres
+    const notasLength = (ws.notas || '').length;
+    const notasCount = document.getElementById('wsNotasCount');
+    if (notasCount) notasCount.textContent = notasLength;
+    
+    // Cambiar título del modal
+    document.getElementById('modalWorkScheduleTitle').textContent = 'Editar Horario Laboral';
+    
+    // Mostrar modal
+    const modal = document.getElementById('modalWorkSchedule');
+    modal.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error al cargar horario:', error);
+    showNotification('Error al cargar datos del horario', 'error');
   }
-  
-  // Llenar formulario
-  document.getElementById('workScheduleId').value = id;
-  document.getElementById('wsEmpleado').value = ws.empleado?.id || '';
-  document.getElementById('wsFecha').value = ws.fecha.split('T')[0];
-  document.getElementById('wsTurno').value = ws.turno;
-  document.getElementById('wsHoraInicio').value = ws.horaInicio;
-  document.getElementById('wsHoraFin').value = ws.horaFin;
-  document.getElementById('wsEstado').value = ws.estado;
-  document.getElementById('wsNotas').value = ws.notas || '';
-  document.getElementById('wsColor').value = ws.color;
-  document.getElementById('wsColorHex').value = ws.color;
-  
-  // Actualizar contador de caracteres
-  const notasLength = (ws.notas || '').length;
-  const notasCount = document.getElementById('wsNotasCount');
-  if (notasCount) notasCount.textContent = notasLength;
-  
-  // Cambiar título del modal
-  document.getElementById('modalWorkScheduleTitle').textContent = 'Editar Horario Laboral';
-  
-  // Mostrar modal
-  const modal = document.getElementById('modalWorkSchedule');
-  modal.classList.remove('hidden');
 }
 
 // Actualizar horario
