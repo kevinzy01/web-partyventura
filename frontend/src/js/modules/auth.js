@@ -98,6 +98,13 @@ const Auth = {
       }
     };
 
+    // Si el body es FormData, NO incluir Content-Type (fetch lo setea automático)
+    if (options.body instanceof FormData) {
+      delete defaultOptions.headers['Content-Type'];
+    } else if (!defaultOptions.headers['Content-Type']) {
+      defaultOptions.headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(url, { ...options, ...defaultOptions });
 
     // Si el token expiró o es inválido
@@ -106,7 +113,9 @@ const Auth = {
       throw new Error('Sesión expirada');
     }
 
-    return response;
+    // Parsear JSON antes de retornar
+    const data = await response.json();
+    return data;
   },
 
   // Renovar token (si implementas refresh tokens)

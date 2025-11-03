@@ -277,8 +277,7 @@ async function loadStats() {
     document.getElementById('totalNews').textContent = newsData.success ? newsData.data.length : 0;
     
     // Cargar contactos (REQUIERE AUTENTICACIÓN)
-    const contactsResponse = await Auth.authFetch(`${API_URL}/contact`);
-    const contactsData = await contactsResponse.json();
+    const contactsData = await Auth.authFetch(`${API_URL}/contact`);
     const totalContacts = contactsData.success ? contactsData.data.length : 0;
     const newMessages = contactsData.success ? contactsData.data.filter(c => !c.leido).length : 0;
     
@@ -296,8 +295,7 @@ async function loadStats() {
     
     // Cargar suscriptores (REQUIERE AUTENTICACIÓN)
     try {
-      const subscribersResponse = await Auth.authFetch(`${API_URL}/newsletter`);
-      const subscribersData = await subscribersResponse.json();
+      const subscribersData = await Auth.authFetch(`${API_URL}/newsletter`);
       document.getElementById('totalSubscribers').textContent = subscribersData.success ? subscribersData.data.length : '0';
     } catch (error) {
       console.log('Newsletter API no disponible aún');
@@ -306,8 +304,7 @@ async function loadStats() {
 
     // Cargar eventos (REQUIERE AUTENTICACIÓN)
     try {
-      const eventsResponse = await Auth.authFetch(`${API_URL}/events`);
-      const eventsData = await eventsResponse.json();
+      const eventsData = await Auth.authFetch(`${API_URL}/events`);
       document.getElementById('totalEvents').textContent = eventsData.success ? eventsData.data.length : '0';
     } catch (error) {
       console.log('Events API:', error.message);
@@ -316,8 +313,7 @@ async function loadStats() {
 
     // Cargar imágenes de galería (REQUIERE AUTENTICACIÓN)
     try {
-      const galleryResponse = await Auth.authFetch(`${API_URL}/gallery`);
-      const galleryData = await galleryResponse.json();
+      const galleryData = await Auth.authFetch(`${API_URL}/gallery`);
       document.getElementById('totalGalleryImages').textContent = galleryData.success ? galleryData.data.length : '0';
     } catch (error) {
       console.log('Gallery API:', error.message);
@@ -724,11 +720,10 @@ async function deleteNews(id, silentOrTitle = false) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/news/${id}`, {
+    const data = await Auth.authFetch(`${API_URL}/news/${id}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     
     if (!response.ok) {
       throw new Error(data.message || 'Error al eliminar la noticia');
@@ -767,8 +762,7 @@ async function loadContacts(filter = 'all') {
   clearSelection('contacts');
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/contact`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/contact`);
     
     if (!data.success || data.data.length === 0) {
       container.innerHTML = `
@@ -963,15 +957,13 @@ async function viewContact(id) {
 // ===================================
 async function updateContactStatus(id, updates) {
   try {
-    const response = await Auth.authFetch(`${API_URL}/contact/${id}`, {
+    const data = await Auth.authFetch(`${API_URL}/contact/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(updates)
     });
-    
-    const data = await response.json();
     
     if (!data.success) {
       throw new Error(data.message || 'Error al actualizar');
@@ -1001,11 +993,10 @@ async function deleteContact(id, silent = false) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/contact/${id}`, {
+    const data = await Auth.authFetch(`${API_URL}/contact/${id}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     
     if (!data.success) {
       throw new Error(data.message || 'Error al eliminar');
@@ -1151,8 +1142,7 @@ async function loadAdmins() {
   const container = document.getElementById('adminsContainer');
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/admins`);
     
     if (!data.success || data.data.length === 0) {
       container.innerHTML = `
@@ -1293,8 +1283,7 @@ async function showEditAdminModal(adminId = null) {
     
     try {
       // Cargar datos del admin (desde la lista ya cargada)
-      const response = await Auth.authFetch(`${API_URL}/admins`);
-      const data = await response.json();
+      const data = await Auth.authFetch(`${API_URL}/admins`);
       const admin = data.data.find(a => a._id === adminId);
       
       if (admin) {
@@ -1430,13 +1419,11 @@ async function toggleAdminRole(adminId, currentRole) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins/${adminId}/role`, {
+    const data = await Auth.authFetch(`${API_URL}/admins/${adminId}/role`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rol: newRole })
     });
-    
-    const data = await response.json();
     
     if (data.success) {
       showNotification(`Rol cambiado a ${roleText}`, 'success');
@@ -1463,11 +1450,10 @@ async function unlockAdmin(adminId) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins/${adminId}/unlock`, {
+    const data = await Auth.authFetch(`${API_URL}/admins/${adminId}/unlock`, {
       method: 'PATCH'
     });
     
-    const data = await response.json();
     
     if (data.success) {
       showNotification('Administrador desbloqueado', 'success');
@@ -1494,11 +1480,10 @@ async function deleteAdmin(adminId, username) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins/${adminId}`, {
+    const data = await Auth.authFetch(`${API_URL}/admins/${adminId}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     
     if (data.success) {
       showNotification('Administrador eliminado', 'success');
@@ -1626,8 +1611,7 @@ async function loadEmpleados() {
   clearSelection('empleados');
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins/empleados`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/admins/empleados`);
     
     if (data.success && Array.isArray(data.data)) {
       displayEmpleados(data.data);
@@ -1755,8 +1739,7 @@ async function showEmpleadoModal(empleadoId = null) {
     
     // Cargar datos del empleado
     try {
-      const response = await Auth.authFetch(`${API_URL}/admins/empleados/${empleadoId}`);
-      const data = await response.json();
+      const data = await Auth.authFetch(`${API_URL}/admins/empleados/${empleadoId}`);
       
       if (data.success && data.data) {
         const empleado = data.data;
@@ -1861,15 +1844,13 @@ async function handleEmpleadoSubmit(event) {
     
     const method = empleadoId ? 'PUT' : 'POST';
     
-    const response = await Auth.authFetch(url, {
+    const data = await Auth.authFetch(url, {
       method: method,
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(empleadoData)
     });
-    
-    const data = await response.json();
     
     if (data.success) {
       // Mostrar mensaje especial si se envió email
@@ -1906,11 +1887,10 @@ async function deleteEmpleado(empleadoId, username, silent = false) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins/empleados/${empleadoId}`, {
+    const data = await Auth.authFetch(`${API_URL}/admins/empleados/${empleadoId}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     
     if (data.success) {
       if (!silent) {
@@ -2050,8 +2030,7 @@ async function loadNotifications() {
   const container = document.getElementById('notificationsList');
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/contact`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/contact`);
     
     if (!data.success || data.data.length === 0) {
       container.innerHTML = `
@@ -2141,8 +2120,7 @@ function openNotificationDetail(contactId) {
 // Marcar todas como leídas
 async function markAllNotificationsRead() {
   try {
-    const response = await Auth.authFetch(`${API_URL}/contact`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/contact`);
     
     if (data.success && data.data.length > 0) {
       const unreadMessages = data.data.filter(msg => !msg.leido);
@@ -2251,8 +2229,7 @@ async function loadEvents() {
   clearSelection('events');
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/events`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/events`);
     
     if (!data.success) throw new Error(data.message);
     
@@ -2415,8 +2392,7 @@ function hideEventImagePreview() {
 
 async function loadEventData(id) {
   try {
-    const response = await Auth.authFetch(`${API_URL}/events/${id}`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/events/${id}`);
     
     if (!data.success) throw new Error(data.message);
     
@@ -2583,11 +2559,10 @@ async function deleteEvent(id, silent = false) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/events/${id}`, {
+    const data = await Auth.authFetch(`${API_URL}/events/${id}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
     if (!silent) {
@@ -2685,8 +2660,7 @@ async function loadGallery() {
     if (featured) params.append('isFeatured', 'true');
     if (active !== undefined) params.append('isActive', active);
     
-    const response = await Auth.authFetch(`${API_URL}/gallery?${params}`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/gallery?${params}`);
     
     if (!data.success) throw new Error(data.message);
     
@@ -2791,8 +2765,7 @@ function closeGalleryModal() {
 
 async function loadImageData(id) {
   try {
-    const response = await Auth.authFetch(`${API_URL}/gallery/${id}`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/gallery/${id}`);
     
     if (!data.success) throw new Error(data.message);
     
@@ -2883,11 +2856,10 @@ async function editImage(id) {
 
 async function toggleImageFeatured(id) {
   try {
-    const response = await Auth.authFetch(`${API_URL}/gallery/${id}/toggle-featured`, {
+    const data = await Auth.authFetch(`${API_URL}/gallery/${id}/toggle-featured`, {
       method: 'PATCH'
     });
     
-    const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
     showNotification(data.message, 'success');
@@ -2901,11 +2873,10 @@ async function toggleImageFeatured(id) {
 
 async function toggleImageStatus(id) {
   try {
-    const response = await Auth.authFetch(`${API_URL}/gallery/${id}/toggle-status`, {
+    const data = await Auth.authFetch(`${API_URL}/gallery/${id}/toggle-status`, {
       method: 'PATCH'
     });
     
-    const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
     showNotification(data.message, 'success');
@@ -2923,11 +2894,10 @@ async function deleteImage(id, silent = false) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/gallery/${id}`, {
+    const data = await Auth.authFetch(`${API_URL}/gallery/${id}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
     if (!silent) {
@@ -3005,8 +2975,7 @@ function setDefaultDates() {
 
 async function loadEmployeesForFilter() {
   try {
-    const response = await Auth.authFetch(`${API_URL}/admins/empleados`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/admins/empleados`);
     
     if (data.success) {
       const employees = data.data;
@@ -3055,8 +3024,7 @@ async function loadTimeRecords() {
       ...timeRecordsFilters
     });
     
-    const response = await Auth.authFetch(`${API_URL}/time-records/admin/todos?${params}`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/time-records/admin/todos?${params}`);
     
     if (!data.success || data.data.registros.length === 0) {
       tbody.innerHTML = `
@@ -3172,8 +3140,7 @@ async function loadTimeRecords() {
 async function loadTimeRecordsSummary() {
   try {
     // Cargar total de empleados
-    const employeesResponse = await Auth.authFetch(`${API_URL}/admins/empleados`);
-    const employeesData = await employeesResponse.json();
+    const employeesData = await Auth.authFetch(`${API_URL}/admins/empleados`);
     
     if (employeesData.success) {
       const employees = employeesData.data;
@@ -3185,8 +3152,7 @@ async function loadTimeRecordsSummary() {
     const mes = now.getMonth() + 1; // getMonth() devuelve 0-11
     const anio = now.getFullYear();
     
-    const resumenResponse = await Auth.authFetch(`${API_URL}/time-records/admin/resumen?mes=${mes}&anio=${anio}`);
-    const resumenData = await resumenResponse.json();
+    const resumenData = await Auth.authFetch(`${API_URL}/time-records/admin/resumen?mes=${mes}&anio=${anio}`);
     
     if (resumenData.success && resumenData.data) {
       // Calcular total de horas del mes
@@ -3196,8 +3162,7 @@ async function loadTimeRecordsSummary() {
     
     // Cargar registros de hoy
     const today = new Date().toISOString().split('T')[0];
-    const todayResponse = await Auth.authFetch(`${API_URL}/time-records/admin/todos?fechaInicio=${today}&fechaFin=${today}`);
-    const todayData = await todayResponse.json();
+    const todayData = await Auth.authFetch(`${API_URL}/time-records/admin/todos?fechaInicio=${today}&fechaFin=${today}`);
     
     if (todayData.success && todayData.data) {
       const todayRecordsCount = todayData.data.pagination.totalRecords;
@@ -3255,8 +3220,7 @@ function updatePagination(from, to, total) {
 async function editTimeRecord(id) {
   try {
     // Obtener el registro actual
-    const response = await Auth.authFetch(`${API_URL}/time-records/admin/todos?limit=1000`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/time-records/admin/todos?limit=1000`);
     
     if (!data.success) throw new Error('Error al cargar registro');
     
@@ -3300,13 +3264,12 @@ async function handleEditTimeRecord(e) {
   const fecha = new Date(`${date}T${time}`);
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/time-records/admin/${recordId}`, {
+    const data = await Auth.authFetch(`${API_URL}/time-records/admin/${recordId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipo, fecha, ubicacion })
     });
     
-    const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
     showNotification('Registro actualizado correctamente', 'success');
@@ -3326,11 +3289,10 @@ async function deleteTimeRecord(id, silent = false) {
   }
   
   try {
-    const response = await Auth.authFetch(`${API_URL}/time-records/admin/${id}`, {
+    const data = await Auth.authFetch(`${API_URL}/time-records/admin/${id}`, {
       method: 'DELETE'
     });
     
-    const data = await response.json();
     if (!data.success) throw new Error(data.message);
     
     if (!silent) {

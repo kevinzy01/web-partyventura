@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnSalida').addEventListener('click', () => ficharSalida());
   document.getElementById('btnLogout').addEventListener('click', handleLogout);
   document.getElementById('btnRecargarHistorial').addEventListener('click', () => cargarHistorial());
+  
+  // Inicializar módulos adicionales con delay
+  setTimeout(() => {
+    initEmployeeSchedules();
+    initIncidencias();
+  }, 500);
 });
 
 // ===================================
@@ -215,8 +221,7 @@ async function cargarDatos() {
 
 async function cargarUltimoRegistro() {
   try {
-    const response = await Auth.authFetch(`${API_URL}/time-records/ultimo`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/time-records/ultimo`);
     
     if (data.success) {
       ultimoRegistro = data.data;
@@ -229,8 +234,7 @@ async function cargarUltimoRegistro() {
 
 async function cargarHistorial() {
   try {
-    const response = await Auth.authFetch(`${API_URL}/time-records/mis-registros?limit=20`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/time-records/mis-registros?limit=20`);
     
     if (data.success) {
       mostrarHistorial(data.data);
@@ -247,8 +251,7 @@ async function cargarResumenMensual() {
     const mes = now.getMonth() + 1;
     const anio = now.getFullYear();
     
-    const response = await Auth.authFetch(`${API_URL}/time-records/mi-resumen?mes=${mes}&anio=${anio}`);
-    const data = await response.json();
+    const data = await Auth.authFetch(`${API_URL}/time-records/mi-resumen?mes=${mes}&anio=${anio}`);
     
     if (data.success && data.data) {
       document.getElementById('horasMes').textContent = `${data.data.totalHoras || 0}h`;
@@ -287,11 +290,9 @@ async function cargarResumenSemanal() {
       fechaFin
     });
     
-    const response = await Auth.authFetch(
+    const data = await Auth.authFetch(
       `${API_URL}/time-records/mis-registros?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&limit=200`
     );
-    
-    const data = await response.json();
     
     if (data.success && data.data && data.data.length > 0) {
       // Calcular total de horas trabajadas en la semana
@@ -346,11 +347,9 @@ async function cargarHorasAsignadas() {
       fechaFin
     });
     
-    const response = await Auth.authFetch(
+    const data = await Auth.authFetch(
       `${API_URL}/work-schedules/my-schedules?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`
     );
-    
-    const data = await response.json();
     
     console.log('📊 Respuesta de horas asignadas:', data);
     
@@ -388,7 +387,7 @@ async function cargarHorasAsignadas() {
 
 async function ficharEntrada() {
   try {
-    const response = await Auth.authFetch(`${API_URL}/time-records/registro`, {
+    const data = await Auth.authFetch(`${API_URL}/time-records/registro`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -398,8 +397,6 @@ async function ficharEntrada() {
         ubicacion: 'Portal Web'
       })
     });
-
-    const data = await response.json();
     
     if (data.success) {
       showToast('¡Entrada registrada!', `Hora: ${new Date(data.data.fecha).toLocaleTimeString('es-ES')}`, 'success');
@@ -415,7 +412,7 @@ async function ficharEntrada() {
 
 async function ficharSalida() {
   try {
-    const response = await Auth.authFetch(`${API_URL}/time-records/registro`, {
+    const data = await Auth.authFetch(`${API_URL}/time-records/registro`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -425,8 +422,6 @@ async function ficharSalida() {
         ubicacion: 'Portal Web'
       })
     });
-
-    const data = await response.json();
     
     if (data.success) {
       let mensaje = '';
@@ -670,8 +665,7 @@ async function renderEmployeeWeekView() {
     const user = Auth.getUser();
     const url = `${API_URL}/work-schedules/weekly?fecha=${mondayISO}&empleadoId=${user.id}`;
     
-    const response = await Auth.authFetch(url);
-    const data = await response.json();
+    const data = await Auth.authFetch(url);
     
     if (!data.success) {
       showToast('Error', 'No se pudieron cargar los horarios', 'error');
@@ -745,8 +739,7 @@ async function renderEmployeeMonthView() {
     const user = Auth.getUser();
     const url = `${API_URL}/work-schedules/monthly?mes=${mes}&anio=${anio}&empleadoId=${user.id}`;
 
-    const response = await Auth.authFetch(url);
-    const data = await response.json();
+    const data = await Auth.authFetch(url);
 
     if (!data.success) {
       showToast('Error', 'No se pudieron cargar los horarios', 'error');
@@ -981,11 +974,338 @@ function initEmployeeSchedules() {
   console.log('✅ Sistema de horarios inicializado');
 }
 
-// Agregar inicialización de horarios al DOMContentLoaded existente
-// NOTA: Esto se debe llamar después de que el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-  // Esperar un poco para que todo se inicialice
+// ===================================
+// SISTEMA DE INCIDENCIAS
+// ===================================
+
+/**
+ * Inicializar sistema de incidencias
+ */
+function initIncidencias() {
+  console.log('🔧 Inicializando sistema de incidencias...');
+  
+  // Verificar que los elementos existan
+  const formIncidencia = document.getElementById('formIncidencia');
+  if (!formIncidencia) {
+    console.warn('⚠️ No se encontró el formulario de incidencias');
+    return;
+  }
+  
+  // Event Listeners
+  formIncidencia.addEventListener('submit', handleSubmitIncidencia);
+  
+  const btnCancelar = document.getElementById('btnCancelarIncidencia');
+  if (btnCancelar) {
+    btnCancelar.addEventListener('click', limpiarFormularioIncidencia);
+  }
+  
+  // Contador de caracteres del motivo
+  const motivoTextarea = document.getElementById('incidenciaMotivo');
+  if (motivoTextarea) {
+    motivoTextarea.addEventListener('input', (e) => {
+      const counter = document.getElementById('motivoCounter');
+      if (counter) {
+        counter.textContent = e.target.value.length;
+      }
+    });
+  }
+  
+  // Mostrar/ocultar "obligatorio" en documento según tipo
+  const tipoSelect = document.getElementById('incidenciaTipo');
+  if (tipoSelect) {
+    tipoSelect.addEventListener('change', (e) => {
+      const documentoLabel = document.getElementById('documentoRequerido');
+      const documentoInput = document.getElementById('incidenciaDocumento');
+      
+      if (e.target.value === 'baja_medica') {
+        documentoLabel.textContent = '(Obligatorio)';
+        documentoLabel.className = 'text-xs text-red-500 font-semibold';
+        documentoInput.required = true;
+      } else {
+        documentoLabel.textContent = '(Opcional)';
+        documentoLabel.className = 'text-xs text-gray-500';
+        documentoInput.required = false;
+      }
+    });
+  }
+  
+  // Establecer fecha máxima (hoy) y mínima (7 días atrás)
+  const fechaInput = document.getElementById('incidenciaFecha');
+  if (fechaInput) {
+    const hoy = new Date();
+    const hace7Dias = new Date();
+    hace7Dias.setDate(hoy.getDate() - 7);
+    
+    fechaInput.max = hoy.toISOString().split('T')[0];
+    fechaInput.min = hace7Dias.toISOString().split('T')[0];
+    fechaInput.value = hoy.toISOString().split('T')[0]; // Hoy por defecto
+  }
+  
+  // Filtros
+  const filterTipo = document.getElementById('filterTipoIncidencia');
+  const filterEstado = document.getElementById('filterEstadoIncidencia');
+  const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltrosIncidencia');
+  
+  if (filterTipo) {
+    filterTipo.addEventListener('change', () => {
+      cargarIncidencias().catch(err => console.error('Error en filtro tipo:', err));
+    });
+  }
+  if (filterEstado) {
+    filterEstado.addEventListener('change', () => {
+      cargarIncidencias().catch(err => console.error('Error en filtro estado:', err));
+    });
+  }
+  if (btnLimpiarFiltros) {
+    btnLimpiarFiltros.addEventListener('click', () => {
+      if (filterTipo) filterTipo.value = '';
+      if (filterEstado) filterEstado.value = '';
+      cargarIncidencias().catch(err => console.error('Error al limpiar filtros:', err));
+    });
+  }
+  
+  // Cargar incidencias iniciales (asíncrono con manejo de errores)
   setTimeout(() => {
-    initEmployeeSchedules();
-  }, 500);
-});
+    cargarIncidencias().catch(err => {
+      console.error('Error en carga inicial de incidencias:', err);
+    });
+  }, 100);
+  
+  console.log('✅ Sistema de incidencias inicializado');
+}
+
+/**
+ * Manejar envío del formulario de incidencia
+ */
+async function handleSubmitIncidencia(e) {
+  e.preventDefault();
+  
+  const fecha = document.getElementById('incidenciaFecha').value;
+  const tipo = document.getElementById('incidenciaTipo').value;
+  const motivo = document.getElementById('incidenciaMotivo').value.trim();
+  const documentoInput = document.getElementById('incidenciaDocumento');
+  
+  // Validaciones
+  if (!fecha || !tipo || !motivo) {
+    showToast('Error', 'Por favor completa todos los campos requeridos', 'error');
+    return;
+  }
+  
+  if (motivo.length < 10) {
+    showToast('Error', 'El motivo debe tener al menos 10 caracteres', 'error');
+    return;
+  }
+  
+  // Validar baja médica requiere documento
+  if (tipo === 'baja_medica' && (!documentoInput.files || documentoInput.files.length === 0)) {
+    showToast('Error', 'La baja médica requiere un documento adjunto', 'error');
+    return;
+  }
+  
+  try {
+    // Crear FormData
+    const formData = new FormData();
+    formData.append('fecha', fecha);
+    formData.append('tipo', tipo);
+    formData.append('motivo', motivo);
+    
+    if (documentoInput.files && documentoInput.files.length > 0) {
+      formData.append('documento', documentoInput.files[0]);
+    }
+    
+    console.log('📤 Enviando incidencia:', { fecha, tipo, motivo, tieneDocumento: documentoInput.files?.length > 0 });
+    
+    // Enviar al backend
+    const response = await Auth.authFetch(`${API_URL}/incidences`, {
+      method: 'POST',
+      body: formData
+      // NO incluir Content-Type - FormData lo establece automáticamente
+    });
+    
+    console.log('📦 Respuesta crear incidencia:', response);
+    
+    if (response && response.success) {
+      showToast('Éxito', 'Incidencia registrada correctamente', 'success');
+      limpiarFormularioIncidencia();
+      cargarIncidencias().catch(err => console.error('Error al recargar incidencias:', err));
+    } else {
+      console.error('❌ Error en respuesta:', response);
+      throw new Error(response?.message || 'Error al registrar incidencia');
+    }
+  } catch (error) {
+    console.error('Error al crear incidencia:', error);
+    showToast('Error', error.message || 'No se pudo registrar la incidencia', 'error');
+  }
+}
+
+/**
+ * Limpiar formulario de incidencia
+ */
+function limpiarFormularioIncidencia() {
+  const form = document.getElementById('formIncidencia');
+  if (form) {
+    form.reset();
+    
+    // Resetear fecha a hoy
+    const fechaInput = document.getElementById('incidenciaFecha');
+    if (fechaInput) {
+      fechaInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Resetear contador
+    const counter = document.getElementById('motivoCounter');
+    if (counter) {
+      counter.textContent = '0';
+    }
+    
+    // Resetear label de documento
+    const documentoLabel = document.getElementById('documentoRequerido');
+    if (documentoLabel) {
+      documentoLabel.textContent = '(Opcional)';
+      documentoLabel.className = 'text-xs text-gray-500';
+    }
+    
+    const documentoInput = document.getElementById('incidenciaDocumento');
+    if (documentoInput) {
+      documentoInput.required = false;
+    }
+  }
+}
+
+/**
+ * Cargar incidencias del empleado
+ */
+async function cargarIncidencias() {
+  try {
+    // Verificar que Auth esté disponible
+    if (!Auth || typeof Auth.authFetch !== 'function') {
+      console.error('Auth no está disponible');
+      return;
+    }
+    
+    // Verificar que API_URL esté definido
+    if (typeof API_URL === 'undefined') {
+      console.error('API_URL no está definido');
+      return;
+    }
+    
+    const filterTipo = document.getElementById('filterTipoIncidencia')?.value || '';
+    const filterEstado = document.getElementById('filterEstadoIncidencia')?.value || '';
+    
+    // Construir query params
+    const params = new URLSearchParams();
+    if (filterTipo) params.append('tipo', filterTipo);
+    if (filterEstado) params.append('estado', filterEstado);
+    
+    const url = `${API_URL}/incidences/mis-incidencias${params.toString() ? '?' + params.toString() : ''}`;
+    
+    console.log('🔍 Cargando incidencias desde:', url);
+    
+    const response = await Auth.authFetch(url);
+    
+    console.log('📦 Respuesta recibida:', response);
+    
+    if (response && response.success) {
+      renderIncidencias(response.data || []);
+    } else {
+      console.error('❌ Respuesta no exitosa:', response);
+      throw new Error(response?.message || 'Error al cargar incidencias');
+    }
+  } catch (error) {
+    console.error('Error al cargar incidencias:', error);
+    // No mostrar toast en carga inicial para no molestar
+    if (error.message && !error.message.includes('no está disponible')) {
+      showToast('Error', 'No se pudieron cargar las incidencias', 'error');
+    }
+  }
+}
+
+/**
+ * Renderizar tabla de incidencias
+ */
+function renderIncidencias(incidencias) {
+  const tbody = document.getElementById('incidenciasTableBody');
+  const noIncidencias = document.getElementById('noIncidencias');
+  
+  if (!tbody) return;
+  
+  // Limpiar tabla
+  tbody.innerHTML = '';
+  
+  if (!incidencias || incidencias.length === 0) {
+    if (noIncidencias) {
+      noIncidencias.classList.remove('hidden');
+    }
+    return;
+  }
+  
+  if (noIncidencias) {
+    noIncidencias.classList.add('hidden');
+  }
+  
+  // Renderizar cada incidencia
+  incidencias.forEach(inc => {
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-gray-50';
+    
+    // Formatear fecha
+    const fecha = new Date(inc.fecha);
+    const fechaStr = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    // Tipo con emoji y color
+    const tipoInfo = getTipoInfo(inc.tipo);
+    
+    // Estado con badge
+    const estadoInfo = getEstadoInfo(inc.estado);
+    
+    // Documento
+    const hasDocumento = inc.documentoAdjunto ? '✅' : '❌';
+    
+    row.innerHTML = `
+      <td class="px-4 py-3 text-sm text-gray-800">${fechaStr}</td>
+      <td class="px-4 py-3 text-sm">
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${tipoInfo.bg} ${tipoInfo.text}">
+          ${tipoInfo.emoji} ${tipoInfo.nombre}
+        </span>
+      </td>
+      <td class="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
+        <div class="max-w-xs truncate" title="${inc.motivo}">
+          ${inc.motivo}
+        </div>
+      </td>
+      <td class="px-4 py-3 text-sm">
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${estadoInfo.bg} ${estadoInfo.text}">
+          ${estadoInfo.emoji} ${estadoInfo.nombre}
+        </span>
+      </td>
+      <td class="px-4 py-3 text-sm text-center hidden sm:table-cell">${hasDocumento}</td>
+    `;
+    
+    tbody.appendChild(row);
+  });
+}
+
+/**
+ * Obtener información de tipo de incidencia
+ */
+function getTipoInfo(tipo) {
+  const tipos = {
+    'falta': { emoji: '🚫', nombre: 'Falta', bg: 'bg-red-100', text: 'text-red-800' },
+    'retraso': { emoji: '⏰', nombre: 'Retraso', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    'ausencia_justificada': { emoji: '📝', nombre: 'Ausencia Justificada', bg: 'bg-blue-100', text: 'text-blue-800' },
+    'baja_medica': { emoji: '🏥', nombre: 'Baja Médica', bg: 'bg-purple-100', text: 'text-purple-800' }
+  };
+  return tipos[tipo] || { emoji: '❓', nombre: tipo, bg: 'bg-gray-100', text: 'text-gray-800' };
+}
+
+/**
+ * Obtener información de estado de incidencia
+ */
+function getEstadoInfo(estado) {
+  const estados = {
+    'pendiente': { emoji: '⏳', nombre: 'Pendiente', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    'aprobada': { emoji: '✅', nombre: 'Aprobada', bg: 'bg-green-100', text: 'text-green-800' },
+    'rechazada': { emoji: '❌', nombre: 'Rechazada', bg: 'bg-red-100', text: 'text-red-800' }
+  };
+  return estados[estado] || { emoji: '❓', nombre: estado, bg: 'bg-gray-100', text: 'text-gray-800' };
+}
