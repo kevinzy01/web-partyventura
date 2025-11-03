@@ -1864,3 +1864,134 @@ No existe suite de pruebas formal. Flujo de pruebas manual:
 
 ### Actualizar Configuración de Frontend
 **Nunca hardcodear URLs de API** - siempre usar `API_URL` y `SERVER_URL` de `/frontend/src/js/modules/config.js`
+
+## Cartas de Resumen del Empleado - Nuevas Funcionalidades (Noviembre 2025)
+
+### **Tarjeta: Horas de Esta Semana** 📅 (NUEVA)
+
+**Ubicación**: Portal del Empleado → Resumen de Hoy (6 tarjetas)
+
+**Características**:
+- Color: Cyan (`bg-cyan-100`, `text-cyan-800`)
+- Posición: Entre "Horas Asignadas Hoy" (rosa) y "Este Mes" (naranja)
+- Cálculo: Suma de horas trabajadas desde lunes a domingo de la semana actual
+- Actualización: Al fichar entrada/salida (parte de `cargarDatos()`)
+- Elemento HTML: `<p id="horasSemana">--h</p>`
+
+**Implementación en Frontend**:
+
+```javascript
+// Función: cargarResumenSemanal() (~70 líneas)
+async function cargarResumenSemanal() {
+  // 1. Calcula lunes (inicio semana) y domingo (fin semana)
+  // 2. Llama a /time-records/mis-registros?fechaInicio=X&fechaFin=Y&limit=200
+  // 3. Suma horasTrabajadas de registros tipo 'salida'
+  // 4. Actualiza elemento horasSemana con resultado formateado (.toFixed(2))
+  // 5. Maneja error: muestra "--h" si falla
+}
+```
+
+**Validaciones de Seguridad**:
+- ✅ Límite aumentado a 200 registros (previene pérdida en semanas activas)
+- ✅ Valida que `data.data.length > 0` antes de procesar
+- ✅ Log explicativo si no hay registros: "⚠️ Sin registros de trabajo esta semana"
+- ✅ Timestamp incluido en debug logging para sincronización
+
+**Commit**: `1da2d11` - Agregada funcionalidad con validaciones de seguridad
+
+---
+
+### **Botones de Filtro Rápido en Panel Admin - Horarios Laborales** (NUEVA)
+
+**Ubicación**: Panel Admin → Horarios Laborales → Entre filtros y selector de vista
+
+**Dos Botones Nuevos**:
+
+1. **Botón "Esta Semana"** 📅
+   - ID: `btnFilterWeek`
+   - Estilos: `bg-cyan-100 border-2 border-cyan-300 text-cyan-800`
+   - Función: `calendarState.goToToday()` + cambiar a vista semanal
+   - Resultado: Muestra la semana actual (Lunes-Domingo)
+   - Log: `📅 Filtro: Esta Semana activado`
+
+2. **Botón "Este Mes"** 📆
+   - ID: `btnFilterMonth`
+   - Estilos: `bg-orange-100 border-2 border-orange-300 text-orange-800`
+   - Función: `calendarState.goToToday()` + cambiar a vista mensual
+   - Resultado: Muestra el mes actual con estadísticas
+   - Log: `📆 Filtro: Este Mes activado`
+
+**Flujo UX**:
+```
+Admin hace click en "Esta Semana"
+  ↓
+Se resetea el estado del calendario a hoy
+  ↓
+Se cambia automáticamente a vista semanal
+  ↓
+Se renderiza la semana actual con sus horarios
+  ↓
+Admin puede navegar libremente con prev/next
+```
+
+**Implementación en HTML** (`/frontend/public/admin.html`):
+```html
+<!-- Filtros rápidos -->
+<div class="flex gap-2 mb-4">
+  <button id="btnFilterWeek" class="flex-1 bg-cyan-100 hover:bg-cyan-200 text-cyan-800 px-4 py-2 rounded-lg font-semibold transition-colors border-2 border-cyan-300">
+    📅 Esta Semana
+  </button>
+  <button id="btnFilterMonth" class="flex-1 bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg font-semibold transition-colors border-2 border-orange-300">
+    📆 Este Mes
+  </button>
+</div>
+```
+
+**Implementación en JavaScript** (`/frontend/src/js/pages/admin.js`):
+```javascript
+// En setupWorkSchedulesEventListeners() ~línea 4570
+const btnFilterWeek = document.getElementById('btnFilterWeek');
+if (btnFilterWeek) {
+  btnFilterWeek.addEventListener('click', () => {
+    calendarState.goToToday();
+    switchWorkSchedulesView('week');
+    renderWorkSchedulesWeekView();
+    console.log('📅 Filtro: Esta Semana activado');
+  });
+}
+
+const btnFilterMonth = document.getElementById('btnFilterMonth');
+if (btnFilterMonth) {
+  btnFilterMonth.addEventListener('click', () => {
+    calendarState.goToToday();
+    switchWorkSchedulesView('month');
+    renderWorkSchedulesMonthView();
+    console.log('📆 Filtro: Este Mes activado');
+  });
+}
+```
+
+**Beneficios**:
+- ✅ Acceso rápido a vistas más frecuentes
+- ✅ Una sola acción vs múltiples clicks
+- ✅ Mejor UX para admin ocupado
+- ✅ Colores coherentes con sistema de diseño
+- ✅ Debug logging para troubleshooting
+
+**Commit**: `1e44dad` - Agregados botones de filtro rápido
+
+---
+
+## Cache Versions (Noviembre 2025)
+
+**Actualizaciones recientes**:
+- `employee.html`: v=8 → v=9 (agregada tarjeta "Esta Semana")
+- `employee.js`: v=8 → v=9 (agregada función `cargarResumenSemanal()`)
+- `admin.html`: v=88 → v=89 (agregados botones de filtro rápido)
+- `admin.js`: v=88 → v=89 (agregados event listeners)
+
+**Importante**: Siempre incrementar versión tras cambios en:
+- Modificaciones de HTML (nueva estructura)
+- Cambios de lógica JavaScript
+- Actualizaciones de estilos CSS significativas
+- Correcciones críticas de bugs
