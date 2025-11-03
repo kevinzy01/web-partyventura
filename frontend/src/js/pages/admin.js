@@ -4027,25 +4027,28 @@ async function renderWorkSchedulesWeekView() {
       const cantidadMonitores = monitoresUnicos.size;
       
       // Determinar color de fondo según cantidad de monitores
-      let bgColor = 'bg-gray-50';
-      let borderColor = 'border-gray-200';
+      let bgColorStyle = '#f3f4f6'; // gray-50 default
+      let borderColorStyle = '#d1d5db'; // gray-200 default
       let badgeText = '';
-      let badgeColor = '';
+      let badgeBgStyle = '';
+      let badgeTextStyle = '';
       
       if (hasSchedules) {
         if (cantidadMonitores >= 6) {
-          bgColor = 'bg-green-50';
-          borderColor = 'border-green-300';
+          bgColorStyle = '#dcfce7'; // green-50
+          borderColorStyle = '#86efac'; // green-300
           badgeText = `✅ ${cantidadMonitores} monitores`;
-          badgeColor = 'bg-green-100 text-green-800';
+          badgeBgStyle = '#dcfce7'; // green-100
+          badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
-          bgColor = 'bg-red-50';
-          borderColor = 'border-red-300';
+          bgColorStyle = '#fee2e2'; // red-50
+          borderColorStyle = '#fca5a5'; // red-300
           badgeText = `⚠️ ${cantidadMonitores} monitores`;
-          badgeColor = 'bg-red-100 text-red-800';
+          badgeBgStyle = '#fee2e2'; // red-100
+          badgeTextStyle = '#991b1b'; // red-800
         } else {
-          bgColor = 'bg-blue-50';
-          borderColor = 'border-blue-200';
+          bgColorStyle = '#eff6ff'; // blue-50
+          borderColorStyle = '#bfdbfe'; // blue-200
         }
       }
 
@@ -4057,7 +4060,8 @@ async function renderWorkSchedulesWeekView() {
       });
 
       return `
-        <div class="day-cell border rounded-lg p-3 ${bgColor} ${borderColor} transition-all"
+        <div class="day-cell border rounded-lg p-3 transition-all"
+             style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle};"
              data-date="${dateISO}"
              data-monitores="${cantidadMonitores}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
@@ -4066,7 +4070,7 @@ async function renderWorkSchedulesWeekView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-2">
             <div class="font-semibold text-sm text-gray-700">${dayName}</div>
-            ${badgeText ? `<div class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeColor}">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="text-[10px] px-2 py-0.5 rounded font-bold" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};">${badgeText}</div>` : ''}
           </div>
           <div class="text-xs text-gray-500 mb-3">${date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
           
@@ -4227,32 +4231,34 @@ async function renderWorkSchedulesMonthView() {
       const cantidadMonitores = monitoresUnicos.size;
       
       // Determinar color de fondo según cantidad de monitores
-      let bgColor = 'bg-white';
-      let borderColor = 'border-gray-200';
+      let bgColorStyle = '#f3f4f6'; // gray-50 default
+      let borderColorStyle = '#d1d5db'; // gray-200 default
       let badgeText = '';
-      let badgeColor = '';
+      let badgeBgStyle = '';
+      let badgeTextStyle = '';
       
       if (hasSchedules) {
         if (cantidadMonitores >= 6) {
-          bgColor = 'bg-green-50';
-          borderColor = 'border-green-300';
+          bgColorStyle = '#dcfce7'; // green-50
+          borderColorStyle = '#86efac'; // green-300
           badgeText = `✅ ${cantidadMonitores}`;
-          badgeColor = 'bg-green-100 text-green-800';
+          badgeBgStyle = '#dcfce7'; // green-100
+          badgeTextStyle = '#166534'; // green-800
         } else if (cantidadMonitores > 0) {
-          bgColor = 'bg-red-50';
-          borderColor = 'border-red-300';
+          bgColorStyle = '#fee2e2'; // red-50
+          borderColorStyle = '#fca5a5'; // red-300
           badgeText = `⚠️ ${cantidadMonitores}`;
-          badgeColor = 'bg-red-100 text-red-800';
+          badgeBgStyle = '#fee2e2'; // red-100
+          badgeTextStyle = '#991b1b'; // red-800
         } else {
-          bgColor = 'bg-blue-50';
-          borderColor = 'border-blue-300';
+          bgColorStyle = '#eff6ff'; // blue-50
+          borderColorStyle = '#93c5fd'; // blue-300
         }
       }
 
       html += `
-        <div class="day-cell border rounded p-2 min-h-[100px] transition-all
-                    ${bgColor} ${borderColor}
-                    ${isToday ? 'ring-2 ring-orange-500' : ''}"
+        <div class="day-cell border rounded p-2 min-h-[100px] transition-all"
+             style="background-color: ${bgColorStyle}; border-color: ${borderColorStyle}; ${isToday ? 'box-shadow: 0 0 0 2px rgb(249, 115, 22);' : ''}"
              data-date="${dateISO}"
              data-monitores="${cantidadMonitores}"
              ondrop="handleScheduleDrop(event, '${dateISO}')"
@@ -4261,7 +4267,7 @@ async function renderWorkSchedulesMonthView() {
              ondragenter="handleScheduleDragEnter(event)">
           <div class="flex items-center justify-between mb-1">
             <div class="text-xs font-semibold ${isToday ? 'text-orange-600' : 'text-gray-700'}">${day}</div>
-            ${badgeText ? `<div class="text-[9px] px-1 py-0.5 rounded font-bold ${badgeColor}" title="Monitores asignados">${badgeText}</div>` : ''}
+            ${badgeText ? `<div class="text-[9px] px-1 py-0.5 rounded font-bold" style="background-color: ${badgeBgStyle}; color: ${badgeTextStyle};" title="Monitores asignados">${badgeText}</div>` : ''}
           </div>
           
           <div class="schedule-cards-container">
