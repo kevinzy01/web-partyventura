@@ -4026,6 +4026,13 @@ async function renderWorkSchedulesWeekView() {
       });
       const cantidadMonitores = monitoresUnicos.size;
       
+      // Debug logging - Vista Semanal
+      console.log(`📊 [SEMANAL] Día ${dateISO}:`, {
+        horarios: horarios.length,
+        monitores: cantidadMonitores,
+        empleados: horarios.map(h => `${h.empleado?.nombre} (${h.empleado?.rolEmpleado})`)
+      });
+      
       // Determinar color de fondo según cantidad de monitores
       let bgColorStyle = '#f3f4f6'; // gray-50 default
       let borderColorStyle = '#d1d5db'; // gray-200 default
@@ -4238,6 +4245,13 @@ async function renderWorkSchedulesMonthView() {
         }
       });
       const cantidadMonitores = monitoresUnicos.size;
+      
+      // Debug logging - Vista Mensual
+      console.log(`📊 [MENSUAL] Día ${dateISO}:`, {
+        horarios: horarios.length,
+        monitores: cantidadMonitores,
+        empleados: horarios.map(h => `${h.empleado?.nombre} (${h.empleado?.rolEmpleado})`)
+      });
       
       // Determinar color de fondo según cantidad de monitores
       let bgColorStyle = '#f3f4f6'; // gray-50 default

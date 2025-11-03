@@ -2030,22 +2030,22 @@
       </div>
 
       <!-- Filtros -->
-      <div class="bg-white rounded-xl shadow-md p-4 mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl shadow-md p-3 md:p-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div>
-            <label for="filterEmployeeSchedules" class="block text-sm font-semibold text-gray-700 mb-2">
+            <label for="filterEmployeeSchedules" class="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">
               Empleado
             </label>
-            <select id="filterEmployeeSchedules" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+            <select id="filterEmployeeSchedules" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
               <option value="">Todos los empleados</option>
             </select>
           </div>
           
           <div>
-            <label for="filterMonth" class="block text-sm font-semibold text-gray-700 mb-2">
+            <label for="filterMonth" class="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">
               Mes
             </label>
-            <select id="filterMonth" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+            <select id="filterMonth" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
               <option value="">Seleccione mes</option>
               <option value="1">Enero</option>
               <option value="2">Febrero</option>
@@ -2063,19 +2063,19 @@
           </div>
           
           <div>
-            <label for="filterYear" class="block text-sm font-semibold text-gray-700 mb-2">
+            <label for="filterYear" class="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">
               Año
             </label>
-            <select id="filterYear" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+            <select id="filterYear" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
               <option value="">Seleccione año</option>
             </select>
           </div>
           
           <div>
-            <label for="filterStatus" class="block text-sm font-semibold text-gray-700 mb-2">
+            <label for="filterStatus" class="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">
               Estado
             </label>
-            <select id="filterStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+            <select id="filterStatus" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
               <option value="">Todos</option>
               <option value="programado">Programado</option>
               <option value="confirmado">Confirmado</option>
@@ -2085,66 +2085,66 @@
           </div>
         </div>
         
-        <div class="flex gap-3 mt-4">
-          <button id="btnApplyFiltersSchedules" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+        <div class="flex flex-col sm:flex-row gap-2 mt-3 md:mt-4">
+          <button id="btnApplyFiltersSchedules" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 text-sm md:text-base rounded-lg font-semibold transition-colors">
             🔍 Filtrar
           </button>
-          <button id="btnClearFiltersSchedules" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-colors">
+          <button id="btnClearFiltersSchedules" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 text-sm md:text-base rounded-lg font-semibold transition-colors">
             🔄 Limpiar
           </button>
         </div>
       </div>
 
       <!-- Filtros rápidos -->
-      <div class="flex gap-2 mb-4">
-        <button id="btnFilterWeek" class="flex-1 bg-cyan-100 hover:bg-cyan-200 text-cyan-800 px-4 py-2 rounded-lg font-semibold transition-colors border-2 border-cyan-300">
+      <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <button id="btnFilterWeek" class="flex-1 bg-cyan-100 hover:bg-cyan-200 text-cyan-800 px-3 py-2 text-sm md:text-base rounded-lg font-semibold transition-colors border-2 border-cyan-300">
           📅 Esta Semana
         </button>
-        <button id="btnFilterMonth" class="flex-1 bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg font-semibold transition-colors border-2 border-orange-300">
+        <button id="btnFilterMonth" class="flex-1 bg-orange-100 hover:bg-orange-200 text-orange-800 px-3 py-2 text-sm md:text-base rounded-lg font-semibold transition-colors border-2 border-orange-300">
           📆 Este Mes
         </button>
       </div>
 
       <!-- Selector de vista -->
       <div class="flex gap-2 mb-4">
-        <button id="btnViewList" class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold">
+        <button id="btnViewList" class="flex-1 bg-blue-500 text-white px-3 py-2 text-sm md:text-base rounded-lg font-semibold">
           📋 Lista
         </button>
-        <button id="btnViewWeek" class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+        <button id="btnViewWeek" class="flex-1 bg-gray-200 text-gray-800 px-3 py-2 text-sm md:text-base rounded-lg font-semibold hover:bg-gray-300 transition-colors">
           📅 Semana
         </button>
-        <button id="btnViewMonth" class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+        <button id="btnViewMonth" class="flex-1 bg-gray-200 text-gray-800 px-3 py-2 text-sm md:text-base rounded-lg font-semibold hover:bg-gray-300 transition-colors">
           📆 Mes
         </button>
       </div>
       
       <!-- Leyenda de indicadores de monitores -->
-      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 border-2 border-blue-200">
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 md:p-4 mb-4 border-2 border-blue-200">
         <div class="flex items-center gap-2 mb-2">
-          <span class="text-lg">ℹ️</span>
-          <h3 class="text-sm font-bold text-gray-800">Indicadores de Cobertura de Monitores</h3>
+          <span class="text-base md:text-lg">ℹ️</span>
+          <h3 class="text-xs md:text-sm font-bold text-gray-800">Indicadores de Cobertura de Monitores</h3>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 text-xs md:text-sm">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-green-50 border-2 border-green-300 rounded flex items-center justify-center">
+            <div class="w-7 h-7 md:w-8 md:h-8 bg-green-50 border-2 border-green-300 rounded flex items-center justify-center flex-shrink-0">
               <span class="text-xs font-bold text-green-800">✅</span>
             </div>
             <div>
-              <span class="font-semibold text-green-800">6+ monitores asignados</span>
-              <span class="text-gray-600 text-xs block">Cobertura completa</span>
+              <span class="font-semibold text-green-800 block">6+ monitores asignados</span>
+              <span class="text-gray-600 text-[10px] md:text-xs block">Cobertura completa</span>
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-red-50 border-2 border-red-300 rounded flex items-center justify-center">
+            <div class="w-7 h-7 md:w-8 md:h-8 bg-red-50 border-2 border-red-300 rounded flex items-center justify-center flex-shrink-0">
               <span class="text-xs font-bold text-red-800">⚠️</span>
             </div>
             <div>
-              <span class="font-semibold text-red-800">Menos de 6 monitores</span>
-              <span class="text-gray-600 text-xs block">Refuerzo necesario</span>
+              <span class="font-semibold text-red-800 block">Menos de 6 monitores</span>
+              <span class="text-gray-600 text-[10px] md:text-xs block">Refuerzo necesario</span>
             </div>
           </div>
         </div>
-        <div class="mt-2 text-xs text-gray-600 italic">
+        <div class="mt-2 text-[10px] md:text-xs text-gray-600 italic">
           💡 Los monitores con horario partido cuentan como 1 solo monitor
         </div>
       </div>
@@ -2211,40 +2211,40 @@
     </div>
 
     <!-- Vista Semanal -->
-    <div id="viewWeek" class="hidden bg-white rounded-xl shadow-lg p-6">
-      <div class="flex items-center justify-between mb-6">
-        <button id="btnPrevWeek" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-colors">
-          ← Semana Anterior
+    <div id="viewWeek" class="hidden bg-white rounded-xl shadow-lg p-3 md:p-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 mb-4 md:mb-6">
+        <button id="btnPrevWeek" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-semibold transition-colors">
+          ← Anterior
         </button>
-        <h2 id="weekTitle" class="text-xl font-bold text-gray-800">
+        <h2 id="weekTitle" class="text-base md:text-xl font-bold text-gray-800 text-center">
           Semana del XX al XX de Mes
         </h2>
-        <button id="btnNextWeek" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-colors">
-          Semana Siguiente →
+        <button id="btnNextWeek" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-semibold transition-colors">
+          Siguiente →
         </button>
       </div>
       
-      <div id="weekCalendar" class="grid grid-cols-7 gap-2">
+      <div id="weekCalendar" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
         <!-- Días de la semana generados dinámicamente -->
       </div>
     </div>
 
     <!-- Vista Mensual -->
-    <div id="viewMonth" class="hidden bg-white rounded-xl shadow-lg p-6">
-      <div class="flex items-center justify-between mb-6">
-        <button id="btnPrevMonth" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-colors">
-          ← Mes Anterior
+    <div id="viewMonth" class="hidden bg-white rounded-xl shadow-lg p-3 md:p-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 mb-4 md:mb-6">
+        <button id="btnPrevMonth" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-semibold transition-colors">
+          ← Anterior
         </button>
-        <h2 id="monthTitle" class="text-xl font-bold text-gray-800">
+        <h2 id="monthTitle" class="text-base md:text-xl font-bold text-gray-800 text-center">
           Mes XXXX
         </h2>
-        <button id="btnNextMonth" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-colors">
-          Mes Siguiente →
+        <button id="btnNextMonth" class="w-full md:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-semibold transition-colors">
+          Siguiente →
         </button>
       </div>
       
       <!-- Resumen mensual -->
-      <div id="monthSummary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div id="monthSummary" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         <!-- Tarjetas de resumen generadas dinámicamente -->
       </div>
       
@@ -2771,6 +2771,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=98"></script>
+  <script src="/src/js/pages/admin.js?v=99"></script>
 </body>
 </html>
