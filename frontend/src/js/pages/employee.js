@@ -197,8 +197,17 @@ async function cargarDatos() {
       cargarUltimoRegistro(),
       cargarHistorial(),
       cargarResumenMensual(),
+      cargarResumenSemanal(),
       cargarHorasAsignadas()
     ]);
+    
+    // Log de sincronización para debugging
+    console.log('📊 Resumen Actualizado:', {
+      horasHoy: document.getElementById('horasHoy')?.textContent,
+      horasSemana: document.getElementById('horasSemana')?.textContent,
+      horasMes: document.getElementById('horasMes')?.textContent,
+      timestamp: new Date().toLocaleTimeString('es-ES')
+    });
   } catch (error) {
     console.error('Error al cargar datos:', error);
   }
@@ -246,6 +255,74 @@ async function cargarResumenMensual() {
     }
   } catch (error) {
     console.error('Error al cargar resumen mensual:', error);
+  }
+}
+
+/**
+ * Cargar horas trabajadas de la semana actual
+ */
+async function cargarResumenSemanal() {
+  try {
+    // Calcular el lunes de la semana actual
+    const hoy = new Date();
+    const diaSemana = hoy.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+    const diasDesdeInicioDeSemana = diaSemana === 0 ? 6 : diaSemana - 1; // Si es domingo, retroceder 6 días
+    
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - diasDesdeInicioDeSemana);
+    lunes.setHours(0, 0, 0, 0);
+    
+    // Calcular el domingo (fin de semana)
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 7);
+    domingo.setHours(0, 0, 0, 0);
+    
+    const fechaInicio = lunes.toISOString();
+    const fechaFin = domingo.toISOString();
+    
+    console.log('🔍 Cargando horas de la semana:', {
+      lunes: lunes.toLocaleDateString('es-ES'),
+      domingo: domingo.toLocaleDateString('es-ES'),
+      fechaInicio,
+      fechaFin
+    });
+    
+    const response = await Auth.authFetch(
+      `${API_URL}/time-records/mis-registros?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&limit=200`
+    );
+    
+    const data = await response.json();
+    
+    if (data.success && data.data && data.data.length > 0) {
+      // Calcular total de horas trabajadas en la semana
+      let horasSemana = 0;
+      
+      data.data.forEach(registro => {
+        if (registro.tipo === 'salida' && registro.horasTrabajadas) {
+          horasSemana += registro.horasTrabajadas;
+        }
+      });
+      
+      console.log('✅ Total horas esta semana:', horasSemana);
+      
+      const elemento = document.getElementById('horasSemana');
+      if (elemento) {
+        elemento.textContent = `${horasSemana.toFixed(2)}h`;
+      }
+    } else {
+      // Sin registros en la semana
+      console.log('⚠️ Sin registros de trabajo esta semana');
+      const elemento = document.getElementById('horasSemana');
+      if (elemento) {
+        elemento.textContent = '0h';
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error al cargar resumen semanal:', error);
+    const elemento = document.getElementById('horasSemana');
+    if (elemento) {
+      elemento.textContent = '--h';
+    }
   }
 }
 
