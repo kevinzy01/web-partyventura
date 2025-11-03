@@ -7,6 +7,7 @@
 // Estado global
 let currentContactId = null;
 let currentFilter = 'all';
+let timeRecordsSummaryInterval = null; // Auto-actualización de tarjetas
 
 // Estado de selección múltiple
 const bulkSelection = {
@@ -372,6 +373,12 @@ function initTabs() {
   };
   
   function activateTab(activeTab, activeSection, onActivate) {
+    // Limpiar intervalo de auto-actualización de Control Horario
+    if (timeRecordsSummaryInterval) {
+      clearInterval(timeRecordsSummaryInterval);
+      timeRecordsSummaryInterval = null;
+    }
+    
     // Desactivar todos los tabs
     allTabs.forEach(tab => {
       tab?.classList.remove('active', 'bg-gradient-to-r', 'from-orange-500', 'to-orange-600', 'text-white');
@@ -427,6 +434,14 @@ function initTabs() {
     activateTab(tabTimeRecords, timeRecordsSection, () => {
       loadTimeRecords();
       loadTimeRecordsSummary();
+      
+      // Iniciar auto-actualización cada 30 segundos
+      if (timeRecordsSummaryInterval) {
+        clearInterval(timeRecordsSummaryInterval);
+      }
+      timeRecordsSummaryInterval = setInterval(() => {
+        loadTimeRecordsSummary();
+      }, 30000); // 30 segundos
     });
   });
   
@@ -3188,24 +3203,37 @@ async function loadTimeRecordsSummary() {
       const todayRecordsCount = todayData.data.pagination.totalRecords;
       document.getElementById('todayRecords').textContent = todayRecordsCount;
       
-      // Contar empleados trabajando ahora (última entrada sin salida)
+      // Contar empleados trabajando ahora (última entrada sin salida correspondiente)
       const registros = todayData.data.registros || [];
-      const workingNow = registros.filter(r => {
-        if (r.tipo === 'entrada') {
-          // Buscar si hay una salida posterior
-          const hasSalida = registros.some(s => 
-            s.tipo === 'salida' && 
-            s.empleado._id === r.empleado._id && 
-            new Date(s.fecha) > new Date(r.fecha)
-          );
-          return !hasSalida;
+      
+      // Agrupar registros por empleado
+      const empleadosMap = new Map();
+      registros.forEach(r => {
+        const empleadoId = r.empleado?._id || r.empleado?.id;
+        if (!empleadoId) return;
+        
+        if (!empleadosMap.has(empleadoId)) {
+          empleadosMap.set(empleadoId, []);
         }
-        return false;
+        empleadosMap.get(empleadoId).push(r);
       });
       
-      // Contar empleados únicos trabajando
-      const uniqueWorking = new Set(workingNow.map(r => r.empleado._id)).size;
-      document.getElementById('workingNow').textContent = uniqueWorking;
+      // Contar empleados actualmente trabajando
+      let workingCount = 0;
+      empleadosMap.forEach((registrosEmpleado, empleadoId) => {
+        // Ordenar por fecha (más reciente primero)
+        registrosEmpleado.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        
+        // El último registro define el estado actual
+        const ultimoRegistro = registrosEmpleado[0];
+        
+        // Si el último registro es entrada, está trabajando
+        if (ultimoRegistro.tipo === 'entrada') {
+          workingCount++;
+        }
+      });
+      
+      document.getElementById('workingNow').textContent = workingCount;
     }
     
   } catch (error) {
