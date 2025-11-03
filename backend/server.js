@@ -160,6 +160,9 @@ app.use('/api/time-records', require('./routes/timeRecords'));
 // Gestión de horarios laborales (empleados pueden ver, solo superadmin gestiona)
 app.use('/api/work-schedules', require('./routes/workSchedules'));
 
+// Gestión de incidencias (empleados crean, superadmin revisa)
+app.use('/api/incidences', require('./routes/incidences'));
+
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
   res.json({

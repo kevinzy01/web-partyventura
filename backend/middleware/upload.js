@@ -5,12 +5,16 @@ const fs = require('fs');
 // Asegurar que existen las carpetas de uploads
 const uploadsDir = path.join(__dirname, '../uploads');
 const galleryDir = path.join(__dirname, '../uploads/gallery');
+const incidenciasDir = path.join(__dirname, '../uploads/incidencias');
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 if (!fs.existsSync(galleryDir)) {
   fs.mkdirSync(galleryDir, { recursive: true });
+}
+if (!fs.existsSync(incidenciasDir)) {
+  fs.mkdirSync(incidenciasDir, { recursive: true });
 }
 
 // Configuración de almacenamiento para galería
@@ -71,6 +75,48 @@ const upload = multer({
   fileFilter: imageFilter
 });
 
+// ===================================
+// CONFIGURACIÓN PARA DOCUMENTOS DE INCIDENCIAS
+// ===================================
+
+// Almacenamiento para documentos de incidencias
+const incidenciasStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, incidenciasDir);
+  },
+  filename: (req, file, cb) => {
+    // Formato: timestamp-empleadoId-originalname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext).replace(/\s+/g, '-');
+    const empleadoId = req.user ? req.user._id : 'unknown';
+    cb(null, `${empleadoId}-${uniqueSuffix}-${basename}${ext}`);
+  }
+});
+
+// Filtro para documentos (PDF e imágenes)
+const documentFilter = (req, file, cb) => {
+  // Aceptar PDF e imágenes
+  const allowedTypes = /jpeg|jpg|png|pdf/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = /^(image\/(jpeg|jpg|png)|application\/pdf)$/.test(file.mimetype);
+
+  if (extname && mimetype) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten archivos PDF o imágenes (jpeg, jpg, png)'));
+  }
+};
+
+// Configurar multer para documentos de incidencias
+const incidenciaUpload = multer({
+  storage: incidenciasStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // Límite de 5MB
+  },
+  fileFilter: documentFilter
+});
+
 // Middleware para manejo de errores de multer
 const handleMulterError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -96,6 +142,7 @@ const handleMulterError = (err, req, res, next) => {
 module.exports = {
   upload,
   galleryUpload,
+  incidenciaUpload,
   handleMulterError
 };
 
