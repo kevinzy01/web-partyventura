@@ -88,6 +88,22 @@ function clearSelection(section) {
   updateSelectAllCheckbox(section);
 }
 
+// Sincronizar checkboxes del DOM con estado global al cambiar de sección
+function syncSelectionState(section) {
+  const checkboxes = document.querySelectorAll(`[data-section="${section}"] .item-checkbox`);
+  checkboxes.forEach(cb => {
+    const itemId = cb.dataset.itemId;
+    // Si está en el estado, marca el checkbox
+    if (bulkSelection[section].has(itemId)) {
+      cb.checked = true;
+    } else {
+      cb.checked = false;
+    }
+  });
+  updateBulkActionBar(section);
+  updateSelectAllCheckbox(section);
+}
+
 // Eliminar elementos seleccionados
 async function bulkDelete(section, deleteFunction, reloadFunction) {
   const selectedIds = Array.from(bulkSelection[section]);
@@ -343,6 +359,18 @@ function initTabs() {
   const allTabs = [tabNews, tabContacts, tabAdmins, tabEmpleados, tabEvents, tabGallery, tabTimeRecords, tabWorkSchedules].filter(Boolean);
   const allSections = [newsSection, contactsSection, adminsSection, empleadosSection, eventsSection, gallerySection, timeRecordsSection, workSchedulesSection].filter(Boolean);
   
+  // Mapeo de secciones a sus nombres en bulkSelection
+  const sectionMap = {
+    'newsSection': 'news',
+    'contactsSection': 'contacts',
+    'adminsSection': 'admins',
+    'empleadosSection': 'empleados',
+    'eventsSection': 'events',
+    'gallerySection': 'gallery',
+    'timeRecordsSection': 'timeRecords',
+    'workSchedulesSection': 'workSchedules'
+  };
+  
   function activateTab(activeTab, activeSection, onActivate) {
     // Desactivar todos los tabs
     allTabs.forEach(tab => {
@@ -359,6 +387,13 @@ function initTabs() {
     
     // Mostrar sección seleccionada
     activeSection?.classList.remove('hidden');
+    
+    // Sincronizar checkboxes de la sección actual con el estado global
+    const sectionId = activeSection?.id;
+    const sectionKey = sectionMap[sectionId];
+    if (sectionKey) {
+      syncSelectionState(sectionKey);
+    }
     
     // Ejecutar callback si existe
     if (onActivate) onActivate();
@@ -2611,7 +2646,8 @@ function initGalleryManagement() {
   document.getElementById('filterFeatured')?.addEventListener('change', loadGallery);
   document.getElementById('filterActive')?.addEventListener('change', loadGallery);
   
-  loadGallery();
+  // NO cargar aquí - será cargada por activateTab cuando el usuario haga click
+  // La carga temprana causaba toggle/flashing en la UI
 }
 
 
