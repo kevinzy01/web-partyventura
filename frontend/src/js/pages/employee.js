@@ -953,6 +953,27 @@ function initEmployeeSchedules() {
       renderEmployeeMonthView();
     });
   }
+
+  // Event Listeners de filtros rápidos
+  const btnFilterWeek = document.getElementById('btnFilterWeekEmployee');
+  if (btnFilterWeek) {
+    btnFilterWeek.addEventListener('click', () => {
+      calendarStateEmployee.goToToday();
+      switchEmployeeScheduleView('week');
+      renderEmployeeWeekView();
+      console.log('📅 Filtro: Esta Semana activado');
+    });
+  }
+
+  const btnFilterMonth = document.getElementById('btnFilterMonthEmployee');
+  if (btnFilterMonth) {
+    btnFilterMonth.addEventListener('click', () => {
+      calendarStateEmployee.goToToday();
+      switchEmployeeScheduleView('month');
+      renderEmployeeMonthView();
+      console.log('📆 Filtro: Este Mes activado');
+    });
+  }
   
   // Cargar vista inicial (semanal)
   renderCurrentEmployeeScheduleView();
