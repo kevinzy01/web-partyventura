@@ -320,6 +320,25 @@ async function loadStats() {
       document.getElementById('totalGalleryImages').textContent = '0';
     }
 
+    // Cargar incidencias (SOLO SUPERADMIN)
+    const user = Auth.getUser();
+    if (user && user.rol === 'superadmin') {
+      try {
+        const incidencesData = await Auth.authFetch(`${API_URL}/incidences/admin/todas?limit=1000`);
+        if (incidencesData.success) {
+          const total = incidencesData.data.length;
+          const pendientes = incidencesData.data.filter(i => i.estado === 'pendiente').length;
+          
+          document.getElementById('totalIncidencias').textContent = total;
+          document.getElementById('pendingIncidenciasText').textContent = `${pendientes} pendiente${pendientes !== 1 ? 's' : ''}`;
+        }
+      } catch (error) {
+        console.log('Incidences API:', error.message);
+        document.getElementById('totalIncidencias').textContent = '0';
+        document.getElementById('pendingIncidenciasText').textContent = '0 pendientes';
+      }
+    }
+
   } catch (error) {
     console.error('Error al cargar estadísticas:', error);
     
@@ -1115,25 +1134,37 @@ function checkAdminTabVisibility() {
   const tabEmpleados = document.getElementById('tabEmpleados');
   const tabTimeRecords = document.getElementById('tabTimeRecords');
   const tabWorkSchedules = document.getElementById('tabWorkSchedules');
+  const incidencesCard = document.getElementById('incidencesStatsCard');
+  const horariosCard = document.getElementById('statsHorarios');
+  const trabajandoAhoraCard = document.getElementById('statsTrabajandoAhora');
   
   if (user && user.rol === 'superadmin') {
-    // Superadmin ve todo
+    // Superadmin ve todo (incluyendo tarjeta de incidencias)
     tabAdmins?.classList.remove('hidden');
     tabEmpleados?.classList.remove('hidden');
     tabTimeRecords?.classList.remove('hidden');
     tabWorkSchedules?.classList.remove('hidden');
+    incidencesCard?.classList.remove('hidden');
+    horariosCard?.classList.remove('hidden');
+    trabajandoAhoraCard?.classList.remove('hidden');
   } else if (user && user.rol === 'admin') {
-    // Admin solo ve empleados
+    // Admin solo ve empleados (NO incidencias - requiere superadmin)
     tabAdmins?.classList.add('hidden');
     tabEmpleados?.classList.remove('hidden');
     tabTimeRecords?.classList.add('hidden');
     tabWorkSchedules?.classList.add('hidden');
+    incidencesCard?.classList.add('hidden');
+    horariosCard?.classList.add('hidden');
+    trabajandoAhoraCard?.classList.add('hidden');
   } else {
     // Empleados no ven nada de administración
     tabAdmins?.classList.add('hidden');
     tabEmpleados?.classList.add('hidden');
     tabTimeRecords?.classList.add('hidden');
     tabWorkSchedules?.classList.add('hidden');
+    incidencesCard?.classList.add('hidden');
+    horariosCard?.classList.add('hidden');
+    trabajandoAhoraCard?.classList.add('hidden');
   }
 }
 
@@ -3199,6 +3230,12 @@ async function loadTimeRecordsSummary() {
       });
       
       document.getElementById('workingNow').textContent = workingCount;
+      
+      // Actualizar también la tarjeta de stats profesionales
+      const statsWorkingNowElement = document.getElementById('statsWorkingNow');
+      if (statsWorkingNowElement) {
+        statsWorkingNowElement.textContent = workingCount;
+      }
     }
     
   } catch (error) {
@@ -3208,6 +3245,12 @@ async function loadTimeRecordsSummary() {
     document.getElementById('monthHours').textContent = '0';
     document.getElementById('todayRecords').textContent = '0';
     document.getElementById('workingNow').textContent = '0';
+    
+    // Resetear también la tarjeta de stats profesionales
+    const statsWorkingNowElement = document.getElementById('statsWorkingNow');
+    if (statsWorkingNowElement) {
+      statsWorkingNowElement.textContent = '0';
+    }
   }
 }
 
@@ -5109,8 +5152,600 @@ document.addEventListener('DOMContentLoaded', () => {
   initEventsManagement();
   initGalleryManagement();
   initTimeRecordsManagement();
+  initIncidencesManagement();
   
   // Actualizar reloj del header cada minuto
   updateDateTime();
   setInterval(updateDateTime, 60000);
 });
+
+// ===================================
+// GESTIÓN DE INCIDENCIAS
+// ===================================
+
+/**
+ * Abre el popup de incidencias
+ */
+function openIncidencesPopup() {
+  const popup = document.getElementById('incidencesPopup');
+  popup.classList.remove('hidden');
+  popup.classList.add('flex');
+  loadIncidencias(); // Cargar datos al abrir
+}
+
+/**
+ * Cierra el popup de incidencias
+ */
+function closeIncidencesPopup() {
+  const popup = document.getElementById('incidencesPopup');
+  popup.classList.add('hidden');
+  popup.classList.remove('flex');
+}
+
+/**
+ * Formatea el tipo de incidencia para mostrar
+ */
+function getIncidenceTipoLabel(tipo) {
+  const labels = {
+    'baja_medica': 'Baja Médica',
+    'falta': 'Falta',
+    'retraso': 'Retraso',
+    'ausencia_justificada': 'Ausencia Justificada'
+  };
+  return labels[tipo] || tipo;
+}
+
+/**
+ * Retorna clases de badge según el tipo de incidencia
+ */
+function getIncidenceTipoBadge(tipo) {
+  const badges = {
+    'baja_medica': 'bg-red-100 text-red-800 border-red-300',
+    'falta': 'bg-orange-100 text-orange-800 border-orange-300',
+    'retraso': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    'ausencia_justificada': 'bg-blue-100 text-blue-800 border-blue-300'
+  };
+  return badges[tipo] || 'bg-gray-100 text-gray-800 border-gray-300';
+}
+
+/**
+ * Retorna clases de badge según el estado de incidencia
+ */
+function getIncidenceEstadoBadge(estado) {
+  const badges = {
+    'pendiente': 'bg-amber-100 text-amber-800 border-amber-300',
+    'aprobada': 'bg-green-100 text-green-800 border-green-300',
+    'rechazada': 'bg-red-100 text-red-800 border-red-300'
+  };
+  return badges[estado] || 'bg-gray-100 text-gray-800 border-gray-300';
+}
+
+/**
+ * Formatea el estado de incidencia para mostrar
+ */
+function getIncidenceEstadoLabel(estado) {
+  const labels = {
+    'pendiente': 'Pendiente',
+    'aprobada': 'Aprobada',
+    'rechazada': 'Rechazada'
+  };
+  return labels[estado] || estado;
+}
+
+/**
+ * Carga todas las incidencias con filtros
+ */
+async function loadIncidencias() {
+  try {
+    // Construir query params con filtros
+    const params = new URLSearchParams();
+    
+    const filterEmployee = document.getElementById('filterIncidenceEmployee').value;
+    const filterType = document.getElementById('filterIncidenceType').value;
+    const filterStatus = document.getElementById('filterIncidenceStatus').value;
+    
+    if (filterEmployee) params.append('empleadoId', filterEmployee);
+    if (filterType) params.append('tipo', filterType);
+    if (filterStatus) params.append('estado', filterStatus);
+    
+    params.append('limit', '100'); // Cargar hasta 100 incidencias
+    
+    const url = `${API_URL}/incidences/admin/todas${params.toString() ? '?' + params.toString() : ''}`;
+    const data = await Auth.authFetch(url);
+    
+    if (!data.success || !data.data) {
+      throw new Error(data.message || 'Error al cargar incidencias');
+    }
+    
+    renderIncidencias(data.data);
+    updateIncidencesBadge(data.data);
+    
+  } catch (error) {
+    console.error('Error al cargar incidencias:', error);
+    showNotification('Error al cargar incidencias: ' + error.message, 'error');
+    
+    const tbody = document.getElementById('incidencesTableBody');
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+          <div class="text-6xl mb-4">❌</div>
+          <p class="text-lg mb-2">Error al cargar incidencias</p>
+          <p class="text-sm">${error.message}</p>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+/**
+ * Renderiza la tabla de incidencias
+ */
+function renderIncidencias(incidencias) {
+  const tbody = document.getElementById('incidencesTableBody');
+  
+  if (!incidencias || incidencias.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+          <div class="text-6xl mb-4">📭</div>
+          <p class="text-lg mb-2">No hay incidencias</p>
+          <p class="text-sm">Las incidencias reportadas por los empleados aparecerán aquí</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  tbody.innerHTML = incidencias.map(incidencia => {
+    const empleadoNombre = incidencia.empleado?.nombre || 'Usuario eliminado';
+    const empleadoRol = incidencia.empleado?.rolEmpleado || '';
+    const tipoLabel = getIncidenceTipoLabel(incidencia.tipo);
+    const tipoBadge = getIncidenceTipoBadge(incidencia.tipo);
+    const estadoLabel = getIncidenceEstadoLabel(incidencia.estado);
+    const estadoBadge = getIncidenceEstadoBadge(incidencia.estado);
+    const fecha = new Date(incidencia.fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    
+    // Badge del rol del empleado
+    let rolBadge = '';
+    if (empleadoRol) {
+      const rolColors = {
+        'monitor': 'bg-blue-100 text-blue-800',
+        'cocina': 'bg-orange-100 text-orange-800',
+        'barra': 'bg-purple-100 text-purple-800'
+      };
+      const rolColor = rolColors[empleadoRol] || 'bg-gray-100 text-gray-800';
+      const rolTexts = {
+        'monitor': 'Monitor',
+        'cocina': 'Cocina',
+        'barra': 'Barra'
+      };
+      const rolText = rolTexts[empleadoRol] || empleadoRol;
+      rolBadge = `<span class="inline-block ${rolColor} text-xs px-2 py-0.5 rounded-full font-semibold ml-2">${rolText}</span>`;
+    }
+    
+    return `
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-3">
+          <div class="font-medium text-gray-900">${empleadoNombre}</div>
+          ${rolBadge}
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full border ${tipoBadge}">
+            ${tipoLabel}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-gray-700">${fecha}</td>
+        <td class="px-4 py-3">
+          <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full border ${estadoBadge}">
+            ${estadoLabel}
+          </span>
+        </td>
+        <td class="px-4 py-3">
+          <button 
+            onclick="openIncidenceDetail('${incidencia.id || incidencia._id}')"
+            class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+            👁️ Ver Detalle
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/**
+ * Actualiza el badge de incidencias pendientes y las estadísticas de la tarjeta
+ */
+function updateIncidencesBadge(incidencias) {
+  const pendientes = incidencias.filter(i => i.estado === 'pendiente').length;
+  const total = incidencias.length;
+  
+  // Actualizar tarjeta del dashboard
+  const cardTotal = document.getElementById('totalIncidencias');
+  const cardPending = document.getElementById('pendingIncidenciasText');
+  
+  if (cardTotal) cardTotal.textContent = total;
+  if (cardPending) cardPending.textContent = `${pendientes} pendiente${pendientes !== 1 ? 's' : ''}`;
+}
+
+/**
+ * Abre el modal de detalle de incidencia
+ */
+async function openIncidenceDetail(incidenciaId) {
+  try {
+    const data = await Auth.authFetch(`${API_URL}/incidences/admin/${incidenciaId}`);
+    
+    if (!data.success || !data.data) {
+      throw new Error(data.message || 'Error al cargar incidencia');
+    }
+    
+    const incidencia = data.data;
+    
+    // Llenar información básica
+    document.getElementById('incidenceId').value = incidencia.id || incidencia._id;
+    document.getElementById('detailEmpleadoNombre').textContent = incidencia.empleado?.nombre || 'Usuario eliminado';
+    
+    // Rol del empleado
+    const empleadoRol = incidencia.empleado?.rolEmpleado;
+    if (empleadoRol) {
+      const rolTexts = {
+        'monitor': 'Monitor',
+        'cocina': 'Cocina',
+        'barra': 'Barra'
+      };
+      const rolColors = {
+        'monitor': 'bg-blue-100 text-blue-800',
+        'cocina': 'bg-orange-100 text-orange-800',
+        'barra': 'bg-purple-100 text-purple-800'
+      };
+      const rolText = rolTexts[empleadoRol] || empleadoRol;
+      const rolColor = rolColors[empleadoRol] || 'bg-gray-100 text-gray-800';
+      document.getElementById('detailEmpleadoRol').innerHTML = `
+        <span class="inline-block ${rolColor} px-3 py-1 rounded-full text-sm font-semibold">${rolText}</span>
+      `;
+    } else {
+      document.getElementById('detailEmpleadoRol').textContent = '-';
+    }
+    
+    // Tipo
+    const tipoLabel = getIncidenceTipoLabel(incidencia.tipo);
+    const tipoBadge = getIncidenceTipoBadge(incidencia.tipo);
+    document.getElementById('detailTipo').innerHTML = `
+      <span class="inline-block px-3 py-1 text-sm font-semibold rounded-full border ${tipoBadge}">
+        ${tipoLabel}
+      </span>
+    `;
+    
+    // Fecha
+    const fecha = new Date(incidencia.fecha).toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+    document.getElementById('detailFecha').textContent = fecha;
+    
+    // Estado
+    const estadoLabel = getIncidenceEstadoLabel(incidencia.estado);
+    const estadoBadge = getIncidenceEstadoBadge(incidencia.estado);
+    document.getElementById('detailEstado').innerHTML = `
+      <span class="inline-block px-3 py-1 text-sm font-semibold rounded-full border ${estadoBadge}">
+        ${estadoLabel}
+      </span>
+    `;
+    
+    // Descripción (campo correcto del backend: 'motivo')
+    document.getElementById('detailDescripcion').textContent = incidencia.motivo || '-';
+    
+    // Documento adjunto (campo correcto del backend: 'documentoAdjunto')
+    const docSection = document.getElementById('detailDocumentoSection');
+    const docButton = document.getElementById('detailDocumentoLink');
+    if (incidencia.documentoAdjunto) {
+      docButton.onclick = () => verDocumentoIncidencia(incidencia.id || incidencia._id);
+      docSection.classList.remove('hidden');
+    } else {
+      docSection.classList.add('hidden');
+    }
+    
+    // Respuesta admin (campo correcto del backend: 'comentarioAdmin')
+    const respuestaSection = document.getElementById('detailRespuestaSection');
+    if (incidencia.comentarioAdmin) {
+      document.getElementById('detailRespuestaAdmin').textContent = incidencia.comentarioAdmin;
+      if (incidencia.updatedAt) {
+        const fechaResp = new Date(incidencia.updatedAt).toLocaleString('es-ES');
+        document.getElementById('detailFechaRespuesta').textContent = `Respondido el ${fechaResp}`;
+      }
+      respuestaSection.classList.remove('hidden');
+    } else {
+      respuestaSection.classList.add('hidden');
+    }
+    
+    // Preseleccionar estado actual en el formulario
+    document.getElementById('incidenceNewStatus').value = incidencia.estado;
+    document.getElementById('incidenceAdminResponse').value = incidencia.comentarioAdmin || '';
+    
+    // Cambiar de vista: ocultar lista, mostrar detalle
+    document.getElementById('incidencesListView').classList.add('hidden');
+    document.getElementById('incidencesDetailView').classList.remove('hidden');
+    
+  } catch (error) {
+    console.error('Error al cargar detalle de incidencia:', error);
+    showNotification('Error al cargar detalle: ' + error.message, 'error');
+  }
+}
+
+/**
+ * Volver a la vista de lista de incidencias
+ */
+function backToIncidencesList() {
+  document.getElementById('incidencesDetailView').classList.add('hidden');
+  document.getElementById('incidencesListView').classList.remove('hidden');
+}
+
+/**
+ * Actualiza el estado de una incidencia
+ */
+async function updateIncidenceStatus(e) {
+  e.preventDefault();
+  
+  const incidenciaId = document.getElementById('incidenceId').value;
+  const nuevoEstado = document.getElementById('incidenceNewStatus').value;
+  const comentarioAdmin = document.getElementById('incidenceAdminResponse').value.trim();
+  
+  // Validar que haya estado seleccionado
+  if (!nuevoEstado) {
+    showNotification('Debes seleccionar un estado', 'error');
+    return;
+  }
+  
+  // Validar que la respuesta sea obligatoria para estados aprobada/rechazada
+  if ((nuevoEstado === 'aprobada' || nuevoEstado === 'rechazada') && !comentarioAdmin) {
+    showNotification('El comentario es obligatorio para aprobar o rechazar', 'error');
+    return;
+  }
+  
+  try {
+    const data = await Auth.authFetch(`${API_URL}/incidences/admin/${incidenciaId}/revisar`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        estado: nuevoEstado,
+        comentarioAdmin: comentarioAdmin || undefined
+      })
+    });
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Error al actualizar incidencia');
+    }
+    
+    showNotification('Incidencia actualizada correctamente', 'success');
+    backToIncidencesList(); // Volver a la lista
+    loadIncidencias(); // Recargar lista
+    
+  } catch (error) {
+    console.error('Error al actualizar incidencia:', error);
+    showNotification('Error al actualizar: ' + error.message, 'error');
+  }
+}
+
+/**
+ * Carga la lista de empleados para el filtro
+ */
+async function loadEmpleadosForIncidenceFilter() {
+  try {
+    const data = await Auth.authFetch(`${API_URL}/admins/empleados`);
+    
+    if (data.success && data.data) {
+      const select = document.getElementById('filterIncidenceEmployee');
+      const currentValue = select.value;
+      
+      // Mantener la opción "Todos"
+      select.innerHTML = '<option value="">Todos los empleados</option>';
+      
+      // Agregar empleados
+      data.data.forEach(empleado => {
+        const option = document.createElement('option');
+        option.value = empleado._id;
+        option.textContent = empleado.nombre;
+        select.appendChild(option);
+      });
+      
+      // Restaurar selección si existía
+      if (currentValue) {
+        select.value = currentValue;
+      }
+    }
+  } catch (error) {
+    console.error('Error al cargar empleados para filtro:', error);
+  }
+}
+
+/**
+ * Inicializa la gestión de incidencias
+ */
+function initIncidencesManagement() {
+  // Event listeners de filtros
+  document.getElementById('filterIncidenceEmployee')?.addEventListener('change', loadIncidencias);
+  document.getElementById('filterIncidenceType')?.addEventListener('change', loadIncidencias);
+  document.getElementById('filterIncidenceStatus')?.addEventListener('change', loadIncidencias);
+  
+  // Botón limpiar filtros
+  document.getElementById('btnClearIncidenceFilters')?.addEventListener('click', () => {
+    document.getElementById('filterIncidenceEmployee').value = '';
+    document.getElementById('filterIncidenceType').value = '';
+    document.getElementById('filterIncidenceStatus').value = '';
+    loadIncidencias();
+  });
+  
+  // Botón volver a la lista
+  document.getElementById('btnBackToIncidencesList')?.addEventListener('click', backToIncidencesList);
+  
+  // Botón eliminar incidencia
+  document.getElementById('btnDeleteIncidence')?.addEventListener('click', async () => {
+    const incidenciaId = document.getElementById('incidenceId').value;
+    if (!incidenciaId) return;
+    
+    const result = await Swal.fire({
+      title: '¿Eliminar incidencia?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+    
+    if (result.isConfirmed) {
+      try {
+        const data = await Auth.authFetch(`${API_URL}/incidences/admin/${incidenciaId}`, {
+          method: 'DELETE'
+        });
+        
+        if (data.success) {
+          showNotification('Incidencia eliminada correctamente', 'success');
+          backToIncidencesList();
+          loadIncidencias();
+        } else {
+          throw new Error(data.message || 'Error al eliminar');
+        }
+      } catch (error) {
+        console.error('Error al eliminar incidencia:', error);
+        showNotification('Error al eliminar: ' + error.message, 'error');
+      }
+    }
+  });
+  
+  // Formulario de gestión
+  document.getElementById('formIncidenceManagement')?.addEventListener('submit', updateIncidenceStatus);
+  
+  // Mostrar/ocultar "requerido" en respuesta según estado seleccionado
+  document.getElementById('incidenceNewStatus')?.addEventListener('change', (e) => {
+    const label = document.getElementById('respuestaRequeridaLabel');
+    if (e.target.value === 'aprobada' || e.target.value === 'rechazada') {
+      label.classList.remove('hidden');
+    } else {
+      label.classList.add('hidden');
+    }
+  });
+  
+  // Cargar empleados para filtro
+  loadEmpleadosForIncidenceFilter();
+  
+  console.log('✅ Gestión de incidencias inicializada');
+}
+
+/**
+ * Ver documento de una incidencia
+ * Abre el documento en una nueva pestaña
+ */
+async function verDocumentoIncidencia(incidenciaId) {
+  try {
+    console.log('📄 Solicitando documento de incidencia:', incidenciaId);
+    
+    // Construir URL del documento
+    const url = `${API_URL}/incidences/${incidenciaId}/documento`;
+    
+    // Obtener token de autenticación
+    const token = Auth.getToken();
+    if (!token) {
+      showNotification('No hay sesión activa', 'error');
+      return;
+    }
+    
+    // Crear ventana de carga
+    const loadingWindow = window.open('', '_blank');
+    if (loadingWindow) {
+      loadingWindow.document.write(`
+        <html>
+          <head>
+            <title>Cargando documento...</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                color: white;
+              }
+              .loader {
+                text-align: center;
+              }
+              .spinner {
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top: 4px solid white;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="loader">
+              <div class="spinner"></div>
+              <p>Cargando documento...</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+    
+    // Hacer petición con fetch manual para manejar la descarga
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      if (loadingWindow) loadingWindow.close();
+      
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      throw new Error(errorData.message || `Error ${response.status}`);
+    }
+    
+    // Obtener el blob del archivo
+    const blob = await response.blob();
+    const contentType = response.headers.get('Content-Type');
+    
+    console.log('✅ Documento recibido:', contentType);
+    
+    // Crear URL del blob
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Redirigir la ventana al documento
+    if (loadingWindow && !loadingWindow.closed) {
+      loadingWindow.location.href = blobUrl;
+    } else {
+      // Si la ventana fue bloqueada, abrir en nueva pestaña
+      window.open(blobUrl, '_blank');
+    }
+    
+    // Limpiar la URL del blob después de un tiempo
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 60000); // 1 minuto
+    
+  } catch (error) {
+    console.error('❌ Error al ver documento:', error);
+    showNotification(error.message || 'No se pudo cargar el documento', 'error');
+  }
+}
+
+// ===================================
+// FIN DEL ARCHIVO
+// ===================================
+
+console.log('✅ Admin.js completamente cargado');

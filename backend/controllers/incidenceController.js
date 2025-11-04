@@ -3,6 +3,8 @@ const Admin = require('../models/Admin');
 const WorkSchedule = require('../models/WorkSchedule');
 const path = require('path');
 const fs = require('fs');
+const sendEmail = require('../config/email');
+const incidenceStatusChangeEmail = require('../templates/incidenceStatusChangeEmail');
 
 // ==================== EMPLEADOS ====================
 
@@ -389,7 +391,30 @@ exports.revisarIncidencia = async (req, res) => {
     
     console.log('✅ Incidencia revisada');
     
-    // TODO: Enviar email al empleado notificando la revisión (Fase futura)
+    // Enviar email de notificación al empleado
+    try {
+      if (incidencia.empleado && incidencia.empleado.email) {
+        console.log('📧 Enviando email de notificación a:', incidencia.empleado.email);
+        
+        const htmlContent = incidenceStatusChangeEmail(
+          incidencia.empleado.nombre,
+          incidencia,
+          estado,
+          comentarioAdmin
+        );
+        
+        await sendEmail({
+          to: incidencia.empleado.email,
+          subject: `Actualización de Incidencia - ${estado === 'aprobada' ? 'Aprobada ✅' : 'Rechazada ❌'}`,
+          html: htmlContent
+        });
+        
+        console.log('✅ Email enviado correctamente');
+      }
+    } catch (emailError) {
+      console.error('⚠️ Error al enviar email de notificación:', emailError.message);
+      // No lanzar error, el proceso principal ya completó
+    }
     
     res.json({
       success: true,
@@ -481,5 +506,110 @@ exports.deleteIncidencia = async (req, res) => {
       message: 'Error al eliminar incidencia',
       error: error.message
     });
+  }
+};
+
+/**
+ * Ver/Descargar documento adjunto de una incidencia
+ * GET /api/incidences/:id/documento
+ */
+exports.getDocumento = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empleadoId = req.user._id;
+    
+    console.log('📄 Solicitando documento de incidencia:', id);
+    console.log('Usuario:', req.user.username, '- Rol:', req.user.rol);
+    
+    const incidencia = await Incidence.findById(id);
+    
+    if (!incidencia) {
+      return res.status(404).json({
+        success: false,
+        message: 'Incidencia no encontrada'
+      });
+    }
+    
+    // Validar permisos: solo el empleado dueño o superadmin
+    if (req.user.rol === 'empleado' && incidencia.empleado.toString() !== empleadoId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permiso para ver este documento'
+      });
+    }
+    
+    if (!incidencia.documentoAdjunto) {
+      return res.status(404).json({
+        success: false,
+        message: 'Esta incidencia no tiene documento adjunto'
+      });
+    }
+    
+    // Construir ruta absoluta del archivo
+    const filePath = path.join(__dirname, '..', incidencia.documentoAdjunto);
+    
+    console.log('Ruta del archivo:', filePath);
+    
+    // Verificar que el archivo existe
+    if (!fs.existsSync(filePath)) {
+      console.error('❌ Archivo no encontrado en:', filePath);
+      return res.status(404).json({
+        success: false,
+        message: 'El archivo no existe en el servidor'
+      });
+    }
+    
+    // Obtener información del archivo
+    const fileName = path.basename(filePath);
+    const fileExtension = path.extname(fileName).toLowerCase();
+    
+    // Determinar Content-Type según extensión
+    const contentTypes = {
+      '.pdf': 'application/pdf',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp'
+    };
+    
+    const contentType = contentTypes[fileExtension] || 'application/octet-stream';
+    
+    console.log('Tipo de archivo:', contentType);
+    console.log('Nombre de archivo:', fileName);
+    
+    // Configurar headers de respuesta
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    
+    // Para navegadores que no soportan inline para PDFs
+    if (fileExtension === '.pdf') {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
+    
+    // Enviar el archivo
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error('❌ Error al enviar archivo:', err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: 'Error al enviar el archivo'
+          });
+        }
+      } else {
+        console.log('✅ Documento enviado correctamente');
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error al obtener documento:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener documento',
+        error: error.message
+      });
+    }
   }
 };

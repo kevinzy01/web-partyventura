@@ -204,7 +204,8 @@ async function cargarDatos() {
       cargarHistorial(),
       cargarResumenMensual(),
       cargarResumenSemanal(),
-      cargarHorasAsignadas()
+      cargarHorasAsignadas(),
+      cargarTrabajandoAhora()
     ]);
     
     // Log de sincronización para debugging
@@ -212,6 +213,7 @@ async function cargarDatos() {
       horasHoy: document.getElementById('horasHoy')?.textContent,
       horasSemana: document.getElementById('horasSemana')?.textContent,
       horasMes: document.getElementById('horasMes')?.textContent,
+      trabajandoAhora: document.getElementById('workingNowEmployee')?.textContent,
       timestamp: new Date().toLocaleTimeString('es-ES')
     });
   } catch (error) {
@@ -381,6 +383,48 @@ async function cargarHorasAsignadas() {
     const elemento = document.getElementById('horasAsignadasHoy');
     if (elemento) {
       elemento.textContent = '--';
+    }
+  }
+}
+
+/**
+ * Cargar estado de "Trabajando Ahora"
+ * Verifica si el empleado tiene una entrada registrada sin salida correspondiente
+ */
+async function cargarTrabajandoAhora() {
+  try {
+    const data = await Auth.authFetch(`${API_URL}/time-records/mis-registros?limit=2`);
+    
+    if (data.success && data.data && data.data.length > 0) {
+      // Ordenar por fecha descendente (más recientes primero)
+      const registros = data.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      
+      // Verificar si el registro más reciente es una entrada (sin salida)
+      const ultimoRegistro = registros[0];
+      const estaTrabajanloAhora = ultimoRegistro.tipo === 'entrada' ? 1 : 0;
+      
+      console.log('✅ Estado trabajando ahora:', {
+        ultimoTipo: ultimoRegistro.tipo,
+        trabajandoAhora: estaTrabajanloAhora
+      });
+      
+      const elemento = document.getElementById('workingNowEmployee');
+      if (elemento) {
+        elemento.textContent = estaTrabajanloAhora;
+      }
+    } else {
+      // Si no hay registros, no está trabajando
+      const elemento = document.getElementById('workingNowEmployee');
+      if (elemento) {
+        elemento.textContent = '0';
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error al cargar estado trabajando ahora:', error);
+    // Mostrar 0 si hay error
+    const elemento = document.getElementById('workingNowEmployee');
+    if (elemento) {
+      elemento.textContent = '0';
     }
   }
 }
@@ -1278,7 +1322,17 @@ function renderIncidencias(incidencias) {
           ${estadoInfo.emoji} ${estadoInfo.nombre}
         </span>
       </td>
-      <td class="px-4 py-3 text-sm text-center hidden sm:table-cell">${hasDocumento}</td>
+      <td class="px-4 py-3 text-sm text-center hidden sm:table-cell">
+        ${inc.documentoAdjunto ? 
+          `<button 
+            onclick="verDocumentoIncidencia('${inc._id}')"
+            class="text-blue-600 hover:text-blue-800 font-medium text-xs px-2 py-1 rounded hover:bg-blue-50"
+            title="Ver documento">
+            📄 Ver
+          </button>` : 
+          `<span class="text-gray-400">Sin doc.</span>`
+        }
+      </td>
     `;
     
     tbody.appendChild(row);
@@ -1309,3 +1363,113 @@ function getEstadoInfo(estado) {
   };
   return estados[estado] || { emoji: '❓', nombre: estado, bg: 'bg-gray-100', text: 'text-gray-800' };
 }
+
+/**
+ * Ver documento de una incidencia
+ * Abre el documento en una nueva pestaña
+ */
+async function verDocumentoIncidencia(incidenciaId) {
+  try {
+    console.log('📄 Solicitando documento de incidencia:', incidenciaId);
+    
+    // Construir URL del documento
+    const url = `${API_URL}/incidences/${incidenciaId}/documento`;
+    
+    // Obtener token de autenticación
+    const token = Auth.getToken();
+    if (!token) {
+      showToast('Error', 'No hay sesión activa', 'error');
+      return;
+    }
+    
+    // Crear ventana de carga
+    const loadingWindow = window.open('', '_blank');
+    if (loadingWindow) {
+      loadingWindow.document.write(`
+        <html>
+          <head>
+            <title>Cargando documento...</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                color: white;
+              }
+              .loader {
+                text-align: center;
+              }
+              .spinner {
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top: 4px solid white;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="loader">
+              <div class="spinner"></div>
+              <p>Cargando documento...</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+    
+    // Hacer petición con fetch manual para manejar la descarga
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      if (loadingWindow) loadingWindow.close();
+      
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      throw new Error(errorData.message || `Error ${response.status}`);
+    }
+    
+    // Obtener el blob del archivo
+    const blob = await response.blob();
+    const contentType = response.headers.get('Content-Type');
+    
+    console.log('✅ Documento recibido:', contentType);
+    
+    // Crear URL del blob
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Redirigir la ventana al documento
+    if (loadingWindow && !loadingWindow.closed) {
+      loadingWindow.location.href = blobUrl;
+    } else {
+      // Si la ventana fue bloqueada, abrir en nueva pestaña
+      window.open(blobUrl, '_blank');
+    }
+    
+    // Limpiar la URL del blob después de un tiempo
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 60000); // 1 minuto
+    
+  } catch (error) {
+    console.error('❌ Error al ver documento:', error);
+    showToast('Error', error.message || 'No se pudo cargar el documento', 'error');
+  }
+}
+
+// Hacer la función global para que pueda ser llamada desde onclick
+window.verDocumentoIncidencia = verDocumentoIncidencia;

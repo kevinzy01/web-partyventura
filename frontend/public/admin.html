@@ -289,6 +289,237 @@
     .animate-scale-in {
       animation: scale-in 0.3s ease-out;
     }
+
+    /* ====== ESTILOS PERSONALIZADOS PARA CLASES FALTANTES ====== */
+    
+    /* Hover Scale 105 - Para elementos interactivos */
+    .hover\:scale-105:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Hover Shadow XL - Sombra aumentada en hover */
+    .hover\:shadow-xl:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Transition All - Transición suave de todas las propiedades */
+    .transition-all {
+      transition: all 0.3s ease;
+    }
+    
+    /* Duration 300 - Duración de animación 300ms */
+    .duration-300 {
+      transition-duration: 300ms;
+    }
+    
+    /* Backdrop Blur - Efecto de desenfoque de fondo (aplica a elementos con bg-black/60) */
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    
+    /* Group Pattern - Soporte para group-hover */
+    .group {
+      position: relative;
+    }
+    
+    .group-hover\:opacity-100:hover {
+      opacity: 1 !important;
+    }
+    
+    .group-hover\:text-red-600:hover {
+      color: #dc2626;
+    }
+    
+    /* Arbitrary Width/Height - Valores dinámicos de Tailwind */
+    .w-\[95vw\] {
+      width: 95vw;
+    }
+    
+    .h-\[95vh\] {
+      height: 95vh;
+    }
+    
+    /* Overlay Pattern - Fondo semitransparente con backdrop */
+    .bg-black\/60 {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    
+    /* Transition Colors - Para transiciones suaves de color */
+    .transition-colors {
+      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .transition-opacity {
+      transition: opacity 0.2s ease;
+    }
+    
+    /* Opacity Classes */
+    .opacity-0 {
+      opacity: 0;
+    }
+    
+    /* Background Colors - Para badges de incidencias */
+    .bg-red-100 {
+      background-color: #fee2e2;
+    }
+    
+    .bg-orange-100 {
+      background-color: #ffedd5;
+    }
+    
+    .bg-yellow-100 {
+      background-color: #fef3c7;
+    }
+    
+    .bg-blue-100 {
+      background-color: #dbeafe;
+    }
+    
+    .bg-amber-100 {
+      background-color: #fef3c7;
+    }
+    
+    .bg-amber-500 {
+      background-color: #f59e0b;
+    }
+    
+    .bg-amber-600 {
+      background-color: #d97706;
+    }
+    
+    .hover\:bg-amber-600:hover {
+      background-color: #d97706;
+    }
+    
+    .border-amber-700 {
+      border-color: #b45309;
+    }
+    
+    /* Gradient utilities */
+    .bg-gradient-to-r {
+      background-image: linear-gradient(to right, var(--tw-gradient-stops));
+    }
+    
+    .from-amber-500 {
+      --tw-gradient-from: #f59e0b;
+      --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(245, 158, 11, 0));
+    }
+    
+    .to-amber-600 {
+      --tw-gradient-to: #d97706;
+    }
+
+    /* Gradiente diagonal (bottom right) */
+    .bg-gradient-to-br {
+      background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+    }
+
+    .from-amber-400 {
+      --tw-gradient-from: #fbbf24;
+      --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(251, 191, 36, 0));
+    }
+
+    /* to-amber-600 ya está definida arriba */
+    
+    /* Global hidden class */
+    .hidden {
+      display: none !important;
+    }
+    
+    /* Viewport width/height classes for modals */
+    .w-\[95vw\] {
+      width: 95vw !important;
+    }
+    
+    .h-\[95vh\] {
+      height: 95vh !important;
+    }
+    
+    .bg-green-100 {
+      background-color: #d1fae5;
+    }
+    
+    .bg-purple-100 {
+      background-color: #f3e8ff;
+    }
+    
+    .bg-gray-100 {
+      background-color: #f3f4f6;
+    }
+    
+    /* Text Colors - Para badges de incidencias */
+    .text-red-800 {
+      color: #991b1b;
+    }
+    
+    .text-orange-800 {
+      color: #9a3412;
+    }
+    
+    .text-yellow-800 {
+      color: #854d0e;
+    }
+    
+    .text-blue-800 {
+      color: #1e40af;
+    }
+    
+    .text-amber-800 {
+      color: #92400e;
+    }
+    
+    .text-green-800 {
+      color: #065f46;
+    }
+    
+    .text-purple-800 {
+      color: #5b21b6;
+    }
+    
+    .text-gray-800 {
+      color: #1f2937;
+    }
+    
+    /* Border Colors - Para badges de incidencias */
+    .border-red-300 {
+      border-color: #fca5a5;
+    }
+    
+    .border-orange-300 {
+      border-color: #fdba74;
+    }
+    
+    .border-yellow-300 {
+      border-color: #fcd34d;
+    }
+    
+    .border-blue-300 {
+      border-color: #93c5fd;
+    }
+    
+    .border-amber-300 {
+      border-color: #fcd34d;
+    }
+    
+    .border-green-300 {
+      border-color: #6ee7b7;
+    }
+    
+    .border-purple-300 {
+      border-color: #d8b4fe;
+    }
+    
+    .border-gray-300 {
+      border-color: #d1d5db;
+    }
+    
+    /* Inline Block - Para badges */
+    .inline-block {
+      display: inline-block;
+    }
+    
+    /* ====== FIN ESTILOS PERSONALIZADOS ====== */
     
     /* Scrollbar Styling */
     ::-webkit-scrollbar {
@@ -693,8 +924,8 @@
         </div>
       </div>
       
-      <!-- Card Suscriptores -->
-      <div class="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
+      <!-- Card Suscriptores (clickeable - abre en nueva pestaña) -->
+      <div id="newsletterStatsCard" class="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-105" onclick="window.open('/newsletter-manager.html', '_blank')">
         <div class="flex items-center justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
@@ -707,7 +938,12 @@
               <p class="text-white/90 text-[10px] md:text-sm font-medium">Suscriptores</p>
             </div>
             <p id="totalSubscribers" class="text-xl md:text-4xl font-bold">0</p>
-            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Newsletter activa</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Click para gestionar</p>
+          </div>
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
           </div>
         </div>
       </div>
@@ -748,6 +984,31 @@
         </div>
       </div>
 
+      <!-- Card Incidencias (solo superadmin) -->
+      <div id="incidencesStatsCard" class="hidden bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105" onclick="openIncidencesPopup()">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg class="w-3 h-3 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Incidencias</p>
+            </div>
+            <p id="totalIncidencias" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">
+              <span id="pendingIncidenciasText">0 pendientes</span>
+            </p>
+          </div>
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
       <!-- Card Horarios (solo superadmin) -->
       <div id="schedulesStatsCard" class="hidden bg-gradient-to-br from-teal-400 to-teal-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group">
         <div class="flex items-center justify-between">
@@ -765,21 +1026,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Tarjeta: Trabajando Ahora (oculta por defecto - solo superadmin) -->
+      <div id="statsTrabajandoAhora" class="bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg md:rounded-xl p-3 md:p-6 shadow-lg stats-card group hidden">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+              <div class="w-6 h-6 md:w-10 md:h-10 bg-white/20 rounded-md md:rounded-lg flex items-center justify-center backdrop-blur-sm text-xl md:text-3xl">
+                ✅
+              </div>
+              <p class="text-white/90 text-[10px] md:text-sm font-medium">Trabajando Ahora</p>
+            </div>
+            <p id="statsWorkingNow" class="text-xl md:text-4xl font-bold">0</p>
+            <p class="text-white/70 text-[9px] md:text-xs mt-0.5 md:mt-1">Empleados activos</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Tabs Profesionales -->
     <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6 md:mb-8">
       <div class="flex flex-col sm:flex-row">
-        <button id="tabNews" class="tab-button active flex-1 px-4 md:px-6 py-4 font-semibold transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 relative">
-          <div class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
-              <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"></path>
-            </svg>
-            <span>Noticias</span>
-          </div>
-        </button>
-        <button id="tabContacts" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+        <!-- 1. Mensajes de Contacto -->
+        <button id="tabContacts" class="tab-button active flex-1 px-4 md:px-6 py-4 font-semibold transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 relative">
           <div class="flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
@@ -789,38 +1058,8 @@
             <span id="badgeNewContacts" class="hidden ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
           </div>
         </button>
-        <button id="tabAdmins" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
-          <div class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
-            </svg>
-            <span>Administradores</span>
-          </div>
-        </button>
-        <button id="tabEmpleados" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
-          <div class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
-            </svg>
-            <span>Empleados</span>
-          </div>
-        </button>
-        <button id="tabSchedules" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
-          <div class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-            </svg>
-            <span>Horarios y Tarifas</span>
-          </div>
-        </button>
-        <button id="tabEvents" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
-          <div class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-            </svg>
-            <span>Eventos</span>
-          </div>
-        </button>
+        
+        <!-- 2. Galería -->
         <button id="tabGallery" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
           <div class="flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -829,15 +1068,30 @@
             <span>Galería</span>
           </div>
         </button>
-        <button id="tabTimeRecords" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+        
+        <!-- 3. Noticias -->
+        <button id="tabNews" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
           <div class="flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+              <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+              <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"></path>
             </svg>
-            <span>Control Horario</span>
+            <span>Noticias</span>
           </div>
         </button>
-        <button id="tabWorkSchedules" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base relative">
+        
+        <!-- 4. Eventos -->
+        <button id="tabEvents" class="tab-button flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Eventos</span>
+          </div>
+        </button>
+        
+        <!-- 5. Horarios Laborales -->
+        <button id="tabWorkSchedules" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
           <div class="flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
@@ -846,11 +1100,41 @@
             <span>Horarios Laborales</span>
           </div>
         </button>
+        
+        <!-- 6. Control Horario -->
+        <button id="tabTimeRecords" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Control Horario</span>
+          </div>
+        </button>
+        
+        <!-- 7. Empleados -->
+        <button id="tabEmpleados" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base border-b sm:border-b-0 sm:border-r border-gray-200 relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
+            </svg>
+            <span>Empleados</span>
+          </div>
+        </button>
+        
+        <!-- 8. Administradores -->
+        <button id="tabAdmins" class="tab-button hidden flex-1 px-4 md:px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 transition-all text-sm md:text-base relative">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+            </svg>
+            <span>Administradores</span>
+          </div>
+        </button>
       </div>
     </div>
 
     <!-- News Section -->
-    <div id="newsSection" class="admin-container">
+    <div id="newsSection" class="admin-container hidden">
       <!-- Botón Nueva Noticia -->
       <div class="mb-4 md:mb-6">
         <button id="btnNewNews" class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-all transform hover:scale-105">
@@ -901,7 +1185,7 @@
     </div>
 
     <!-- Contacts Section -->
-    <div id="contactsSection" class="admin-container hidden">
+    <div id="contactsSection" class="admin-container">
       <!-- Barra de acción masiva -->
       <div id="bulkActionBarContacts" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -2402,6 +2686,209 @@
   </div>
 
   <!-- ========================================
+       SECCIÓN DE INCIDENCIAS
+       ======================================== -->
+  <!-- ========================================
+       MODAL POPUP DE INCIDENCIAS (FULLSCREEN)
+       ======================================== -->
+  
+  <div id="incidencesPopup" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeIncidencesPopup()"></div>
+    
+    <!-- Popup Window -->
+    <div class="relative bg-white rounded-2xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden animate-scale-in">
+      <!-- Header -->
+      <div class="flex-shrink-0 bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+          </svg>
+          Gestión de Incidencias
+        </h2>
+        <button onclick="closeIncidencesPopup()" class="text-white hover:text-gray-200 transition-colors text-4xl font-light leading-none">
+          &times;
+        </button>
+      </div>
+      
+      <!-- Body con scroll -->
+      <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <!-- Vista de Lista (por defecto) -->
+        <div id="incidencesListView">
+          <!-- Filtros -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-white rounded-xl shadow">
+          <!-- Filtro por Empleado -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Empleado</label>
+            <select id="filterIncidenceEmployee" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+              <option value="">Todos los empleados</option>
+            </select>
+          </div>
+          
+          <!-- Filtro por Tipo -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo</label>
+            <select id="filterIncidenceType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+              <option value="">Todos los tipos</option>
+              <option value="baja_medica">Baja Médica</option>
+              <option value="falta">Falta</option>
+              <option value="retraso">Retraso</option>
+              <option value="ausencia_justificada">Ausencia Justificada</option>
+            </select>
+          </div>
+          
+          <!-- Filtro por Estado -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
+            <select id="filterIncidenceStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+            </select>
+          </div>
+          
+          <!-- Botón Limpiar Filtros -->
+          <div class="flex items-end">
+            <button id="btnClearIncidenceFilters" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+              🔄 Limpiar
+            </button>
+          </div>
+        </div>
+        
+        <!-- Tabla de Incidencias -->
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b-2 border-gray-200">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Empleado</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="incidencesTableBody" class="divide-y divide-gray-200 bg-white">
+                <tr>
+                  <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+                    <div class="text-6xl mb-4">⏳</div>
+                    <p class="text-lg">Cargando incidencias...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </div>
+        
+        <!-- Vista de Detalle (oculta por defecto) -->
+        <div id="incidencesDetailView" class="hidden">
+          <!-- Botón Volver -->
+          <button id="btnBackToIncidencesList" class="mb-6 inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Volver a la Lista
+          </button>
+          
+          <!-- Contenido del Detalle -->
+          <div class="bg-white rounded-xl shadow-lg p-6 space-y-6">
+            <!-- Información de la Incidencia -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Empleado</label>
+                <p id="detailEmpleadoNombre" class="text-lg font-medium text-gray-900">-</p>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Puesto</label>
+                <p id="detailEmpleadoRol" class="text-lg">-</p>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Tipo de Incidencia</label>
+                <p id="detailTipo" class="text-lg">-</p>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Fecha</label>
+                <p id="detailFecha" class="text-lg font-medium text-gray-900">-</p>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Estado Actual</label>
+                <p id="detailEstado" class="text-lg">-</p>
+              </div>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-600 mb-2">Descripción</label>
+              <div id="detailDescripcion" class="p-4 bg-gray-50 rounded-lg text-gray-800 whitespace-pre-wrap">-</div>
+            </div>
+            
+            <!-- Documento Adjunto (si existe) -->
+            <div id="detailDocumentoSection" class="hidden">
+              <label class="block text-sm font-semibold text-gray-600 mb-2">Documento Adjunto</label>
+              <div class="flex items-center gap-3">
+                <button id="detailDocumentoLink" type="button" class="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Ver Documento
+                </button>
+              </div>
+            </div>
+            
+            <!-- Respuesta del Admin (si existe) -->
+            <div id="detailRespuestaSection" class="hidden">
+              <label class="block text-sm font-semibold text-gray-600 mb-2">Respuesta del Administrador</label>
+              <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                <p id="detailRespuestaAdmin" class="text-gray-800 whitespace-pre-wrap">-</p>
+                <p id="detailFechaRespuesta" class="text-sm text-gray-500 mt-2">-</p>
+              </div>
+            </div>
+            
+            <!-- Formulario de Gestión -->
+            <div class="border-t pt-6">
+              <h4 class="text-lg font-bold text-gray-800 mb-4">Gestionar Incidencia</h4>
+              <form id="formIncidenceManagement">
+                <input type="hidden" id="incidenceId">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nuevo Estado *</label>
+                    <select id="incidenceNewStatus" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                      <option value="">Seleccionar estado...</option>
+                      <option value="pendiente">Pendiente</option>
+                      <option value="aprobada">Aprobada</option>
+                      <option value="rechazada">Rechazada</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="mt-4">
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Respuesta al Empleado
+                    <span id="respuestaRequeridaLabel" class="text-red-500 hidden">*</span>
+                  </label>
+                  <textarea id="incidenceAdminResponse" rows="4" maxlength="500" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Escribe tu respuesta al empleado (opcional)..."></textarea>
+                  <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                  <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    💾 Actualizar Incidencia
+                  </button>
+                  <button type="button" id="btnDeleteIncidence" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    🗑️ Eliminar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
        MODALES
        ======================================== -->
   
@@ -2787,6 +3274,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=108"></script>
+  <script src="/src/js/pages/admin.js?v=260"></script>
 </body>
 </html>

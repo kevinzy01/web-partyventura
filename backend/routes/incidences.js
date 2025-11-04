@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const { auth, requireSuperAdmin } = require('../middleware/auth');
 const { incidenciaUpload, handleMulterError } = require('../middleware/upload');
 const { validate } = require('../middleware/validate');
-const validateObjectId = require('../middleware/validateObjectId');
+const { validateObjectId } = require('../middleware/validateObjectId');
 const incidenceController = require('../controllers/incidenceController');
 
 // ==================== VALIDACIONES ====================
@@ -101,6 +101,18 @@ router.get(
   incidenceController.getIncidencia
 );
 
+/**
+ * @route   GET /api/incidences/:id/documento
+ * @desc    Ver/Descargar documento adjunto de una incidencia
+ * @access  Private (empleado dueño o superadmin)
+ */
+router.get(
+  '/:id/documento',
+  auth,
+  validateObjectId('id'),
+  incidenceController.getDocumento
+);
+
 // ==================== RUTAS DE SUPERADMIN ====================
 
 /**
@@ -126,6 +138,19 @@ router.get(
   auth,
   requireSuperAdmin,
   incidenceController.getPendientes
+);
+
+/**
+ * @route   GET /api/incidences/admin/:id
+ * @desc    Obtener detalle de una incidencia específica (solo superadmin)
+ * @access  Private (superadmin)
+ */
+router.get(
+  '/admin/:id',
+  auth,
+  requireSuperAdmin,
+  validateObjectId('id'),
+  incidenceController.getIncidencia
 );
 
 /**

@@ -469,7 +469,7 @@ function initNewsletter() {
         throw new Error('Por favor ingresa un email válido');
       }
 
-      const response = await fetch(`${API_URL}/newsletter`, {
+      const response = await fetch(`${API_URL}/newsletter/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

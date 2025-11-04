@@ -1,4 +1,4 @@
-const rateLimit = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 
 /**
  * Rate limiters específicos para diferentes tipos de operaciones
@@ -19,10 +19,7 @@ const publicReadLimiter = rateLimit({
   legacyHeaders: false, // Deshabilitar headers X-RateLimit-*
   skipSuccessfulRequests: false,
   skipFailedRequests: false,
-  keyGenerator: (req) => {
-    // Usar IP del cliente
-    return req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter para uploads de archivos
@@ -38,10 +35,7 @@ const uploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    // Limitar por usuario autenticado o IP
-    return req.user?._id?.toString() || req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter para operaciones de escritura (CREATE)
@@ -57,9 +51,7 @@ const createLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.user?._id?.toString() || req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter para operaciones de actualización (UPDATE)
@@ -75,9 +67,7 @@ const updateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.user?._id?.toString() || req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter para operaciones de eliminación (DELETE)
@@ -93,9 +83,7 @@ const deleteLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.user?._id?.toString() || req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter estricto para operaciones sensibles
@@ -111,9 +99,7 @@ const strictLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.user?._id?.toString() || req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter general (ya existente, pero mejorado)
@@ -128,7 +114,8 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false
+  skipSuccessfulRequests: false,
+  keyGenerator: ipKeyGenerator
 });
 
 // Rate limiter para solicitud de recuperación de contraseña
@@ -145,8 +132,8 @@ const forgotPasswordLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: false,
   keyGenerator: (req) => {
-    // Limitar por email (si se proporciona) o IP
-    return req.body?.email?.toLowerCase() || req.ip;
+    // Limitar por email (si se proporciona) o IP usando ipKeyGenerator
+    return req.body?.email?.toLowerCase() || ipKeyGenerator(req);
   }
 });
 
@@ -163,9 +150,7 @@ const resetPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.ip;
-  }
+  keyGenerator: ipKeyGenerator
 });
 
 module.exports = {
