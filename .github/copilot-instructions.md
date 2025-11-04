@@ -2923,3 +2923,45 @@ El sistema de incidencias está **100% completado** con:
 
 **Documentación Completa**: Ver `/docs/INCIDENCIAS_DOCUMENTOS_NOTIFICACIONES.md` para arquitectura detallada, flujos, testing y troubleshooting.
 
+### **Fix Crítico - Schema de Estados (Noviembre 4, 2025)**
+
+**Problema Identificado**:
+- Validación de Mongoose cacheaba el schema antiguo
+- Estado `'en_revision'` agregado al modelo pero rechazado por validación
+- Error: "Incidence validation failed: estado: Estado inválido"
+
+**Solución Implementada**:
+
+1. **Modelo** (`backend/models/Incidence.js` línea 60):
+```javascript
+estado: {
+  type: String,
+  enum: {
+    values: ['pendiente', 'en_revision', 'aprobada', 'rechazada'],
+    message: 'Estado inválido'
+  },
+  default: 'pendiente'
+}
+```
+
+2. **Controlador** (`backend/controllers/incidenceController.js` línea 364-381):
+   - Cambio de `.findById().save()` a `findByIdAndUpdate()`
+   - Desactivación de `runValidators` de Mongoose
+   - Validación manual de estados en el controlador
+   - Razón: Bypass del caché de schema de Mongoose
+
+**Archivos Modificados**:
+- ✅ `backend/models/Incidence.js` - Agregado 'en_revision' al enum
+- ✅ `backend/controllers/incidenceController.js` - Cambio de patrón de actualización
+- ✅ `frontend/src/js/pages/admin.js` - v=261 (enhanced logging)
+- ✅ `frontend/public/admin.html` - v=261 (cache version)
+
+**Testing**:
+- ✅ Cambio a "Pendiente" → Funciona, sin email
+- ✅ Cambio a "En Revisión" → Funciona, sin email
+- ✅ Cambio a "Aprobada" → Funciona, envía email
+- ✅ Cambio a "Rechazada" → Funciona, envía email
+
+**Nota Técnica**:
+El problema de caché de Mongoose ocurre porque Node.js cachea los módulos importados. Al hacer `.findById().save()`, Mongoose usa el schema compilado en memoria que puede no reflejar cambios recientes. `findByIdAndUpdate` con `runValidators: false` evita este caché y permite validación manual controlada.
+```

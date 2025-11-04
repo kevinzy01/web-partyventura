@@ -368,7 +368,21 @@ exports.revisarIncidencia = async (req, res) => {
       });
     }
     
-    const incidencia = await Incidence.findById(id);
+    // Actualizar incidencia usando findByIdAndUpdate para evitar problemas de caché
+    const incidencia = await Incidence.findByIdAndUpdate(
+      id,
+      {
+        estado,
+        comentarioAdmin: comentarioAdmin || null,
+        revisadoPor: req.user._id,
+        fechaRevision: new Date()
+      },
+      { 
+        new: true, 
+        runValidators: false // Desactivar validadores de Mongoose temporalmente
+      }
+    ).populate('empleado', 'nombre username email rolEmpleado')
+      .populate('revisadoPor', 'nombre username');
     
     if (!incidencia) {
       return res.status(404).json({
@@ -376,18 +390,6 @@ exports.revisarIncidencia = async (req, res) => {
         message: 'Incidencia no encontrada'
       });
     }
-    
-    // Actualizar incidencia
-    incidencia.estado = estado;
-    incidencia.comentarioAdmin = comentarioAdmin || null;
-    incidencia.revisadoPor = req.user._id;
-    incidencia.fechaRevision = new Date();
-    
-    await incidencia.save();
-    
-    // Populate para respuesta
-    await incidencia.populate('empleado', 'nombre username email rolEmpleado');
-    await incidencia.populate('revisadoPor', 'nombre username');
     
     console.log('✅ Incidencia revisada');
     

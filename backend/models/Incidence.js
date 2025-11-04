@@ -57,7 +57,7 @@ const incidenceSchema = new mongoose.Schema({
   estado: {
     type: String,
     enum: {
-      values: ['pendiente', 'aprobada', 'rechazada'],
+      values: ['pendiente', 'en_revision', 'aprobada', 'rechazada'],
       message: 'Estado inválido'
     },
     default: 'pendiente'

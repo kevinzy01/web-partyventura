@@ -5491,9 +5491,13 @@ function backToIncidencesList() {
 async function updateIncidenceStatus(e) {
   e.preventDefault();
   
+  console.log('🔄 updateIncidenceStatus llamado');
+  
   const incidenciaId = document.getElementById('incidenceId').value;
   const nuevoEstado = document.getElementById('incidenceNewStatus').value;
   const comentarioAdmin = document.getElementById('incidenceAdminResponse').value.trim();
+  
+  console.log('📋 Datos del formulario:', { incidenciaId, nuevoEstado, comentarioAdmin });
   
   // Validar que haya estado seleccionado
   if (!nuevoEstado) {
@@ -5508,6 +5512,7 @@ async function updateIncidenceStatus(e) {
   }
   
   try {
+    console.log('📤 Enviando petición PATCH...');
     const data = await Auth.authFetch(`${API_URL}/incidences/admin/${incidenciaId}/revisar`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -5515,6 +5520,8 @@ async function updateIncidenceStatus(e) {
         comentarioAdmin: comentarioAdmin || undefined
       })
     });
+    
+    console.log('📥 Respuesta recibida:', data);
     
     if (!data.success) {
       throw new Error(data.message || 'Error al actualizar incidencia');
@@ -5525,7 +5532,9 @@ async function updateIncidenceStatus(e) {
     loadIncidencias(); // Recargar lista
     
   } catch (error) {
-    console.error('Error al actualizar incidencia:', error);
+    console.error('❌ Error completo:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
     showNotification('Error al actualizar: ' + error.message, 'error');
   }
 }
