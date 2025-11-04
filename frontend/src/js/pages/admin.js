@@ -4643,6 +4643,9 @@ window.handleScheduleDrop = async function(event, newDate) {
       await renderWorkSchedulesWeekView();
     } else if (currentWorkSchedulesView === 'month') {
       await renderWorkSchedulesMonthView();
+    } else {
+      // Vista de lista (default)
+      await loadWorkSchedules();
     }
     
     console.log('✅ Horario actualizado exitosamente');
@@ -4656,6 +4659,9 @@ window.handleScheduleDrop = async function(event, newDate) {
       await renderWorkSchedulesWeekView();
     } else if (currentWorkSchedulesView === 'month') {
       await renderWorkSchedulesMonthView();
+    } else {
+      // Vista de lista (default)
+      await loadWorkSchedules();
     }
   } finally {
     draggedSchedule = null;
