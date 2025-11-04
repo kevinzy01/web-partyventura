@@ -4007,7 +4007,8 @@ class CalendarState {
 }
 
 // Instancia global del estado del calendario
-const calendarState = new CalendarState();
+// IMPORTANTE: Se inicializa en DOMContentLoaded para asegurar que DateUtils esté cargado
+let calendarState = null;
 
 // ===================================
 // RENDERIZADO DE BADGES DE MONITORES
@@ -5135,6 +5136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('%c[CALENDAR] ✅ DateUtils module loaded successfully', 'color: #06D6A0; font-weight: bold;');
     console.log('%c[CALENDAR] Local module - no external dependencies', 'color: #118AB2;');
   }
+  
+  // Inicializar CalendarState ahora que DateUtils está disponible
+  calendarState = new CalendarState();
+  console.log('%c[CALENDAR] ✅ CalendarState initialized', 'color: #06D6A0; font-weight: bold;');
   
   // Cargar datos iniciales
   loadNews();
