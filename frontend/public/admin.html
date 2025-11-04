@@ -2236,71 +2236,74 @@
   </div>
 
   <!-- Modal Editar Registro -->
-  <div id="modalEditTimeRecord" class="modal hidden">
-    <div class="modal-overlay"></div>
-    <div class="modal-content max-w-lg">
-      <div class="modal-header bg-gradient-to-r from-blue-500 to-blue-600">
-        <h3 class="modal-title">Editar Registro de Tiempo</h3>
-        <button id="btnCloseEditModal" class="modal-close-btn">&times;</button>
+  <!-- Modal Editar Registro de Tiempo -->
+  <div id="modalEditTimeRecord" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <h3 class="text-2xl font-bold text-gray-900">Editar Registro de Tiempo</h3>
+        <button id="btnCloseEditModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <div class="modal-body">
-        <form id="formEditTimeRecord">
-          <input type="hidden" id="editRecordId">
-          
-          <div class="mb-4">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              Empleado
-            </label>
-            <input type="text" id="editEmployeeName" readonly
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
-          </div>
+      
+      <form id="formEditTimeRecord" class="p-6 space-y-6">
+        <input type="hidden" id="editRecordId">
+        
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Empleado</label>
+          <input type="text" id="editEmployeeName" readonly
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
+        </div>
 
-          <div class="mb-4">
-            <label for="editType" class="block text-sm font-semibold text-gray-700 mb-2">
-              Tipo <span class="text-red-500">*</span>
-            </label>
-            <select id="editType" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-              <option value="entrada">✅ Entrada</option>
-              <option value="salida">🚪 Salida</option>
-            </select>
-          </div>
+        <div>
+          <label for="editType" class="block text-sm font-semibold text-gray-700 mb-2">
+            Tipo <span class="text-red-500">*</span>
+          </label>
+          <select id="editType" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="entrada">✅ Entrada</option>
+            <option value="salida">🚪 Salida</option>
+          </select>
+        </div>
 
-          <div class="mb-4">
-            <label for="editDate" class="block text-sm font-semibold text-gray-700 mb-2">
-              Fecha <span class="text-red-500">*</span>
-            </label>
-            <input type="date" id="editDate" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-          </div>
+        <div>
+          <label for="editDate" class="block text-sm font-semibold text-gray-700 mb-2">
+            Fecha <span class="text-red-500">*</span>
+          </label>
+          <input type="date" id="editDate" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
 
-          <div class="mb-4">
-            <label for="editTime" class="block text-sm font-semibold text-gray-700 mb-2">
-              Hora <span class="text-red-500">*</span>
-            </label>
-            <input type="time" id="editTime" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-          </div>
+        <div>
+          <label for="editTime" class="block text-sm font-semibold text-gray-700 mb-2">
+            Hora <span class="text-red-500">*</span>
+          </label>
+          <input type="time" id="editTime" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
 
-          <div class="mb-6">
-            <label for="editLocation" class="block text-sm font-semibold text-gray-700 mb-2">
-              Ubicación
-            </label>
-            <input type="text" id="editLocation" maxlength="200"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Ej: Oficina Central">
-          </div>
+        <div>
+          <label for="editLocation" class="block text-sm font-semibold text-gray-700 mb-2">
+            Ubicación
+          </label>
+          <input type="text" id="editLocation" maxlength="200"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Ej: Oficina Central">
+        </div>
 
-          <div class="flex gap-3">
-            <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-              💾 Guardar Cambios
-            </button>
-            <button type="button" id="btnCancelEdit" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
+        <div class="flex gap-3 pt-4">
+          <button type="submit" 
+            class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl">
+            💾 Guardar Cambios
+          </button>
+          <button type="button" id="btnCancelEdit" 
+            class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -3267,6 +3270,6 @@
   <!-- DateUtils: Módulo local de utilidades de fechas (sin dependencias CDN) -->
   <script src="/src/js/modules/date-utils.js?v=2"></script>
   
-  <script src="/src/js/pages/admin.js?v=267"></script>
+  <script src="/src/js/pages/admin.js?v=268"></script>
 </body>
 </html>
