@@ -38,11 +38,12 @@ function determinarTurno(horaInicio, horaFin) {
 async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fechaSalida, horasTrabajadas) {
   try {
     // Obtener la fecha del turno (usar fecha de entrada)
+    // CRÍTICO: Normalizar a medianoche UTC para evitar problemas de zona horaria
     const fechaTurno = new Date(fechaEntrada);
-    fechaTurno.setHours(0, 0, 0, 0);
+    fechaTurno.setUTCHours(0, 0, 0, 0);
     
     const siguienteDia = new Date(fechaTurno);
-    siguienteDia.setDate(siguienteDia.getDate() + 1);
+    siguienteDia.setUTCDate(siguienteDia.getUTCDate() + 1);
     
     // Buscar horario asignado para ese día
     const horario = await WorkSchedule.findOne({
@@ -195,12 +196,12 @@ async function detectarYGestionarEntradaOlvidada(empleadoId, ultimoRegistro) {
     const fechaEntrada = new Date(ultimoRegistro.fecha);
     const ahora = new Date();
     
-    // Normalizar fechas para comparar días
+    // Normalizar fechas para comparar días (usar UTC para consistencia)
     const fechaEntradaDay = new Date(fechaEntrada);
-    fechaEntradaDay.setHours(0, 0, 0, 0);
+    fechaEntradaDay.setUTCHours(0, 0, 0, 0);
     
     const ahoraDay = new Date(ahora);
-    ahoraDay.setHours(0, 0, 0, 0);
+    ahoraDay.setUTCHours(0, 0, 0, 0);
     
     // Si están en el mismo día, no hay problema
     if (fechaEntradaDay.getTime() === ahoraDay.getTime()) {
@@ -502,12 +503,12 @@ exports.getTodosLosRegistros = async (req, res) => {
       query.fecha = {};
       if (fechaInicio) {
         const startDate = new Date(fechaInicio);
-        startDate.setHours(0, 0, 0, 0);
+        startDate.setUTCHours(0, 0, 0, 0);
         query.fecha.$gte = startDate;
       }
       if (fechaFin) {
         const endDate = new Date(fechaFin);
-        endDate.setHours(23, 59, 59, 999);
+        endDate.setUTCHours(23, 59, 59, 999);
         query.fecha.$lte = endDate;
       }
     }

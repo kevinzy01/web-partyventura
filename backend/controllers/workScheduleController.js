@@ -368,17 +368,17 @@ exports.getWeeklyView = async (req, res) => {
     }
     
     const fechaRef = new Date(fecha);
-    const diaSemana = fechaRef.getDay();
+    const diaSemana = fechaRef.getUTCDay();
     
-    // Calcular inicio de semana (lunes)
+    // Calcular inicio de semana (lunes) - usar UTC
     const inicioSemana = new Date(fechaRef);
-    inicioSemana.setDate(fechaRef.getDate() - (diaSemana === 0 ? 6 : diaSemana - 1));
-    inicioSemana.setHours(0, 0, 0, 0);
+    inicioSemana.setUTCDate(fechaRef.getUTCDate() - (diaSemana === 0 ? 6 : diaSemana - 1));
+    inicioSemana.setUTCHours(0, 0, 0, 0);
     
-    // Calcular fin de semana (domingo)
+    // Calcular fin de semana (domingo) - usar UTC
     const finSemana = new Date(inicioSemana);
-    finSemana.setDate(inicioSemana.getDate() + 6);
-    finSemana.setHours(23, 59, 59, 999);
+    finSemana.setUTCDate(inicioSemana.getUTCDate() + 6);
+    finSemana.setUTCHours(23, 59, 59, 999);
     
     const filter = {
       fecha: { $gte: inicioSemana, $lte: finSemana },
