@@ -5125,43 +5125,71 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Admin panel loaded');
   
   // ===================================
-  // VALIDACIÓN DE DEPENDENCIAS
+  // INICIALIZACIÓN CON DELAY PARA DATEUTILS
   // ===================================
-  if (typeof DateUtils === 'undefined') {
-    console.error('%c[CALENDAR ERROR] DateUtils module not loaded!', 'color: #E63946; font-weight: bold; font-size: 14px;');
-    console.error('Please ensure date-utils.js is included in HTML before admin.js');
-    alert('Error crítico: No se pudo cargar el módulo de fechas. Por favor, recargue la página.');
-    return; // Detener inicialización
-  } else {
+  const initializePanel = () => {
+    if (typeof DateUtils === 'undefined') {
+      console.warn('%c[CALENDAR] ⚠️ Esperando a DateUtils...', 'color: #F77F00;');
+      // Esperar 200ms y reintentar una vez
+      setTimeout(() => {
+        if (typeof DateUtils === 'undefined') {
+          console.error('%c[CALENDAR] ❌ DateUtils no disponible - calendario deshabilitado', 'color: #E63946;');
+          // Continuar sin calendario
+          initializePanelWithoutCalendar();
+        } else {
+          // DateUtils cargó, inicializar normalmente
+          initializeCalendar();
+          initializePanelCore();
+        }
+      }, 200);
+      return;
+    }
+    
+    // DateUtils disponible desde el inicio
+    initializeCalendar();
+    initializePanelCore();
+  };
+  
+  const initializeCalendar = () => {
     console.log('%c[CALENDAR] ✅ DateUtils module loaded successfully', 'color: #06D6A0; font-weight: bold;');
     console.log('%c[CALENDAR] Local module - no external dependencies', 'color: #118AB2;');
-  }
+    
+    // Inicializar CalendarState
+    calendarState = new CalendarState();
+    console.log('%c[CALENDAR] ✅ CalendarState initialized', 'color: #06D6A0; font-weight: bold;');
+  };
   
-  // Inicializar CalendarState ahora que DateUtils está disponible
-  calendarState = new CalendarState();
-  console.log('%c[CALENDAR] ✅ CalendarState initialized', 'color: #06D6A0; font-weight: bold;');
+  const initializePanelCore = () => {
+    // Cargar datos iniciales
+    loadNews();
+    loadStats();
+    
+    // Inicializar componentes
+    initTabs();
+    initContactFilters();
+    initContactModal();
+    initAdminManagement();
+    initEmpleadoManagement();
+    setupNotificationsDropdown();
+    
+    // Inicializar nuevas funcionalidades
+    initEventsManagement();
+    initGalleryManagement();
+    initTimeRecordsManagement();
+    initIncidencesManagement();
+    
+    // Actualizar reloj del header cada minuto
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+  };
   
-  // Cargar datos iniciales
-  loadNews();
-  loadStats();
+  const initializePanelWithoutCalendar = () => {
+    console.warn('%c[ADMIN] ⚠️ Inicializando panel sin sistema de calendario', 'color: #F77F00; font-weight: bold;');
+    initializePanelCore();
+  };
   
-  // Inicializar componentes
-  initTabs();
-  initContactFilters();
-  initContactModal();
-  initAdminManagement();
-  initEmpleadoManagement();
-  setupNotificationsDropdown();
-  
-  // Inicializar nuevas funcionalidades
-  initEventsManagement();
-  initGalleryManagement();
-  initTimeRecordsManagement();
-  initIncidencesManagement();
-  
-  // Actualizar reloj del header cada minuto
-  updateDateTime();
-  setInterval(updateDateTime, 60000);
+  // Iniciar
+  initializePanel();
 });
 
 // ===================================
