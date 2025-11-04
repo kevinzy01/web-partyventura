@@ -253,20 +253,26 @@ async function loadStats() {
     // Cargar noticias (pública, no requiere auth)
     const newsResponse = await fetch(`${API_URL}/news?limit=1000`);
     const newsData = await newsResponse.json();
-    document.getElementById('totalNews').textContent = newsData.success ? newsData.data.length : 0;
+    const totalNewsEl = document.getElementById('totalNews');
+    if (totalNewsEl) {
+      totalNewsEl.textContent = newsData.success ? newsData.data.length : 0;
+    }
     
     // Cargar contactos (REQUIERE AUTENTICACIÓN)
     const contactsData = await Auth.authFetch(`${API_URL}/contact`);
     const totalContacts = contactsData.success ? contactsData.data.length : 0;
     const newMessages = contactsData.success ? contactsData.data.filter(c => !c.leido).length : 0;
     
-    document.getElementById('totalContacts').textContent = totalContacts;
-    document.getElementById('newMessages').textContent = newMessages;
+    const totalContactsEl = document.getElementById('totalContacts');
+    const newMessagesEl = document.getElementById('newMessages');
+    if (totalContactsEl) totalContactsEl.textContent = totalContacts;
+    if (newMessagesEl) newMessagesEl.textContent = newMessages;
     
     // Mostrar badge si hay mensajes nuevos
-    if (newMessages > 0) {
-      document.getElementById('badgeNewContacts').classList.remove('hidden');
-      document.getElementById('badgeNewContacts').textContent = newMessages;
+    const badgeNewContactsEl = document.getElementById('badgeNewContacts');
+    if (newMessages > 0 && badgeNewContactsEl) {
+      badgeNewContactsEl.classList.remove('hidden');
+      badgeNewContactsEl.textContent = newMessages;
     }
     
     // Actualizar badge de notificaciones en header
@@ -275,28 +281,40 @@ async function loadStats() {
     // Cargar suscriptores (REQUIERE AUTENTICACIÓN)
     try {
       const subscribersData = await Auth.authFetch(`${API_URL}/newsletter`);
-      document.getElementById('totalSubscribers').textContent = subscribersData.success ? subscribersData.data.length : '0';
+      const totalSubscribersEl = document.getElementById('totalSubscribers');
+      if (totalSubscribersEl) {
+        totalSubscribersEl.textContent = subscribersData.success ? subscribersData.data.length : '0';
+      }
     } catch (error) {
       console.log('Newsletter API no disponible aún');
-      document.getElementById('totalSubscribers').textContent = '0';
+      const totalSubscribersEl = document.getElementById('totalSubscribers');
+      if (totalSubscribersEl) totalSubscribersEl.textContent = '0';
     }
 
     // Cargar eventos (REQUIERE AUTENTICACIÓN)
     try {
       const eventsData = await Auth.authFetch(`${API_URL}/events`);
-      document.getElementById('totalEvents').textContent = eventsData.success ? eventsData.data.length : '0';
+      const totalEventsEl = document.getElementById('totalEvents');
+      if (totalEventsEl) {
+        totalEventsEl.textContent = eventsData.success ? eventsData.data.length : '0';
+      }
     } catch (error) {
       console.log('Events API:', error.message);
-      document.getElementById('totalEvents').textContent = '0';
+      const totalEventsEl = document.getElementById('totalEvents');
+      if (totalEventsEl) totalEventsEl.textContent = '0';
     }
 
     // Cargar imágenes de galería (REQUIERE AUTENTICACIÓN)
     try {
       const galleryData = await Auth.authFetch(`${API_URL}/gallery`);
-      document.getElementById('totalGalleryImages').textContent = galleryData.success ? galleryData.data.length : '0';
+      const totalGalleryEl = document.getElementById('totalGalleryImages');
+      if (totalGalleryEl) {
+        totalGalleryEl.textContent = galleryData.success ? galleryData.data.length : '0';
+      }
     } catch (error) {
       console.log('Gallery API:', error.message);
-      document.getElementById('totalGalleryImages').textContent = '0';
+      const totalGalleryEl = document.getElementById('totalGalleryImages');
+      if (totalGalleryEl) totalGalleryEl.textContent = '0';
     }
 
     // Cargar incidencias (SOLO SUPERADMIN)
@@ -308,13 +326,20 @@ async function loadStats() {
           const total = incidencesData.data.length;
           const pendientes = incidencesData.data.filter(i => i.estado === 'pendiente').length;
           
-          document.getElementById('totalIncidencias').textContent = total;
-          document.getElementById('pendingIncidenciasText').textContent = `${pendientes} pendiente${pendientes !== 1 ? 's' : ''}`;
+          const totalIncidenciasEl = document.getElementById('totalIncidencias');
+          const pendingIncidenciasEl = document.getElementById('pendingIncidenciasText');
+          
+          if (totalIncidenciasEl) totalIncidenciasEl.textContent = total;
+          if (pendingIncidenciasEl) {
+            pendingIncidenciasEl.textContent = `${pendientes} pendiente${pendientes !== 1 ? 's' : ''}`;
+          }
         }
       } catch (error) {
         console.log('Incidences API:', error.message);
-        document.getElementById('totalIncidencias').textContent = '0';
-        document.getElementById('pendingIncidenciasText').textContent = '0 pendientes';
+        const totalIncidenciasEl = document.getElementById('totalIncidencias');
+        const pendingIncidenciasEl = document.getElementById('pendingIncidenciasText');
+        if (totalIncidenciasEl) totalIncidenciasEl.textContent = '0';
+        if (pendingIncidenciasEl) pendingIncidenciasEl.textContent = '0 pendientes';
       }
     }
 
@@ -5559,10 +5584,17 @@ async function updateIncidenceStatus(e) {
  */
 async function loadEmpleadosForIncidenceFilter() {
   try {
+    const select = document.getElementById('filterIncidenceEmployee');
+    
+    // Validar que el elemento exista
+    if (!select) {
+      console.warn('⚠️ Elemento filterIncidenceEmployee no encontrado - omitiendo carga');
+      return;
+    }
+    
     const data = await Auth.authFetch(`${API_URL}/admins/empleados`);
     
     if (data.success && data.data) {
-      const select = document.getElementById('filterIncidenceEmployee');
       const currentValue = select.value;
       
       // Mantener la opción "Todos"
