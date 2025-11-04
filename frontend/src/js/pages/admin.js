@@ -165,30 +165,9 @@ async function bulkDelete(section, deleteFunction, reloadFunction) {
 // 0. INICIALIZACIÓN Y AUTENTICACIÓN
 // ===================================
 
-// Verificar autenticación al cargar
-window.addEventListener('DOMContentLoaded', () => {
-  // El guard se ejecuta automáticamente desde auth.js
-  if (Auth.isAuthenticated()) {
-    initializeAdmin();
-  }
-});
-
-// Inicializar el panel de administración
-function initializeAdmin() {
-  console.log('✅ Autenticación verificada, iniciando panel...');
-  
-  // Mostrar información del usuario
-  displayUserInfo();
-  
-  // Inicializar componentes
-  updateDateTime();
-  setInterval(updateDateTime, 60000); // Actualizar cada minuto
-  
-  initTabs();
-  loadStats();
-  loadNews();
-  loadContacts();
-}
+// ⚠️ DEPRECADO - Listener duplicado eliminado
+// La inicialización se maneja en línea 5124 con el nuevo sistema
+// que incluye verificación de DateUtils y carga ordenada de componentes
 
 // Mostrar información del usuario en el header
 function displayUserInfo() {
@@ -5160,6 +5139,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   
   const initializePanelCore = () => {
+    // Mostrar información del usuario en el header
+    displayUserInfo();
+    
     // Cargar datos iniciales
     loadNews();
     loadStats();
