@@ -5501,7 +5501,7 @@ async function updateIncidenceStatus(e) {
     return;
   }
   
-  // Validar que la respuesta sea obligatoria para estados aprobada/rechazada
+  // Validar que la respuesta sea obligatoria solo para estados finales (aprobada/rechazada)
   if ((nuevoEstado === 'aprobada' || nuevoEstado === 'rechazada') && !comentarioAdmin) {
     showNotification('El comentario es obligatorio para aprobar o rechazar', 'error');
     return;

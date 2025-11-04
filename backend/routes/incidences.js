@@ -50,8 +50,8 @@ const createIncidenceValidation = [
 const revisarIncidenciaValidation = [
   body('estado')
     .notEmpty().withMessage('El estado es requerido')
-    .isIn(['aprobada', 'rechazada'])
-    .withMessage('Estado inválido. Debe ser "aprobada" o "rechazada"'),
+    .isIn(['pendiente', 'en_revision', 'aprobada', 'rechazada'])
+    .withMessage('Estado inválido. Debe ser: pendiente, en_revision, aprobada o rechazada'),
   
   body('comentarioAdmin')
     .optional()

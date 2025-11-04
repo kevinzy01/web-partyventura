@@ -361,10 +361,10 @@ exports.revisarIncidencia = async (req, res) => {
     console.log('Comentario:', comentarioAdmin);
     
     // Validar estado
-    if (!['aprobada', 'rechazada'].includes(estado)) {
+    if (!['pendiente', 'en_revision', 'aprobada', 'rechazada'].includes(estado)) {
       return res.status(400).json({
         success: false,
-        message: 'Estado inválido. Debe ser "aprobada" o "rechazada"'
+        message: 'Estado inválido. Debe ser: pendiente, en_revision, aprobada o rechazada'
       });
     }
     
@@ -391,29 +391,33 @@ exports.revisarIncidencia = async (req, res) => {
     
     console.log('✅ Incidencia revisada');
     
-    // Enviar email de notificación al empleado
-    try {
-      if (incidencia.empleado && incidencia.empleado.email) {
-        console.log('📧 Enviando email de notificación a:', incidencia.empleado.email);
-        
-        const htmlContent = incidenceStatusChangeEmail(
-          incidencia.empleado.nombre,
-          incidencia,
-          estado,
-          comentarioAdmin
-        );
-        
-        await sendEmail({
-          to: incidencia.empleado.email,
-          subject: `Actualización de Incidencia - ${estado === 'aprobada' ? 'Aprobada ✅' : 'Rechazada ❌'}`,
-          html: htmlContent
-        });
-        
-        console.log('✅ Email enviado correctamente');
+    // Enviar email de notificación al empleado (solo para estados finales)
+    if (estado === 'aprobada' || estado === 'rechazada') {
+      try {
+        if (incidencia.empleado && incidencia.empleado.email) {
+          console.log('📧 Enviando email de notificación a:', incidencia.empleado.email);
+          
+          const htmlContent = incidenceStatusChangeEmail(
+            incidencia.empleado.nombre,
+            incidencia,
+            estado,
+            comentarioAdmin
+          );
+          
+          await sendEmail({
+            to: incidencia.empleado.email,
+            subject: `Actualización de Incidencia - ${estado === 'aprobada' ? 'Aprobada ✅' : 'Rechazada ❌'}`,
+            html: htmlContent
+          });
+          
+          console.log('✅ Email enviado correctamente');
+        }
+      } catch (emailError) {
+        console.error('⚠️ Error al enviar email de notificación:', emailError.message);
+        // No lanzar error, el proceso principal ya completó
       }
-    } catch (emailError) {
-      console.error('⚠️ Error al enviar email de notificación:', emailError.message);
-      // No lanzar error, el proceso principal ya completó
+    } else {
+      console.log('ℹ️ Email no enviado - estado intermedio:', estado);
     }
     
     res.json({
