@@ -410,7 +410,10 @@ exports.getWeeklyView = async (req, res) => {
       const diaStr = dia.toISOString().split('T')[0];
       
       const horariosDelDia = horarios.filter(h => {
-        const fechaH = new Date(h.fecha).toISOString().split('T')[0];
+        // Normalizar la fecha del horario a medianoche UTC para comparación correcta
+        const fechaHorario = new Date(h.fecha);
+        fechaHorario.setUTCHours(0, 0, 0, 0);
+        const fechaH = fechaHorario.toISOString().split('T')[0];
         return fechaH === diaStr;
       });
       
