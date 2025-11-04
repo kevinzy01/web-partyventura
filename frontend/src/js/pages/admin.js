@@ -91,6 +91,12 @@ function clearSelection(section) {
 
 // Sincronizar checkboxes del DOM con estado global al cambiar de sección
 function syncSelectionState(section) {
+  // Verificar que la sección existe en bulkSelection
+  if (!bulkSelection[section]) {
+    console.warn(`⚠️ Sección "${section}" no tiene sistema de selección múltiple - omitiendo sync`);
+    return;
+  }
+  
   const checkboxes = document.querySelectorAll(`[data-section="${section}"] .item-checkbox`);
   checkboxes.forEach(cb => {
     const itemId = cb.dataset.itemId;
