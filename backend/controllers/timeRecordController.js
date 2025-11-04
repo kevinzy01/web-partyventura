@@ -96,11 +96,7 @@ async function verificarYGestionarHorario(empleadoId, empleado, fechaEntrada, fe
         horaInicio: horaInicio,
         horaFin: horaFin,
         estado: 'completado', // Ya está completado porque ya se trabajó
-        notas: `🤖 Horario creado automáticamente tras fichaje sin asignación previa.\n` +
-               `Entrada: ${fechaEntrada.toLocaleString('es-ES')}\n` +
-               `Salida: ${fechaSalida.toLocaleString('es-ES')}\n` +
-               `Horas trabajadas: ${horasTrabajadas}h` +
-               (duracionMinutos < 1 ? `\n⚠️ Sesión corta ajustada a 1 minuto para validación` : ''),
+        notas: '', // Sin notas automáticas
         color: '#10b981', // Verde para horarios auto-creados
         creadoPor: empleadoId, // El propio empleado lo "crea" al fichar
         horasTotales: horasTrabajadas
